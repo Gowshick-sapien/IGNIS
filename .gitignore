@@ -1,0 +1,19 @@
+# IGNIS Ideation PDFs
+Simulation_Ideation_v1.pdf
+hardware_ideation_v1.pdf
+project title .pdf
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+.venv/
+venv/
+ENV/
