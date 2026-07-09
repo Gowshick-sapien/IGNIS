@@ -1,55 +1,471 @@
-# IGNIS — Phase A: Core Decision Pipeline
+# IGNIS
+### Intelligent Geo-distributed Network for Wildfire Intervention and Surveillance
 
-> **IGNIS** (Intelligent Geo-distributed Network for Wildfire Intervention and Surveillance)
-
-Phase A implements the **core wildfire decision pipeline** of the IGNIS architecture.
-
-At this stage, the project validates the **fog-level decision-making logic** without introducing networking, Docker, MQTT, databases, or cloud infrastructure.
-
-The objective is to prove that the proposed wildfire decision architecture correctly computes a **Wildfire Hazard Index (WHI)**, applies the **multi-sensor confirmation rule**, and produces the appropriate wildfire state (`GREEN`, `YELLOW`, `ORANGE`, `RED`).
+> A distributed Edge–Fog–Cloud wildfire early warning and pre-suppression architecture designed to reduce response latency through localized autonomous intelligence.
 
 ---
 
-# Project Goal
+## Overview
 
-The complete IGNIS project proposes an **Edge–Fog–Cloud architecture** for autonomous wildfire early warning and pre-suppression.
+IGNIS is a research-oriented software simulation that explores how **Edge Computing**, **Fog Computing**, and **Cloud Computing** can work together to improve wildfire early warning systems.
 
-Phase A focuses only on the **local pipeline**:
+Conventional wildfire monitoring primarily relies on satellite observations and centralized cloud processing. While effective for large-scale monitoring, this introduces latency before actionable decisions reach field responders.
 
-```
+IGNIS proposes a hierarchical architecture where **local Fog Nodes** perform real-time environmental analysis, execute safe autonomous pre-suppression actions, and coordinate with higher-level control centers.
 
-Scenario → Edge Node → Fog Node → Decision → Console
+This repository currently implements:
 
-```
-
-No distributed communication is implemented yet.
+- ✅ Phase A – Core Decision Pipeline
+- ✅ Phase B – Distributed Containerized Architecture
 
 ---
 
-# Phase A Scope
+# Current Architecture
 
-Implemented:
+```
 
-- Synthetic wildfire scenarios
-- Edge node simulation
-- Wildfire Hazard Index (WHI)
-- Sensor normalization
-- Multi-sensor confirmation logic
-- State machine
-- Structured decision records
-- Console presentation
-- Unit tests
+                   ┌────────────────────────────┐
+                   │      Control Center        │
+                   │ FastAPI + SSE Dashboard    │
+                   └─────────────┬──────────────┘
+                                 │
+                                 │ MQTT
+                                 │
+                    ┌────────────▼────────────┐
+                    │     MQTT Broker         │
+                    │  Eclipse Mosquitto      │
+                    └────────────┬────────────┘
+                                 │
+          ┌──────────────────────┼──────────────────────┐
+          │                      │                      │
+          ▼                      ▼                      ▼
+     Edge Node E11         Edge Node E12         Edge Node E13
+          │                      │                      │
+          └──────────────┬───────┴──────────────┬──────┘
+                         ▼
+                  Fog Node (Zone 4B)
+                         │
+                         ▼
+          Wildfire Decision Pipeline
+```
 
-Not implemented yet:
+---
 
-- MQTT communication
-- Docker containers
-- Multiple fog nodes
-- Cloud layer
-- Databases
-- Grafana dashboard
-- Network failures
-- Lateral fog coordination
+# Project Objectives
+
+- Develop a distributed wildfire early warning architecture.
+- Validate localized Fog-level decision making.
+- Reduce dependence on centralized cloud processing.
+- Demonstrate asynchronous communication using MQTT.
+- Build a scalable architecture that can later integrate:
+  - multiple forest zones
+  - cloud coordination
+  - hardware sensors
+  - drone systems
+  - real-world deployments
+
+---
+
+# Project Phases
+
+| Phase | Status | Description |
+|---------|:------:|------------|
+| Phase A | ✅ | Core wildfire decision pipeline |
+| Phase B | ✅ | MQTT communication & Docker architecture |
+| Phase C | ⏳ | Cloud integration |
+| Phase D | ⏳ | Multi-zone coordination |
+| Phase E | ⏳ | Hardware integration |
+
+---
+
+# Phase A
+
+Phase A validates the **local wildfire decision engine**.
+
+No networking or distributed components are involved.
+
+Pipeline:
+
+```
+
+Scenario
+↓
+Edge Node
+↓
+Fog Node
+↓
+Normalization
+↓
+Wildfire Hazard Index (WHI)
+↓
+Confirmation Logic
+↓
+State Machine
+↓
+Decision
+↓
+Console
+
+```
+
+---
+
+## Phase A Components
+
+### Scenario Provider
+
+Generates synthetic environmental conditions.
+
+Supported scenarios:
+
+- S1 – Normal Day
+- S2 – Slow-Building Risk
+- S3 – Sudden Ignition
+- S4 – Single Sensor Fault
+
+---
+
+### Edge Node
+
+Represents a physical sensor cluster.
+
+Responsibilities:
+
+- package sensor readings
+- attach metadata
+- publish structured telemetry
+
+---
+
+### Fog Node
+
+Acts as the local decision-making brain.
+
+Responsibilities:
+
+- normalize sensor values
+- compute WHI
+- evaluate confirmation logic
+- determine wildfire state
+- generate autonomous actions
+
+---
+
+### Decision Pipeline
+
+```
+
+Raw Sensors
+↓
+Normalization
+↓
+Wildfire Hazard Index (WHI)
+↓
+Confirmation Rule
+↓
+State Machine
+↓
+Decision Record
+
+```
+
+---
+
+# Phase B
+
+Phase B transforms the local pipeline into a distributed system.
+
+Instead of Python function calls, components communicate through **MQTT**.
+
+---
+
+## Distributed Architecture
+
+Every component runs inside its own Docker container.
+
+```
+
+docker-compose
+
+│
+
+├── mqtt-broker
+
+├── edge-sim-e11
+
+├── edge-sim-e12
+
+├── edge-sim-e13
+
+├── fog-node
+
+└── control-center
+
+```
+
+---
+
+## MQTT Topic Hierarchy
+
+```
+
+ignis/v1/
+
+├── zone/{zone}/edge/{node}/reading
+
+├── zone/{zone}/edge/{node}/control
+
+├── zone/{zone}/fog/state
+
+├── zone/{zone}/fog/alert
+
+└── zone/{zone}/fog/action_log
+
+```
+
+---
+
+## MQTT Message Flow
+
+### Telemetry
+
+```
+
+Edge Node
+↓
+
+MQTT Broker
+↓
+
+Fog Node
+
+```
+
+---
+
+### Zone State
+
+```
+
+Fog Node
+↓
+
+MQTT Broker
+↓
+
+Control Center
+
+```
+
+---
+
+### Scenario Injection
+
+```
+
+Browser
+↓
+
+FastAPI
+↓
+
+Scenario Service
+↓
+
+MQTT Broker
+↓
+
+Edge Node
+
+```
+
+---
+
+# Data Flow
+
+The complete system executes the following pipeline:
+
+```
+
+Scenario Provider
+↓
+
+Telemetry Provider
+↓
+
+Edge Node
+↓
+
+MQTT Broker
+↓
+
+Fog Node
+
+↓
+
+Normalization
+
+↓
+
+Wildfire Hazard Index
+
+↓
+
+Confirmation Rule
+
+↓
+
+State Machine
+
+↓
+
+Zone Aggregator
+
+↓
+
+MQTT Broker
+
+↓
+
+Control Center
+
+↓
+
+Server Sent Events
+
+↓
+
+Web Dashboard
+
+```
+
+---
+
+# Telemetry Providers
+
+Each Edge Node can dynamically switch between telemetry providers.
+
+### RandomWalkProvider
+
+Simulates normal environmental drift.
+
+Used during baseline monitoring.
+
+---
+
+### ScenarioProvider
+
+Produces deterministic telemetry for predefined wildfire scenarios.
+
+Used during demonstrations.
+
+---
+
+### FaultInjectionProvider
+
+Produces faulty or corrupted sensor readings.
+
+Used to validate false-positive protection.
+
+---
+
+# Wildfire Hazard Index (WHI)
+
+Sensor readings are first normalized to a common scale.
+
+```
+
+Temperature
+
+↓
+
+0.87
+
+Humidity
+
+↓
+
+0.92
+
+Wind
+
+↓
+
+0.63
+
+...
+
+↓
+
+Weighted Hazard Index
+
+```
+
+WHI represents the current wildfire hazard level.
+
+---
+
+# Confirmation Rule
+
+A high WHI alone is not sufficient.
+
+At least **three independent sensors** must exceed their confirmation thresholds before the system can escalate to:
+
+- ORANGE
+- RED
+
+Otherwise the state is clamped to **YELLOW**.
+
+This prevents isolated faulty sensors from generating false alarms.
+
+---
+
+# Zone Aggregation
+
+Each Edge Node is evaluated independently.
+
+```
+
+E11 → GREEN
+
+E12 → RED
+
+E13 → GREEN
+
+```
+
+The Zone State becomes
+
+```
+
+RED
+
+```
+
+using maximum-state aggregation.
+
+This prevents localized wildfire events from being diluted through averaging.
+
+---
+
+# Control Center
+
+The Local Control Center is implemented using:
+
+- FastAPI
+- Server-Sent Events (SSE)
+- MQTT Listener
+- Scenario Service
+
+Features include:
+
+- Live telemetry
+- Zone status
+- Edge status
+- Alert feed
+- Action logs
+- Scenario execution
+- Fault injection
 
 ---
 
@@ -58,294 +474,73 @@ Not implemented yet:
 ```
 
 IGNIS/
-│
+
 ├── config/
-│   └── zone_config.json
+
+│ ├── zone_config.json
+
+│ └── mosquitto.conf
+
 │
+
 ├── src/
-│   │
-│   ├── scoring/
-│   │   ├── normalization.py
-│   │   ├── hazard_index.py
-│   │   ├── confirmation.py
-│   │   └── state_machine.py
-│   │
-│   ├── edge_node.py
-│   ├── fog_node.py
-│   ├── scenario.py
-│   └── presenter.py
+
+│ ├── scoring/
+
+│ ├── control_center/
+
+│ ├── edge_sim.py
+
+│ ├── fog_node.py
+
+│ ├── fog_node_runner.py
+
+│ ├── scenario.py
+
+│ └── presenter.py
+
 │
+
 ├── tests/
-│   └── test_scoring.py
+
 │
+
+├── Dockerfile
+
+├── docker-compose.yml
+
+├── requirements.txt
+
 └── run_phase_a.py
 
 ```
 
 ---
 
-# Architecture
+# Running the Project
 
-```
+## Requirements
 
-                 Scenario Generator
-                        │
-                        ▼
-                 Sensor Readings
-                        │
-                        ▼
-                   Edge Node
-                        │
-                        ▼
-                   Fog Node
-                        │
-         ┌──────────────┼──────────────┐
-         ▼              ▼              ▼
-  Normalization        WHI      Confirmation
-         └──────────────┼──────────────┘
-                        ▼
-                 State Machine
-                        ▼
-                Decision Record
-                        ▼
-                   Presenter
+- Docker Desktop
+- Docker Compose v2
 
-```
+No local Python installation is required.
 
 ---
 
-# Data Flow
-
-The entire Phase A pipeline is deterministic and synchronous.
-
-## Step 1 — Load Configuration
-
-`run_phase_a.py`
-
-- loads `zone_config.json`
-- initializes the `FogNode`
-- loads sensor limits
-- loads WHI weights
-- loads confirmation thresholds
-- loads state thresholds
-
----
-
-## Step 2 — Generate Scenario
-
-`ScenarioGenerator`
-
-Produces synthetic environmental data representing one of the supported scenarios.
-
-Example:
-
-```python
-{
-    "temperature_c": 38,
-    "humidity_pct": 19,
-    "gas_ppm": 140,
-    ...
-}
-```
-
----
-
-## Step 3 — Edge Node
-
-The `EdgeNode` simulates a physical sensor cluster.
-
-Responsibilities:
-
-- attaches node metadata
-- timestamps the reading
-- returns a structured sensor reading
-
-Output:
-
-```python
-{
-    "node_id": "E01",
-    "zone_id": "4B",
-    "timestamp": "...",
-    "temperature_c": 38,
-    ...
-}
-```
-
----
-
-## Step 4 — Fog Node
-
-The Fog Node coordinates the complete decision pipeline.
-
-It does **not** implement the mathematics directly.
-
-Instead it calls the scoring modules sequentially.
-
----
-
-### 4.1 Normalization
-
-Converts heterogeneous sensor values into a common range:
-
-```
-0.0 → No Risk
-1.0 → Maximum Risk
-```
-
-Example:
-
-```
-Temperature
-
-38°C
-
-↓
-
-0.84
-```
-
----
-
-### 4.2 Wildfire Hazard Index (WHI)
-
-Computes a weighted hazard score using the normalized sensor values.
-
-```
-WHI = Σ(weight × normalized_sensor)
-```
-
-Output:
-
-```
-WHI = 0.81
-```
-
----
-
-### 4.3 Confirmation
-
-Evaluates which independent sensors exceed their individual confirmation thresholds.
-
-Example:
-
-```
-Temperature ✓
-
-Humidity ✓
-
-Gas ✓
-
-Wind ✗
-
-Thermal ✓
-
-Confirmation Count = 4
-```
-
----
-
-### 4.4 State Machine
-
-Determines the wildfire state using:
-
-- Wildfire Hazard Index
-- Confirmation Count
-
-Rules:
-
-```
-WHI >= RED threshold
-AND
-Confirmation >= 3
-
-↓
-
-RED
-```
-
-If the confirmation count is below three:
-
-```
-RED
-
-↓
-
-YELLOW (clamped)
-```
-
-This prevents false positives caused by isolated faulty sensors.
-
----
-
-### 4.5 Decision Record
-
-The Fog Node produces a structured decision record.
-
-Example:
-
-```python
-{
-    "zone": "4B",
-    "whi": 0.84,
-    "confirmation_count": 4,
-    "state": "ORANGE",
-    "actions": [
-        "activate_mist_perimeter",
-        "notify_control_center"
-    ]
-}
-```
-
----
-
-## Step 5 — Presenter
-
-The Presenter receives the decision record and renders a human-readable console output.
-
-The Presenter contains **no decision logic**.
-
----
-
-# Configuration
-
-`config/zone_config.json`
-
-Contains all configurable parameters:
-
-- normalization ranges
-- WHI weights
-- sensor confirmation thresholds
-- wildfire state thresholds
-
-Different forest types can therefore be simulated without modifying the source code.
-
----
-
-# Supported Scenarios
-
-| Scenario | Description | Expected State |
-|----------|-------------|----------------|
-| S1 | Normal Day | GREEN |
-| S2 | Slow-Building Risk | YELLOW |
-| S3 | Sudden Ignition | RED |
-| S4 | Single Sensor Fault | YELLOW (clamped) |
-
----
-
-# Running Phase A
-
-Clone the repository.
-
-Install Python 3.11+.
-
-Run:
+## Build and Start
 
 ```bash
-python run_phase_a.py
+docker compose up --build
 ```
 
-The program executes every scenario sequentially and prints the resulting wildfire decisions.
+---
+
+## Open Dashboard
+
+```
+http://localhost:8000
+```
 
 ---
 
@@ -357,74 +552,73 @@ Execute:
 python -m unittest discover tests
 ```
 
-or
+or inside Docker
 
 ```bash
-pytest
+docker compose run --rm fog-node python -m unittest discover tests
 ```
 
-(if pytest is installed)
+---
 
-The tests verify:
+# Demonstration Scenarios
 
-- normalization
-- WHI computation
-- confirmation logic
-- state transitions
-- false-positive clamping
+| Scenario | Description |
+|----------|-------------|
+| S1 | Normal Day |
+| S2 | Slow-Building Risk |
+| S3 | Sudden Ignition |
+| S4 | Single Sensor Fault |
 
 ---
 
 # Design Principles
 
-Phase A intentionally separates responsibilities.
+The project follows strict separation of responsibilities.
 
-| Module | Responsibility |
-|---------|---------------|
-| Scenario | Environmental data generation |
-| Edge Node | Sensor interface |
-| Fog Node | Pipeline orchestration |
-| Normalization | Sensor scaling |
-| Hazard Index | WHI computation |
-| Confirmation | Threshold validation |
-| State Machine | Final decision |
-| Presenter | Console visualization |
+| Component | Responsibility |
+|-----------|----------------|
+| Telemetry Provider | Generates environmental data |
+| Edge Node | Sensor interface & telemetry publishing |
+| MQTT Broker | Message routing |
+| Fog Node | Local decision making |
+| Zone Aggregator | Zone-level state computation |
+| Control Center | Visualization |
+| Scenario Service | Scenario orchestration |
 
-Each module performs **one responsibility only**.
-
----
-
-# Current Limitations
-
-Phase A intentionally excludes:
-
-- MQTT
-- Docker
-- Cloud communication
-- Databases
-- Multi-zone simulation
-- Lateral fog coordination
-- Network failures
-- Hardware integration
-
-These features are introduced in subsequent phases.
+Each component performs a single well-defined responsibility.
 
 ---
 
-# Next Phase
+# Future Work
 
-Phase B introduces the first distributed components:
+Upcoming phases will introduce:
 
-- Docker containerization
-- MQTT communication
-- Multiple edge nodes
-- Local message broker
-- Event-driven architecture
-
-The decision pipeline implemented in Phase A remains unchanged; only the communication mechanism evolves.
+- Cloud coordination
+- Multi-zone communication
+- Fog-to-Fog coordination
+- Persistent databases
+- Digital Twin
+- Hardware sensor integration
+- Real drone communication
+- Cloud analytics
+- Long-term wildfire intelligence
 
 ---
 
-## License
+# Research Focus
 
-This project is part of the IGNIS research and simulation framework for validating distributed Edge–Fog–Cloud wildfire intelligence architectures.
+This project investigates:
+
+- Distributed Edge–Fog–Cloud Computing
+- Wildfire Early Warning Systems
+- IoT Sensor Networks
+- MQTT-based Distributed Systems
+- Cyber-Physical Systems
+- Autonomous Decision Making
+- Disaster Response Architectures
+
+---
+
+# License
+
+This repository is intended for academic research, experimentation, and educational purposes.
