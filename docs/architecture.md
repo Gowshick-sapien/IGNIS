@@ -1,4 +1,4 @@
-# Autonomous Wildfire Early Warning System — Simulation Architecture
+# IGNIS — Simulation Architecture
 
 **Edge-Fog-Cloud (EFC) Software Simulation — Detailed Architecture Document (v1)**
 **Parent concept:** Autonomous Wildfire Early Warning and Pre-Suppression Using Edge-Fog-Cloud Architecture in Indian Forest Ecosystems
