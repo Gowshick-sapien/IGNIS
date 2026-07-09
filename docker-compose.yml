@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  mqtt-broker:
+    image: eclipse-mosquitto:2
+    container_name: ignis-mqtt-broker
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    restart: always
+
+  edge-sim-e11:
+    build: .
+    container_name: ignis-edge-sim-e11
+    command: python src/edge_sim.py
+    depends_on:
+      - mqtt-broker
+    environment:
+      - NODE_ID=E11
+      - ZONE_ID=4B
+      - MQTT_HOST=mqtt-broker
+      - MQTT_PORT=1883
+      - GPS_LAT=21.940
+      - GPS_LON=86.320
+      - TICK_INTERVAL=3.0
+      - SEASONAL_BASELINE=0.5
+    restart: unless-stopped
+
+  edge-sim-e12:
+    build: .
+    container_name: ignis-edge-sim-e12
+    command: python src/edge_sim.py
+    depends_on:
+      - mqtt-broker
+    environment:
+      - NODE_ID=E12
+      - ZONE_ID=4B
+      - MQTT_HOST=mqtt-broker
+      - MQTT_PORT=1883
+      - GPS_LAT=21.950
+      - GPS_LON=86.330
+      - TICK_INTERVAL=3.0
+      - SEASONAL_BASELINE=0.5
+    restart: unless-stopped
+
+  edge-sim-e13:
+    build: .
+    container_name: ignis-edge-sim-e13
+    command: python src/edge_sim.py
+    depends_on:
+      - mqtt-broker
+    environment:
+      - NODE_ID=E13
+      - ZONE_ID=4B
+      - MQTT_HOST=mqtt-broker
+      - MQTT_PORT=1883
+      - GPS_LAT=21.930
+      - GPS_LON=86.310
+      - TICK_INTERVAL=3.0
+      - SEASONAL_BASELINE=0.5
+    restart: unless-stopped
+
+  fog-node:
+    build: .
+    container_name: ignis-fog-node
+    command: python src/fog_node_runner.py
+    depends_on:
+      - mqtt-broker
+    environment:
+      - ZONE_ID=4B
+      - MQTT_HOST=mqtt-broker
+      - MQTT_PORT=1883
+      - CONFIG_PATH=config/zone_config.json
+    restart: unless-stopped
+
+  control-center:
+    build: .
+    container_name: ignis-control-center
+    command: uvicorn src.control_center.app:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mqtt-broker
+    environment:
+      - ZONE_ID=4B
+      - MQTT_HOST=mqtt-broker
+      - MQTT_PORT=1883
+    restart: unless-stopped

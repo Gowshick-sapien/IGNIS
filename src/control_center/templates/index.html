@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IGNIS — local Range Forest Control Center</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Vanilla CSS Design System */
+        :root {
+            --bg-color: #0b0d13;
+            --card-bg: rgba(20, 25, 38, 0.65);
+            --card-border: rgba(255, 255, 255, 0.05);
+            --accent-color: #f97316; /* Orange */
+            
+            /* Status Colors */
+            --color-green: #10b981;
+            --color-yellow: #f59e0b;
+            --color-orange: #f97316;
+            --color-red: #ef4444;
+            
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            
+            --glow-green: rgba(16, 185, 129, 0.2);
+            --glow-yellow: rgba(245, 158, 11, 0.2);
+            --glow-orange: rgba(249, 115, 22, 0.2);
+            --glow-red: rgba(239, 68, 68, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            padding: 24px;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(249, 115, 22, 0.05) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(239, 68, 68, 0.03) 0px, transparent 50%),
+                radial-gradient(at 50% 100%, rgba(16, 185, 129, 0.03) 0px, transparent 50%);
+        }
+
+        /* Container Layout */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Header Styling */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            padding: 16px 24px;
+            border-radius: 16px;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--color-orange), var(--color-red));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-family: 'Outfit', sans-serif;
+            color: white;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .logo-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-sub {
+            color: var(--text-muted);
+            font-size: 13px;
+            margin-left: 8px;
+            padding-left: 8px;
+            border-left: 1px solid var(--text-muted);
+        }
+
+        .system-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--color-green);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--color-green);
+            animation: pulse 2s infinite;
+        }
+
+        /* Main Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Glassmorphism Card base */
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 12px;
+        }
+
+        .card-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Left Side: Zone Card Details */
+        .zone-card {
+            min-height: 320px;
+        }
+
+        .zone-display {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            padding: 12px 0;
+        }
+
+        .zone-badge-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            border: 4px solid var(--card-border);
+            text-align: center;
+            position: relative;
+            background: rgba(255, 255, 255, 0.02);
+            transition: all 0.5s ease;
+        }
+
+        .zone-badge-container.state-GREEN {
+            border-color: var(--color-green);
+            box-shadow: 0 0 30px var(--glow-green);
+        }
+
+        .zone-badge-container.state-YELLOW {
+            border-color: var(--color-yellow);
+            box-shadow: 0 0 30px var(--glow-yellow);
+        }
+
+        .zone-badge-container.state-ORANGE {
+            border-color: var(--color-orange);
+            box-shadow: 0 0 40px var(--glow-orange);
+            animation: pulse-border-orange 1.5s infinite;
+        }
+
+        .zone-badge-container.state-RED {
+            border-color: var(--color-red);
+            box-shadow: 0 0 50px var(--glow-red);
+            animation: pulse-border-red 1s infinite;
+        }
+
+        .zone-state-val {
+            font-family: 'Outfit', sans-serif;
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .zone-whi-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .whi-score {
+            font-family: 'Outfit', sans-serif;
+            font-size: 54px;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, #ffffff, #9ca3af);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .whi-bar-bg {
+            height: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 5px;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .whi-bar-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 5px;
+            background: linear-gradient(90deg, var(--color-green), var(--color-yellow), var(--color-red));
+            transition: width 0.5s ease;
+        }
+
+        .confirming-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .confirm-badge {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-secondary);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .confirm-badge.active {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        .clamping-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px dashed var(--color-yellow);
+            color: #fcd34d;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Right Side: Scenario Controller */
+        .scenario-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .btn-active {
+            background: rgba(249, 115, 22, 0.12) !important;
+            border-color: var(--color-orange) !important;
+            color: #fdba74;
+            box-shadow: 0 0 15px rgba(249, 115, 22, 0.1);
+        }
+
+        .btn-stop {
+            background: rgba(239, 68, 68, 0.1) !important;
+            border-color: rgba(239, 68, 68, 0.3) !important;
+            color: #fca5a5;
+        }
+
+        .btn-stop:hover:not(:disabled) {
+            background: rgba(239, 68, 68, 0.18) !important;
+            border-color: var(--color-red) !important;
+        }
+
+        .btn-title {
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .btn-desc {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .scenario-status-box {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--card-border);
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .progress-bar-bg {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+            overflow: hidden;
+            width: 100px;
+            margin-left: 10px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--color-orange);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Edge Nodes Grid Section */
+        .edge-section-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            margin-top: 10px;
+        }
+
+        .edge-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .edge-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .edge-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .edge-name {
+            font-family: 'Outfit', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .edge-meta {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .edge-disconnected-overlay {
+            border-color: rgba(239, 68, 68, 0.2);
+            opacity: 0.6;
+        }
+
+        .edge-parameters {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .param-box {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            padding: 8px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .param-box.alerted {
+            background: rgba(239, 68, 68, 0.06);
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .param-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .param-val {
+            font-family: 'Outfit', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .param-box.alerted .param-val {
+            color: #fca5a5;
+        }
+
+        /* Operations Event Feed */
+        .event-log-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 240px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .event-log-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .event-log-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+
+        .event-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .event-item.type-alert {
+            background: rgba(239, 68, 68, 0.05);
+            border-color: rgba(239, 68, 68, 0.15);
+        }
+
+        .event-item.type-action_log {
+            background: rgba(249, 115, 22, 0.05);
+            border-color: rgba(249, 115, 22, 0.15);
+        }
+
+        .event-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .event-badge {
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        .event-badge.state-GREEN { background-color: var(--color-green); color: black; }
+        .event-badge.state-YELLOW { background-color: var(--color-yellow); color: black; }
+        .event-badge.state-ORANGE { background-color: var(--color-orange); color: black; }
+        .event-badge.state-RED { background-color: var(--color-red); color: white; }
+        .event-badge.action { background-color: var(--color-orange); color: black; }
+
+        .event-text {
+            color: var(--text-primary);
+        }
+
+        .event-time {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes pulse-border-orange {
+            0% { box-shadow: 0 0 10px rgba(249, 115, 22, 0.2); }
+            50% { box-shadow: 0 0 25px rgba(249, 115, 22, 0.4); }
+            100% { box-shadow: 0 0 10px rgba(249, 115, 22, 0.2); }
+        }
+
+        @keyframes pulse-border-red {
+            0% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
+            50% { box-shadow: 0 0 35px rgba(239, 68, 68, 0.6); }
+            100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <!-- Header -->
+        <header>
+            <div class="logo-section">
+                <div class="logo-icon">I</div>
+                <div class="logo-title">IGNIS</div>
+                <div class="logo-sub">Range Forest Office Feed (Simlipal - Zone 4B)</div>
+            </div>
+            <div class="system-status">
+                <div class="status-dot"></div>
+                <span id="connection-status">Broker Connected</span>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Split Grid -->
+        <div class="dashboard-grid">
+            
+            <!-- Zone Decision metrics -->
+            <div class="card zone-card">
+                <div class="card-header">
+                    <span class="card-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 0 0-10 10c0 5.523 4.477 10 10 10s10-4.477 10-10a10 10 0 0 0-10-10z"/><path d="M12 6v6l4 2"/></svg>
+                        Zone Status Aggregator
+                    </span>
+                    <span id="active-nodes-count" style="font-size: 13px; color: var(--text-secondary);">3 Active Nodes</span>
+                </div>
+                
+                <div class="zone-display">
+                    <!-- Status Ring -->
+                    <div id="zone-status-ring" class="zone-badge-container state-GREEN">
+                        <span style="font-size: 10px; text-transform: uppercase; color: var(--text-secondary);">Current Risk</span>
+                        <div id="zone-state-label" class="zone-state-val">GREEN</div>
+                    </div>
+                    
+                    <!-- Scoring Data -->
+                    <div class="zone-whi-container">
+                        <span style="font-size: 12px; color: var(--text-secondary);">Wildfire Hazard Index (WHI)</span>
+                        <div id="zone-whi-label" class="whi-score">0.000</div>
+                        
+                        <div class="whi-bar-bg">
+                            <div id="zone-whi-bar" class="whi-bar-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Clamping Warning Banner -->
+                <div id="clamping-warning" class="clamping-warning">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <strong>False-Positive Guard Active:</strong> WHI suggests high risk, but confirmations &lt; 3. Clamped to YELLOW.
+                </div>
+                
+                <!-- Confirming list -->
+                <div>
+                    <span style="font-size: 12px; color: var(--text-secondary);">Threshold Confirmation Parameters (Need 3 for Orange/Red)</span>
+                    <div class="confirming-badges">
+                        <div id="badge-temp" class="confirm-badge">Temp (>=40°C)</div>
+                        <div id="badge-humidity" class="confirm-badge">Humid (&lt;=25%)</div>
+                        <div id="badge-wind" class="confirm-badge">Wind (&gt;=25 km/h)</div>
+                        <div id="badge-soil" class="confirm-badge">Soil Moisture (&lt;=10%)</div>
+                        <div id="badge-gas" class="confirm-badge">Gas (&gt;=30 ppm)</div>
+                        <div id="badge-thermal" class="confirm-badge">Thermal Anomaly (&gt;=3°C)</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Scenario Injector controls -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        Simulation Control Panel
+                    </span>
+                    <div id="scenario-active-indicator" class="scenario-status-box" style="display: none;">
+                        <span id="scenario-status-text">Scenario Running</span>
+                        <div class="progress-bar-bg"><div id="scenario-progress-bar" class="progress-bar-fill"></div></div>
+                    </div>
+                </div>
+                
+                <div class="scenario-controls">
+                    <button class="btn" onclick="triggerScenario('S1')">
+                        <span class="btn-title">S1 - Normal Day</span>
+                        <span class="btn-desc">Drifts gently within normal limits. Stays GREEN.</span>
+                    </button>
+                    <button class="btn" onclick="triggerScenario('S2')">
+                        <span class="btn-title">S2 - Slow-Building Risk</span>
+                        <span class="btn-desc">Drying trend over hours. Transitions to YELLOW.</span>
+                    </button>
+                    <button class="btn" onclick="triggerScenario('S3')">
+                        <span class="btn-title">S3 - Sudden Ignition</span>
+                        <span class="btn-desc">Rapid spike on E12. Escalates to ORANGE/RED.</span>
+                    </button>
+                    <button class="btn" onclick="triggerScenario('S4')">
+                        <span class="btn-title">S4 - Single Sensor Fault</span>
+                        <span class="btn-desc">Gas spikes on E12. Clamped to YELLOW.</span>
+                    </button>
+                </div>
+                
+                <button class="btn btn-stop" style="text-align: center; display: block;" onclick="stopScenario()">
+                    <span class="btn-title" style="font-weight: 700; text-align: center;">RESET SYSTEM TO BASELINE</span>
+                </button>
+            </div>
+            
+        </div>
+
+        <!-- Edge Nodes Status Grid -->
+        <div>
+            <div class="edge-section-title">Edge Node Sensor Arrays</div>
+            <div id="edge-nodes-container" class="edge-grid" style="margin-top: 12px;">
+                <!-- Dynamically generated edge cards go here -->
+                <div class="edge-card" id="card-E11">
+                    <div class="edge-card-header">
+                        <span class="edge-name">Edge Node E11</span>
+                        <span class="edge-meta">Waiting for data...</span>
+                    </div>
+                    <div class="edge-parameters">
+                        <div class="param-box"><span class="param-label">Temp</span><span class="param-val">--</span></div>
+                        <div class="param-box"><span class="param-label">Humid</span><span class="param-val">--</span></div>
+                        <div class="param-box"><span class="param-label">Wind</span><span class="param-val">--</span></div>
+                        <div class="param-box"><span class="param-label">Soil M.</span><span class="param-val">--</span></div>
+                        <div class="param-box"><span class="param-label">Gas</span><span class="param-val">--</span></div>
+                        <div class="param-box"><span class="param-label">Thermal</span><span class="param-val">--</span></div>
+                    </div>
+                </div>
+                <div class="edge-card" id="card-E12">
+                    <div class="edge-card-header">
+                        <span class="edge-name">Edge Node E12</span>
+                        <span class="edge-meta">Waiting for data...</span>
+                    </div>
+                    <div class="edge-parameters">
+                        <div class="param-box"><span class="param-label">Temp</span><span class="param-val">--</span></div>
+                        <div class="param-box"><span class="param-label">Humid</span><span class="param-val">--</span></div>
+                        <div class="param-box"><span class="param-label">Wind</span><span class="param-val">--</span></div>
+                        <div class="param-box"><span class="param-label">Soil M.</span><span class="param-val">--</span></div>
+                        <div class="param-box"><span class="param-label">Gas</span><span class="param-val">--</span></div>
+                        <div class="param-box"><span class="param-label">Thermal</span><span class="param-val">--</span></div>
+                    </div>
+                </div>
+                <div class="edge-card" id="card-E13">
+                    <div class="edge-card-header">
+                        <span class="edge-name">Edge Node E13</span>
+                        <span class="edge-meta">Waiting for data...</span>
+                    </div>
+                    <div class="edge-parameters">
+                        <div class="param-box"><span class="param-label">Temp</span><span class="param-val">--</span></div>
+                        <div class="param-box"><span class="param-label">Humid</span><span class="param-val">--</span></div>
+                        <div class="param-box"><span class="param-label">Wind</span><span class="param-val">--</span></div>
+                        <div class="param-box"><span class="param-label">Soil M.</span><span class="param-val">--</span></div>
+                        <div class="param-box"><span class="param-label">Gas</span><span class="param-val">--</span></div>
+                        <div class="param-box"><span class="param-label">Thermal</span><span class="param-val">--</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Log/Console Feed -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M3 20v-8a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v8"/><path d="M14 20v-4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v8"/></svg>
+                    Control Center Operations Feed
+                </span>
+                <span style="font-size: 12px; color: var(--text-muted);">Real-time events &amp; reports</span>
+            </div>
+            
+            <div id="event-log" class="event-log-container">
+                <!-- Log entries added dynamically here -->
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Scripting for live interaction -->
+    <script>
+        // Store connection states and thresholds
+        const CONFIRMATION_THRESHOLDS = {
+            temperature_c: { type: 'above', threshold: 40.0 },
+            humidity_pct: { type: 'below', threshold: 25.0 },
+            wind_speed_kmh: { type: 'above', threshold: 25.0 },
+            soil_moisture_pct: { type: 'below', threshold: 10.0 },
+            gas_ppm: { type: 'above', threshold: 30.0 },
+            thermal_anomaly_c: { type: 'above', threshold: 3.0 }
+        };
+
+        let lastSnapshotTimestamp = 0;
+
+        // Initialize snapshot
+        async function fetchSnapshot() {
+            try {
+                const response = await fetch('/api/snapshot');
+                const data = await response.json();
+                
+                // Populate readings
+                if (data.edge_readings) {
+                    data.edge_readings.forEach(reading => updateEdgeCard(reading));
+                }
+                
+                // Populate zone state
+                if (data.zone_states && data.zone_states.length > 0) {
+                    updateZoneAggregator(data.zone_states[0]);
+                }
+                
+                // Populate event log
+                if (data.event_log) {
+                    const logContainer = document.getElementById('event-log');
+                    logContainer.innerHTML = '';
+                    data.event_log.forEach(event => appendEventLog(event));
+                }
+            } catch (err) {
+                console.error("Error fetching snapshot:", err);
+            }
+        }
+
+        // Trigger scenario S1-S4
+        async function triggerScenario(id) {
+            try {
+                const response = await fetch('/api/scenario/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ scenario_id: id })
+                });
+                const result = await response.json();
+                console.log("Scenario start response:", result);
+                pollScenarioStatus();
+            } catch (err) {
+                console.error("Error starting scenario:", err);
+            }
+        }
+
+        // Stop current running scenario
+        async function stopScenario() {
+            try {
+                const response = await fetch('/api/scenario/stop', { method: 'POST' });
+                const result = await response.json();
+                console.log("Scenario stop response:", result);
+                pollScenarioStatus();
+            } catch (err) {
+                console.error("Error stopping scenario:", err);
+            }
+        }
+
+        // Poll scenario status to update progress bars
+        async function pollScenarioStatus() {
+            try {
+                const response = await fetch('/api/scenario/status');
+                const status = await response.json();
+                
+                const statusBox = document.getElementById('scenario-active-indicator');
+                const statusText = document.getElementById('scenario-status-text');
+                const progressBar = document.getElementById('scenario-progress-bar');
+                
+                if (status.is_active) {
+                    statusBox.style.display = 'flex';
+                    statusText.innerText = `${status.running_scenario} Execution (Step ${status.current_step}/${status.total_steps})`;
+                    const percentage = (status.current_step / status.total_steps) * 100;
+                    progressBar.style.width = `${percentage}%`;
+                } else {
+                    statusBox.style.display = 'none';
+                    progressBar.style.width = '0%';
+                }
+            } catch (err) {
+                console.error("Error checking scenario status:", err);
+            }
+        }
+
+        // Periodically check scenario status
+        setInterval(pollScenarioStatus, 2000);
+
+        // Update Node visual cards
+        function updateEdgeCard(reading) {
+            const nodeId = reading.node_id;
+            const card = document.getElementById(`card-${nodeId}`);
+            if (!card) return;
+            
+            // Remove disconnected styling if active
+            card.classList.remove('edge-disconnected-overlay');
+            
+            // Update timestamp
+            const meta = card.querySelector('.edge-meta');
+            meta.innerText = `Seq: ${reading.sequence} | Latency check: OK`;
+            
+            // Get parameter elements and fill
+            const params = {
+                temperature_c: { label: 'Temp', suffix: '°C' },
+                humidity_pct: { label: 'Humid', suffix: '%' },
+                wind_speed_kmh: { label: 'Wind', suffix: ' km/h' },
+                soil_moisture_pct: { label: 'Soil M.', suffix: '%' },
+                gas_ppm: { label: 'Gas', suffix: ' ppm' },
+                thermal_anomaly_c: { label: 'Thermal', suffix: '°C' }
+            };
+            
+            const boxes = card.querySelectorAll('.param-box');
+            let idx = 0;
+            
+            for (const [key, metaData] of Object.entries(params)) {
+                const val = reading[key];
+                const box = boxes[idx];
+                if (box) {
+                    const valSpan = box.querySelector('.param-val');
+                    valSpan.innerText = `${val.toFixed(1)}${metaData.suffix}`;
+                    
+                    // Check threshold crossing
+                    const thresholdRule = CONFIRMATION_THRESHOLDS[key];
+                    let isAlerted = false;
+                    if (thresholdRule.type === 'above') {
+                        isAlerted = val >= thresholdRule.threshold;
+                    } else {
+                        isAlerted = val <= thresholdRule.threshold;
+                    }
+                    
+                    if (isAlerted) {
+                        box.classList.add('alerted');
+                    } else {
+                        box.classList.remove('alerted');
+                    }
+                }
+                idx++;
+            }
+        }
+
+        // Update Zone aggregation state
+        function updateZoneAggregator(zoneState) {
+            // Update labels
+            document.getElementById('zone-whi-label').innerText = zoneState.whi.toFixed(3);
+            
+            // Update progress bar width
+            document.getElementById('zone-whi-bar').style.width = `${zoneState.whi * 100}%`;
+            
+            // Update State ring colors
+            const ring = document.getElementById('zone-status-ring');
+            ring.className = 'zone-badge-container'; // clear states
+            ring.classList.add(`state-${zoneState.state}`);
+            
+            document.getElementById('zone-state-label').innerText = zoneState.state;
+            
+            // Active nodes count
+            document.getElementById('active-nodes-count').innerText = `${zoneState.active_nodes.length} Reporting Nodes (${zoneState.active_nodes.join(', ')})`;
+            
+            // Handle Clamping banner
+            const clampBanner = document.getElementById('clamping-warning');
+            if (zoneState.is_state_clamped) {
+                clampBanner.style.display = 'flex';
+            } else {
+                clampBanner.style.display = 'none';
+            }
+            
+            // Handle Confirmations badges glowing
+            const confirmingSensors = zoneState.confirming_sensors || [];
+            const badgeKeys = {
+                temperature_c: 'badge-temp',
+                humidity_pct: 'badge-humidity',
+                wind_speed_kmh: 'badge-wind',
+                soil_moisture_pct: 'badge-soil',
+                gas_ppm: 'badge-gas',
+                thermal_anomaly_c: 'badge-thermal'
+            };
+            
+            for (const [key, badgeId] of Object.entries(badgeKeys)) {
+                const element = document.getElementById(badgeId);
+                if (element) {
+                    if (confirmingSensors.includes(key)) {
+                        element.classList.add('active');
+                    } else {
+                        element.classList.remove('active');
+                    }
+                }
+            }
+        }
+
+        // Add item to Operations feed
+        function appendEventLog(event) {
+            const container = document.getElementById('event-log');
+            const item = document.createElement('div');
+            
+            const localTime = event.local_time || new Date().toLocaleTimeString();
+            const topic = event.topic || '';
+            
+            if (topic.includes('alert')) {
+                item.className = 'event-item type-alert';
+                item.innerHTML = `
+                    <div class="event-left">
+                        <span class="event-badge state-${event.severity}">${event.severity} ALERT</span>
+                        <span class="event-text">State transition detected on node E12. Zone escalates.</span>
+                    </div>
+                    <span class="event-time">${localTime}</span>
+                `;
+            } else if (topic.includes('action_log')) {
+                item.className = 'event-item type-action_log';
+                const actionsText = event.actions.map(act => act.toUpperCase()).join(' &amp; ');
+                item.innerHTML = `
+                    <div class="event-left">
+                        <span class="event-badge action">ACTION</span>
+                        <span class="event-text"><strong>Commands Broadcasted:</strong> [${actionsText}]</span>
+                    </div>
+                    <span class="event-time">${localTime}</span>
+                `;
+            } else {
+                return; // skip basic updates
+            }
+            
+            container.insertBefore(item, container.firstChild);
+        }
+
+        // Setup real-time updates using Server-Sent Events (SSE)
+        function initSSE() {
+            const statusIndicator = document.getElementById('connection-status');
+            const eventSource = new EventSource('/api/stream');
+            
+            eventSource.onopen = () => {
+                statusIndicator.innerText = "Broker Linked (Real-time)";
+                statusIndicator.previousElementSibling.style.backgroundColor = "var(--color-green)";
+                statusIndicator.previousElementSibling.style.boxShadow = "0 0 10px var(--color-green)";
+            };
+            
+            eventSource.onerror = (err) => {
+                statusIndicator.innerText = "Reconnecting...";
+                statusIndicator.previousElementSibling.style.backgroundColor = "var(--color-yellow)";
+                statusIndicator.previousElementSibling.style.boxShadow = "0 0 10px var(--color-yellow)";
+            };
+            
+            eventSource.onmessage = (event) => {
+                const payload = JSON.parse(event.data);
+                const topic = payload.topic;
+                const data = payload.data;
+                
+                if (topic.includes('reading')) {
+                    updateEdgeCard(data);
+                } else if (topic.includes('state')) {
+                    updateZoneAggregator(data);
+                } else if (topic.includes('alert') || topic.includes('action_log')) {
+                    // Inject timestamp and topic
+                    data.topic = topic;
+                    data.local_time = new Date().toLocaleTimeString();
+                    appendEventLog(data);
+                }
+            };
+        }
+
+        // Initial setup
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchSnapshot();
+            initSSE();
+            pollScenarioStatus();
+            
+            // Set up a helper to check if node container becomes inactive 
+            // (if we don't hear from a node for > 10 seconds, we show it as disconnected)
+            setInterval(() => {
+                const activeNodesCount = document.getElementById('active-nodes-count');
+                // Basic visualization checks can be added here
+            }, 5000);
+        });
+    </script>
+</body>
+</html>
