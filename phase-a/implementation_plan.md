@@ -1,3 +1,88 @@
+# Implementation Plan - IGNIS Simulation Phase A
+
+This plan outlines the design and implementation of **Phase A (Core Pipeline)** for the IGNIS (Intelligent Geo-distributed Network for Wildfire Intervention and Surveillance) software simulation, based on the `Simulation_Ideation_v1` and `hardware_ideation_v1` documents.
+
+Phase A establishes a single edge node -> single fog node local pipeline using direct function calls, validating the data model, risk-scoring logic, and the multi-sensor confirmation rules without external dependencies like Docker or MQTT.
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> The risk-scoring and state classification thresholds are configured dynamically through a JSON file, allowing customization per forest zone without modifying code.
+
+> [!IMPORTANT]
+> **Multi-Sensor Confirmation Rule (Section 8.4)**: To prevent false positives, we enforce that even if the aggregate risk score exceeds the `ORANGE` or `RED` threshold, the system will not transition to `ORANGE` or `RED` unless at least **three** independent sensor parameters have crossed their respective confirmation thresholds. If they do not, the state will be clamped to `YELLOW` (or remain `GREEN`).
+
+---
+
+## Proposed Changes
+
+We will organize the code under the project root (`d:\projects\IGNIS`) in a structured Python package.
+
+### Configuration
+
+#### [NEW] [zone_config.json](file:///d:/projects/IGNIS/config/zone_config.json)
+Contains weights, normalization boundaries, individual confirmation thresholds for each sensor parameter, and state transition thresholds for a specific forest division (e.g., zone "4B").
+
+### Source Code
+
+#### [NEW] [edge_node.py](file:///d:/projects/IGNIS/src/edge_node.py)
+Implements the `EdgeNode` class representing a sensor cluster.
+- Generates synthetic sensor readings for: temperature, humidity, wind speed, wind direction, soil moisture, gas/smoke level, thermal anomaly, light intensity, rainfall, and GPS coordinates.
+- Supports three data generation modes:
+  - **Baseline**: Natural drift with random walks within seasonal normal ranges.
+  - **Scenario-driven**: Emits exact predetermined values from a test script to simulate specific sequences.
+  - **Fault**: Simulates faulty sensor behavior (e.g., stuck values, extreme out-of-range readings).
+
+#### [NEW] [fog_node.py](file:///d:/projects/IGNIS/src/fog_node.py)
+Implements the `FogNode` class representing the "local brain".
+- Ingests readings from edge nodes.
+- Normalizes each sensor reading to a value in $[0.0, 1.0]$ using configuration boundaries:
+  - Higher temperature, lower humidity, higher wind speed, lower soil moisture, higher gas levels, and higher thermal anomaly contribute to higher risk.
+  - Time of day is normalized using a peak at 14:00 (2 PM) as the highest risk hour.
+  - Seasonal baseline is supplied directly from config.
+- Computes aggregate `risk_score` as a weighted sum of normalized values.
+- Performs state classification (`GREEN`, `YELLOW`, `ORANGE`, `RED`).
+- Enforces the **Multi-Sensor Confirmation Rule**:
+  - Evaluates individual confirmation conditions:
+    1. Temperature $\ge$ threshold
+    2. Humidity $\le$ threshold
+    3. Wind Speed $\ge$ threshold
+    4. Soil Moisture $\le$ threshold
+    5. Gas Level $\ge$ threshold
+    6. Thermal Anomaly $\ge$ threshold
+  - If the computed state is `ORANGE` or `RED`, but the number of crossed confirmation thresholds is $< 3$, the state is clamped to `YELLOW`.
+- Emits structured decision records and logs simulated autonomous actions (e.g. `activate_mist_perimeter`, `notify_control_center`).
+
+#### [NEW] [pipeline.py](file:///d:/projects/IGNIS/src/pipeline.py)
+A helper file that ties the `EdgeNode` and `FogNode` together and prints clean, formatted console summaries of the simulation execution.
+
+### Demonstration and Runner
+
+#### [NEW] [run_phase_a.py](file:///d:/projects/IGNIS/run_phase_a.py)
+The entry point script that plays back four scenarios representing the core test cases:
+1. **Scenario S1: Normal Day** (Baseline drift, stays `GREEN`).
+2. **Scenario S2: Slow-Building Risk** (Gradual drift, transitions to `YELLOW`).
+3. **Scenario S3: Sudden Ignition** (Rapid spike in multiple sensors, escalates to `RED` as confirmation rule is met).
+4. **Scenario S4: Single Sensor Fault** (Extreme spike in gas sensor only; risk score increases but is clamped to `YELLOW` because confirmation count is 1).
+
+---
+
+## Verification Plan
+
+We will verify Phase A by running the simulation pipeline program and reviewing the console logs.
+
+### Manual Verification
+- Run `run_phase_a.py` and inspect the formatted console output:
+  - Verify that Scenario S1 stays `GREEN`.
+  - Verify that Scenario S2 transitions to `YELLOW` as parameters drift.
+  - Verify that Scenario S3 successfully reaches `RED` when temperature, gas, thermal anomaly, and humidity spike.
+  - Verify that Scenario S4 remains `YELLOW` (or `GREEN`) despite a high gas reading, showing the confirmation rule clamped the alert.
+- Run automated unit tests to verify the correctness of the risk calculation and the confirmation clamping logic.
+
+####################################################################\
+
 # Implementation Plan - IGNIS Simulation Phase A (Updated)
 
 This plan outlines the design and implementation of **Phase A (Core Pipeline)** for the IGNIS software simulation, incorporating feedback to refine architecture modularity, decoupling, and terminology.
