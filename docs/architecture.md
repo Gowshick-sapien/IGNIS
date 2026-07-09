@@ -1,201 +1,343 @@
-# Architecture Overview
+# Autonomous Wildfire Early Warning System — Simulation Architecture
+
+**Edge-Fog-Cloud (EFC) Software Simulation — Detailed Architecture Document (v1)**
+**Parent concept:** Autonomous Wildfire Early Warning and Pre-Suppression Using Edge-Fog-Cloud Architecture in Indian Forest Ecosystems
+
+---
+
+## 1. Purpose
+
+This document translates the Simulation Ideation (v1) into a concrete, buildable software architecture. It is a **decision-architecture validation testbed** — every physical component (sensors, LoRa radios, solar fog servers, actuators) is replaced with a containerized software surrogate that reproduces the same data flow, decision logic, and failure modes. Nothing here drives real hardware; the goal is to produce measurable evidence for the risk-scoring, state-machine, lateral-coordination, and offline-resilience claims of the parent design before any capital is spent.
+
+---
+
+## 2. System Context
 
 ```mermaid
-graph TD
-    %% Style definitions
-    classDef cloudStyle fill:#f5f5f7,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5;
-    classDef fogStyle fill:#f9f9fb,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5;
-    classDef edgeStyle fill:#ffffff,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5;
-    classDef centerStyle fill:#ffffff,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5;
+flowchart TB
+    subgraph Physical["Reference: Physical System (Parent Paper — NOT built here)"]
+        direction LR
+        PS[Weatherproof Sensors + LoRa]
+        PF[Jetson Orin NX Fog Server]
+        PC[MeghRaj Cloud]
+        PA[Actuators: mist / drone / acoustic]
+    end
 
-    %% Nodes
-    Cloud["**CLOUD LAYER**<br><br>• National/State Command Center | FSI / NRSC Integration<br>• Historical Analysis | Long-term Pattern Recognition<br>• Policy-level Decision Making | Cross-region Coordination"]:::cloudStyle
-    
-    Fog["**FOG LAYER (LOCAL BRAIN)**<br><br>• Distributed Fog Nodes per Forest Zone/Division<br>• Real-time Scenario Modelling | Risk Scoring<br>• Autonomous Pre-Suppression Commands | Alert Dispatch<br>• Lateral Communication Between Fog Nodes"]:::fogStyle
-    
-    Edge["**EDGE LAYER**<br><br>• Sensor Clusters<br>• Data Acquisition<br>• Local Pre-filter"]:::edgeStyle
-    
-    LCC["**LOCAL CONTROL CENTER**<br><br>• Forest Range Office<br>• Ground Teams<br>• Drone Dispatch"]:::centerStyle
+    subgraph Sim["This Project: Pure-Software Simulation"]
+        direction LR
+        ES[edge-sim containers]
+        FN[fog-node containers]
+        CB[cloud-broker + timeseries-db + dashboard]
+        AL[Logged action records — no real actuation]
+    end
 
-    %% Connections
-    Cloud <--> |"Bidirectional (MQTT / HTTPS)"| Fog
-    Fog <--> |"Bidirectional"| Edge
-    Fog --> |"Alert"| LCC
+    Physical -. "1:1 conceptual mapping, see Section 11" .-> Sim
+    Sim -. "validated interface contracts feed" .-> Physical
 ```
 
-The proposed system operates on three tiers described below.
+---
 
-## Edge Layer — Field Sensor Clusters
+## 3. Three-Tier Container Architecture
 
-Each Edge Node is a weatherproof sensor cluster deployed at strategic points across the forest (based on fire risk mapping). They continuously sample environmental parameters and transmit to the nearest fog node.
+```mermaid
+flowchart TB
+    subgraph EdgeTier["EDGE TIER — per zone, N nodes"]
+        E1[edge-sim: node E1]
+        E2[edge-sim: node E2]
+        E3[edge-sim: node E_n]
+    end
 
-### Sensor Stack (per Edge Node)
+    subgraph EdgeFogLink["EDGE↔FOG LINK — LoRa surrogate"]
+        MB[mqtt-broker-local<br/>Eclipse Mosquitto, 1 per zone]
+        IMP[[optional impairment sidecar<br/>tc netem: latency / jitter / loss]]
+    end
 
-| Sensor | Parameter Measured | Relevance to Fire Risk |
-| :--- | :--- | :--- |
-| **DHT22 / SHT40** | Temperature + Relative Humidity | Dry, hot conditions = high risk |
-| **Anemometer + Wind Vane** | Wind speed + direction | Determines fire spread vector |
-| **Capacitive Soil Moisture Sensor** | Soil moisture content | Dry soil = high fuel load |
-| **MQ-2 / MQ-7 Gas Sensor** | Smoke, CO, LPG | Early combustion indicator |
-| **FLIR Lepton / MLX90640** | Infrared thermal imaging | Surface temperature anomaly |
-| **BH1750 / TSL2591** | Ambient light intensity | Time-of-day context |
-| **Rain Gauge (Tipping Bucket)** | Precipitation | Natural suppression factor |
-| **GPS Module (NEO-8M)** | Geo-location | Spatial mapping of events |
+    subgraph FogTier["FOG TIER — 1 fog-node per zone"]
+        FN1[fog-node: Zone 4A]
+        FN2[fog-node: Zone 4B]
+        FN3[fog-node: Zone 4C]
+    end
 
-### Edge Node Communication
+    subgraph LateralLink["FOG↔FOG LATERAL CHANNEL"]
+        LT[region/lateral/#123;zone_id#125;<br/>shared MQTT topic namespace]
+    end
 
-*   **Protocol:** LoRa (Long Range, Low Power) — 868 MHz band in India
-*   **Range:** 2–15 km line-of-sight in open terrain; 1–5 km in forested areas
-*   **Data rate:** Low (sensor telemetry is small payloads — this is appropriate for LoRa)
-*   **Topology:** Star topology to nearest Fog Node; mesh fallback between edge nodes
+    subgraph CloudLink["FOG↔CLOUD LINK — interruptible on demand"]
+        CBK[cloud-broker<br/>Mosquitto / Kafka]
+    end
 
-### Power Design
+    subgraph CloudTier["CLOUD TIER"]
+        TSDB[(timeseries-db<br/>TimescaleDB / InfluxDB)]
+        DASH[dashboard<br/>Grafana]
+        CTRL[Control Center View<br/>Report A feed]
+    end
 
-*   **Primary:** Solar panel (10W–20W monocrystalline) + LiFePO4 battery bank (sufficient for 5–7 days of overcast operation)
-*   **Backup:** Supercapacitor bank for surge protection
-*   **Rationale:** Eliminates grid dependency entirely; designed for deployment in remote forest zones
+    subgraph Harness["TEST & FAULT HARNESS"]
+        SI[scenario-injector]
+        CC[chaos-controller]
+    end
+
+    E1 & E2 & E3 -->|"publish: zone/{z}/edge/{n}/reading"| MB
+    MB -.-> IMP
+    MB -->|subscribe| FN1
+    MB -->|subscribe| FN2
+    MB -->|subscribe| FN3
+
+    FN1 <-->|"publish/subscribe risk state + wind vector"| LT
+    FN2 <-->|"publish/subscribe risk state + wind vector"| LT
+    FN3 <-->|"publish/subscribe risk state + wind vector"| LT
+
+    FN1 -->|"Report A: zone/{z}/fog/alert"| CTRL
+    FN1 -->|"Report B: cloud/{z}/report"| CBK
+    FN2 -->|"Report A + B"| CBK
+    FN3 -->|"Report A + B"| CBK
+    CBK -->|"command: cloud/{z}/command"| FN1
+    CBK -->|"command: cloud/{z}/command"| FN2
+    CBK -->|"command: cloud/{z}/command"| FN3
+
+    CBK --> TSDB --> DASH
+    DASH --> CTRL
+
+    SI -.->|drives trajectories| E1 & E2 & E3
+    CC -.->|"docker network disconnect / iptables"| CBK
+    CC -.->|sensor fault injection| E1 & E2 & E3
+```
 
 ---
 
-## Fog Layer — The Local Brain
+## 4. Container Inventory
 
-This is the core innovation of the proposed system. Each fog node is an intelligent computing unit deployed at the forest range/beat level — physically close to the field, not at the district control center.
+| Container | Image Basis | Role | Scale |
+|---|---|---|---|
+| `edge-sim` | `python:slim` | Synthetic sensor generator | N per zone (5–10) |
+| `mqtt-broker-local` | `eclipse-mosquitto` | Edge↔fog bus (LoRa surrogate) | 1 per zone |
+| `fog-node` | `python:slim` / `node:slim` | Risk scoring, state machine, lateral coordination | 1 per zone |
+| `cloud-broker` | `eclipse-mosquitto` or `bitnami/kafka` | Fog↔cloud bus | 1 shared |
+| `timeseries-db` | `timescale/timescaledb` or `influxdb` | Historical + live store | 1 shared |
+| `dashboard` | `grafana/grafana` | Visualization | 1 shared |
+| `scenario-injector` | `python:slim` | Drives test scenarios | on demand |
+| `chaos-controller` | `python:slim` + `iproute2` | Network/sensor fault injection | on demand |
 
-### What the Fog Node Is
-
-A fog node is a ruggedized edge server — not a cloud server, not a microcontroller. It sits in the middle of the compute hierarchy.
-
-**Candidate hardware (mid-level spec):**
-*   NVIDIA Jetson Orin NX (for AI inference capability)
-*   **Or:** Industrial-grade ARM server (e.g., Advantech EPC-R3720) for non-AI-intensive deployments
-*   Redundant storage (eMMC + SD backup)
-*   Cellular modem (4G LTE + fallback 2G) for cloud uplink
-*   Local LoRa gateway for edge communication
-*   Housed in IP67-rated enclosure
-
-### What the Fog Node Does
-
-#### Step 1 — Continuous Data Ingestion
-Receives time-series sensor data from all edge nodes in its zone via LoRa gateway. Maintains a rolling local data buffer.
-
-#### Step 2 — Scenario Construction
-The fog node doesn't just threshold-check individual sensors. It builds a composite risk scenario by correlating multiple parameters:
-
-$$	ext{Risk Scenario} = f(	ext{Temperature}, 	ext{Humidity}, 	ext{Wind Speed}, 	ext{Wind Direction}, 	ext{Soil Moisture}, 	ext{Gas Levels}, 	ext{Thermal Anomaly}, 	ext{Time-of-day}, 	ext{Season}, 	ext{Historical fire data for zone})$$
-
-This is implemented as a multi-parameter weighted risk scoring model, initially rule-based (transparent, auditable) and extensible to lightweight ML models (e.g., Random Forest, TinyML) in later phases.
-
-#### Step 3 — Risk Classification
-The scenario is classified into one of four states:
-
-| State | Description | Action Triggered |
-| :--- | :--- | :--- |
-| **GREEN** | Normal | Log and report to cloud periodically |
-| **YELLOW** | Elevated Risk | Increase sampling rate; alert control center |
-| **ORANGE** | Imminent Risk | Pre-suppression activation; human alert + cloud notification |
-| **RED** | Active Fire Detected | Full autonomous response + emergency escalation |
-
-#### Step 4 — Autonomous Pre-Suppression (ORANGE/RED)
-Within the fog node's safe action envelope (defined actions that are pre-authorized and bounded), it can directly command:
-*   Activation of fixed mist/sprinkler systems at perimeter fire-break points
-*   Deployment command to pre-positioned autonomous drones (if available)
-*   Activation of acoustic deterrent systems to drive wildlife away from risk zone
-*   Triggering of physical firebreak actuators (motorized clearing barriers, if installed)
-
-**All autonomous actions are:**
-*   Logged with timestamp and sensor justification
-*   Bounded to pre-defined safe envelopes (cannot exceed authorized scope)
-*   Immediately reported to human control center with reason
-
-#### Step 5 — Dual Parallel Reporting
-Simultaneously with autonomous action:
-*   **Report A → Local Control Center (immediate, short-format alert)**
-    *   *Contains:* Zone ID, Risk Level, Key parameters, Actions taken
-*   **Report B → Cloud Layer (full data packet)**
-    *   *Contains:* Raw sensor time-series + Scenario analysis + Decision log + Actions taken + Request for cloud-level analysis
-
-#### Step 6 — Receiving Cloud Commands
-If the cloud layer sends override or refined commands based on its broader analysis, the fog node adjusts its behavior accordingly. The fog node always defers to cloud commands when connectivity is available — it only operates autonomously when cloud is unreachable or during the response latency window.
-
-### Fog Node Clustering and Lateral Communication
-
-Multiple fog nodes are deployed across forest divisions. They communicate laterally via:
-*   **Primary:** 4G LTE mesh (where available)
-*   **Fallback:** Long-range WiFi (802.11ah — 900 MHz sub-GHz band) or licensed RF links
-
-**Lateral communication enables:**
-*   **Fire spread prediction:** If Node A detects ignition and wind is blowing toward Node B's zone, Node A proactively alerts Node B to enter pre-suppression state
-*   **Shared situational awareness:** All nodes maintain a synchronized regional risk map
-*   **Redundancy:** If one fog node fails, adjacent nodes expand their coverage zone
-
-### Fog Node Power Design
-
-*   **Primary:** Solar + battery (larger capacity than edge nodes — 100Ah+ LiFePO4 bank)
-*   **Backup:** Small diesel/petrol generator for extended outage
-*   **Rationale:** Fog nodes are semi-permanent installations at range offices or designated forest posts; limited grid access is acceptable; full off-grid preferred
+All orchestrated via a single `docker-compose.yml`; per-zone services parameterized through Compose's `deploy`/environment-variable pattern so adding a zone is a config change, not a code change.
 
 ---
 
-## Cloud Layer
+## 5. Fog-Node Internal Pipeline
 
-The cloud layer serves as the strategic intelligence and long-term management brain. It does not replace operational fog decisions but provides context that fog nodes cannot generate alone.
+The fog node is the core logic under test. Its six-step pipeline:
 
-**Functions:**
-*   Ingests fog node reports and raw sensor data
-*   Runs historical comparison models (current conditions vs. same season in past years)
-*   Maintains national-level fire risk maps updated in near-real-time
-*   Interfaces with FSI/NRSC satellite systems — correlating satellite hotspot data with fog-level sensor data
-*   Sends advisory commands to fog nodes (e.g., recalibrate risk thresholds for incoming heat wave)
-*   Generates post-event analysis reports for forest department records and policy use
-*   Hosts the administrative dashboard for district/state/national forest officers
+```mermaid
+flowchart LR
+    A["Step 1: Ingestion<br/>subscribe to zone edge topics,<br/>rolling 30-min buffer per sensor"] --> B["Step 2: Composite Risk Scoring<br/>weighted rule-based function<br/>w1..w8, config per zone"]
+    B --> C["Step 3: State Classification<br/>GREEN/YELLOW/ORANGE/RED<br/>+ 3-sensor confirmation rule"]
+    C --> D{"State ≥ ORANGE?"}
+    D -->|yes| E["Step 4: Simulated Autonomous Action<br/>immutable JSON action log<br/>(no real actuator)"]
+    D -->|no| F["Step 5: Dual Reporting"]
+    E --> F
+    F --> G["Report A → local control-center feed"]
+    F --> H["Report B → cloud (raw + score + decisions)"]
+    F --> I["Step 6: Cloud Command Handling<br/>adjust local thresholds<br/>OR persist last-known config if offline"]
+```
 
-**Cloud infrastructure:** Can be hosted on NIC Cloud (Government of India's MeghRaj) or state data centers, aligning with data sovereignty requirements.
+**Composite risk score:**
+```
+risk_score = w1·f(temperature) + w2·f(humidity) + w3·f(wind_speed)
+           + w4·f(soil_moisture) + w5·f(gas_level) + w6·f(thermal_anomaly)
+           + w7·f(time_of_day) + w8·f(seasonal_baseline)
+```
+Weights and normalization functions are configurable per zone (YAML/JSON), enabling dry-deciduous vs. moist-Himalayan profiles without code changes. Phase 1 is fully rule-based/auditable; a stub interface allows a later ML classifier swap without touching the surrounding architecture.
 
 ---
 
-# System Workflow — End to End
+## 6. State Machine (per Fog Node)
 
-## Normal Operation (GREEN State)
+```mermaid
+stateDiagram-v2
+    [*] --> GREEN
+    GREEN --> YELLOW: risk_score crosses threshold\nOR lateral pre-emptive signal
+    YELLOW --> ORANGE: risk_score crosses threshold\nAND ≥3 independent sensors confirm
+    ORANGE --> RED: risk_score crosses threshold\nAND ≥3 independent sensors confirm
+    RED --> ORANGE: sustained readings drop
+    ORANGE --> YELLOW: sustained readings drop
+    YELLOW --> GREEN: sustained readings drop
+    ORANGE --> ORANGE: log action_log record\n(activate_mist_perimeter, notify_control_center)
+    RED --> RED: log action_log record
 
-1.  **Edge sensors** → LoRa → **Fog Node**
-2.  **Fog Node:** Rolling data collection, scenario scoring, GREEN state confirmed
-3.  **Fog Node** → Cloud: Periodic telemetry batch (every 15–30 min)
-4.  **Cloud:** Updates national risk map, no action required
+    note right of ORANGE
+        Multi-sensor confirmation rule (Sec 8.4)
+        is enforced BEFORE entering ORANGE/RED —
+        primary false-positive control, tested
+        as first-class logic (not just a score gate)
+    end note
+```
 
-## Elevated Risk (YELLOW State)
+---
 
-1.  **Fog Node** detects rising temperature + dropping humidity + increasing wind speed
-2.  Risk Score crosses YELLOW threshold
-3.  **Fog Node:** Increases sampling rate (edge nodes polled every 30 sec instead of 5 min)
-4.  **Fog Node** → Control Center: *"Zone 4B: Elevated risk. Monitor."*
-5.  **Fog Node** → Cloud: Real-time streaming begins
-6.  **Fog Node** → Adjacent Fog Nodes: *"Zone 4B elevated — downstream zones stand by"*
+## 7. Lateral Fog-to-Fog Coordination (Sequence)
 
-## Imminent Risk / Autonomous Action (ORANGE State)
+The most novel, and highest-priority-to-validate, logic path:
 
-1.  Gas sensor detects CO spike. Thermal camera shows surface temp anomaly.
-2.  Soil moisture critically low. Wind direction: toward fuel-dense zone.
-3.  Risk Score crosses ORANGE threshold.
-4.  **Fog Node (within seconds):**
-    *   **ACTION:** Activates perimeter mist systems at fire-break points
-    *   **ACTION:** Sends deployment command to nearest drone station
-    *   **ALERT → Control Center:** Full scenario brief + actions taken
-    *   **REPORT → Cloud:** Complete data packet + decision log
-5.  **Control Center receives alert:**
-    *   Reviews fog node assessment
-    *   Dispatches ground team (with fog-generated zone map)
-    *   Can override fog actions if needed
-6.  **Cloud receives report:**
-    *   Cross-references satellite data
-    *   Runs predictive spread model
-    *   Sends refined tactical advisory back to fog node
+```mermaid
+sequenceDiagram
+    participant SensorsB as Zone 4B Sensors
+    participant FogB as fog-node (Zone 4B)
+    participant Lateral as region/lateral/{zone_id}
+    participant FogC as fog-node (Zone 4C, downwind)
+    participant Cloud as cloud-broker
 
-## Active Fire (RED State)
+    SensorsB->>FogB: readings (temp↑, humidity↓, gas↑)
+    FogB->>FogB: risk_score crosses YELLOW+
+    FogB->>Lateral: publish {zone: 4B, state: YELLOW, wind_vector: 220°}
+    Lateral->>FogC: broadcast received
+    FogC->>FogC: check adjacency + bearing:\ndoes 220° point at Zone 4C?
+    alt wind points toward 4C
+        FogC->>FogC: raise own state one step\n(GREEN → YELLOW) pre-emptively
+        FogC->>Cloud: Report B (state change, reason: lateral)
+    else wind does not point toward 4C
+        FogC->>FogC: no change
+    end
+    FogB->>Cloud: Report A + Report B (own state change)
+```
 
-1.  **Fog Node** confirms active fire (thermal + gas + visual)
-2.  **Full escalation:**
-    *   All pre-suppression systems at maximum
-    *   Emergency alert to control center + state fire department
-    *   Fog lateral broadcast: all neighboring nodes escalate to ORANGE
-3.  **Cloud:** Emergency coordination mode activated
-4.  Integration with **NDMA (National Disaster Management Authority)** protocols
+---
+
+## 8. Offline-Resilience Behavior
+
+```mermaid
+sequenceDiagram
+    participant Fog as fog-node
+    participant Cloud as cloud-broker
+    participant Chaos as chaos-controller
+
+    Fog->>Cloud: heartbeat + reports (normal operation)
+    Chaos->>Cloud: docker network disconnect (simulate link loss)
+    Note over Fog: cloud_connected = false
+    Fog->>Fog: continue ingestion, scoring,\nstate transitions, action logging\n(last-known config retained)
+    Fog->>Fog: queue unsent reports locally
+    Chaos->>Cloud: restore link
+    Fog->>Cloud: flush queued Report B packets
+    Cloud-->>Fog: any pending command (e.g. sensitivity adjustment)
+```
+
+---
+
+## 9. Data Model
+
+**Edge reading**
+```json
+{
+  "node_id": "E12", "zone_id": "4B", "timestamp": "...",
+  "temperature_c": 34.2, "humidity_pct": 21.5,
+  "wind_speed_kmh": 14.0, "wind_dir_deg": 220,
+  "soil_moisture_pct": 9.1, "gas_ppm": 12,
+  "thermal_anomaly_c": 2.1, "light_lux": 41000,
+  "rain_mm": 0.0, "gps": [21.94, 86.32]
+}
+```
+
+**Fog decision record**
+```json
+{
+  "zone_id": "4B", "timestamp": "...",
+  "risk_score": 0.78, "state": "ORANGE",
+  "confirming_sensors": ["gas_ppm", "thermal_anomaly_c", "soil_moisture_pct"],
+  "actions_logged": ["activate_mist_perimeter", "notify_control_center"],
+  "cloud_connected": false
+}
+```
+
+---
+
+## 10. Topic / Message Naming Convention
+
+| Topic | Purpose |
+|---|---|
+| `zone/{zone_id}/edge/{node_id}/reading` | edge sensor readings |
+| `zone/{zone_id}/fog/state` | fog risk state heartbeat |
+| `zone/{zone_id}/fog/alert` | control-center alert (Report A) |
+| `zone/{zone_id}/fog/action_log` | simulated autonomous action record |
+| `region/lateral/{zone_id}` | lateral coordination broadcast |
+| `cloud/{zone_id}/report` | full data packet to cloud (Report B) |
+| `cloud/{zone_id}/command` | advisory command from cloud to fog |
+
+---
+
+## 11. Test Scenario Matrix
+
+| ID | Scenario | Exercises | Expected Result |
+|---|---|---|---|
+| S1 | Normal day | Baseline operation | State stays GREEN; periodic telemetry only |
+| S2 | Slow-building risk | Gradual multi-parameter drift | GREEN→YELLOW transition; sampling rate increases |
+| S3 | Sudden ignition | Rapid multi-sensor spike | ORANGE/RED within seconds; action log populated |
+| S4 | Single sensor fault | Fault-mode edge node | No escalation from one faulty sensor (validates 3-sensor rule) |
+| S5 | Cloud outage during event | Chaos-controller cuts fog↔cloud mid-scenario | Fog continues locally; reports flush on reconnect |
+| S6 | Lateral spread prediction | S3 + wind vector toward neighbor | Neighbor pre-emptively raises state before its own sensors trigger |
+| S7 | Concurrent multi-zone escalation | S3 in 2+ zones simultaneously | No dropped messages, no cross-talk, dashboard reflects both |
+
+---
+
+## 12. Validation Metrics
+
+| Metric | Measurement | Validates |
+|---|---|---|
+| Fog decision latency | last confirming reading → state-change timestamp delta | Section 7.1 latency claim (fog-level) |
+| Lateral alert propagation time | source escalation → neighbor pre-emptive change | Section 6.3 predictive capability |
+| False-positive rate under fault injection | unwarranted ORANGE/RED count across S4 trials | Section 8.4 multi-sensor design |
+| Offline continuity | uninterrupted decisioning/logging during S5 | Sections 2.3, 8.2 offline resilience |
+| Concurrent-zone integrity | message loss / cross-talk count during S7 | Message-bus scalability |
+
+---
+
+## 13. Development Phases
+
+```mermaid
+flowchart LR
+    A["Phase A<br/>Core pipeline:<br/>single edge → single fog,<br/>direct calls, no MQTT"] --> B["Phase B<br/>Containerize + MQTT,<br/>multi-node per zone,<br/>control-center feed"]
+    B --> C["Phase C<br/>Cloud layer:<br/>broker + TSDB + dashboard,<br/>dual reporting + commands"]
+    C --> D["Phase D<br/>Multi-zone + lateral:<br/>3+ zones, adjacency/bearing<br/>config, S6 logic"]
+    D --> E["Phase E<br/>Fault/chaos testing:<br/>S4, S5, S7, metric collection"]
+    E --> F["Phase F<br/>Scenario library +<br/>reporting, feeds parent<br/>project report"]
+```
+
+---
+
+## 14. Technology Stack
+
+- **Languages:** Python (edge sims, fog logic, scenario/chaos scripts); optional Node.js for fog service
+- **Messaging:** Eclipse Mosquitto (MQTT); optional Kafka for higher-throughput cloud ingestion
+- **Storage:** TimescaleDB or InfluxDB
+- **Visualization:** Grafana; static page fallback for control-center view
+- **Orchestration:** Docker Compose (no Kubernetes needed at this scale)
+- **Fault injection:** `tc netem`, `iptables`/`docker network disconnect`, scripted via Python
+- **Testing:** Versioned YAML scenarios + a test runner asserting on Section 12 metrics
+
+---
+
+## 15. Explicit Scope Boundary
+
+| Aspect | In scope | Out of scope (hardware phase) |
+|---|---|---|
+| Sensor readings | Synthetic generation, realistic ranges + faults | Real calibration, drift, physical fault behavior |
+| Edge↔fog comms | MQTT + optional artificial latency/loss | Real LoRa RF propagation, antenna design |
+| Fog decision logic | Fully implemented and tested | — (main deliverable) |
+| Autonomous actions | Logged structured records only | Real mist/drone/acoustic actuation |
+| Power system | Not modeled | Solar sizing, battery chemistry |
+| Fog↔fog / fog↔cloud links | MQTT + simulated outages | Real 4G/VSAT/sub-GHz RF behavior |
+| Governance/logging | Immutable action-log format | Legal/regulatory sign-off, DGCA compliance |
+| Hardware durability | N/A | IP67 enclosures, temperature range, tamper detection |
+| Institutional integration | N/A | RFO workflows, FSI/NRSC data-sharing agreements |
+
+---
+
+## 16. Path Back to Hardware
+
+Once metrics in Section 12 are stable against Section 7 targets, the natural next step (outside this project) is the Phase 1 field pilot: 5–10 real edge nodes + 1 real fog node in a single forest division, advisory-only mode, reusing the simulation's message schemas and risk-scoring config as-is — a data-source swap, not a redesign.
+
+---
+
+## 17. Known Limitations
+
+- Cannot validate RF propagation, power sizing, or hardware durability — field testing is still required regardless of simulation quality.
+- Synthetic sensor data won't capture the full statistical texture of real forest conditions; the measured false-positive rate is a **lower bound**, not a real-world prediction.
+- "Autonomous action" outputs are logged intentions only — real actuator control is unverified until hardware integration.
+- Human-factors questions (would an RFO trust and act on this alert format) cannot be tested in simulation.
