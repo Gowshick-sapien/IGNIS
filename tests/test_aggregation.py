@@ -2,18 +2,19 @@ import unittest
 import sys
 import os
 import time
+import json
 from unittest.mock import MagicMock
 
 # Mock paho-mqtt dependencies for host testing
 sys.modules['paho'] = MagicMock()
 sys.modules['paho.mqtt'] = MagicMock()
 sys.modules['paho.mqtt.client'] = MagicMock()
+sys.modules['dotenv'] = MagicMock()
 
 # Adjust path to import from src
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from src.fog_node_runner import FogNodeRunner
-
 
 class TestFogNodeAggregation(unittest.TestCase):
     def setUp(self):
@@ -55,15 +56,21 @@ class TestFogNodeAggregation(unittest.TestCase):
                 self.fog_processor = FogNode(self.zone_id, self.config)
                 self.node_states = {}
                 self.last_zone_state = "GREEN"
-                # Mock client
+                self.override_active = False
+                self.override_state = "NONE"
+                self.override_operator = "SYSTEM"
+                self.override_actions = []
+                self.override_reason = ""
+                
+                # Mock local & cloud clients
                 class MockClient:
                     def __init__(self):
                         self.published = []
-                    def publish(self, topic, payload):
+                    def publish(self, topic, payload, retain=False):
                         self.published.append((topic, json.loads(payload)))
-                self.client = MockClient()
+                self.client_local = MockClient()
+                self.client_cloud = MockClient()
 
-        import json
         self.runner = MockFogNodeRunner(self.config)
 
     def test_all_green_aggregation(self):
@@ -87,9 +94,9 @@ class TestFogNodeAggregation(unittest.TestCase):
         self.runner.evaluate_and_publish_zone_status()
         
         # Verify the published state
-        self.assertEqual(len(self.runner.client.published), 1)
-        topic, payload = self.runner.client.published[0]
-        self.assertEqual(topic, "ignis/v1/zone/4B/fog/state")
+        self.assertEqual(len(self.runner.client_local.published), 1)
+        topic, payload = self.runner.client_local.published[0]
+        self.assertEqual(topic, "ignis/v1/fog/zone/4B/state")
         self.assertEqual(payload["state"], "GREEN")
         self.assertAlmostEqual(payload["whi"], 0.20)
         self.assertFalse(payload["is_state_clamped"])
@@ -117,22 +124,22 @@ class TestFogNodeAggregation(unittest.TestCase):
         self.runner.evaluate_and_publish_zone_status()
         
         # Verify state transition triggered state, alert and action log publications
-        # Wait, since last_zone_state defaults to GREEN, transition to RED triggers alert & action_log
-        self.assertEqual(len(self.runner.client.published), 3)
+        # since last_zone_state defaults to GREEN, transition to RED triggers alert & action_log
+        self.assertEqual(len(self.runner.client_local.published), 3)
         
-        state_topic, state_payload = self.runner.client.published[0]
-        self.assertEqual(state_topic, "ignis/v1/zone/4B/fog/state")
+        state_topic, state_payload = self.runner.client_local.published[0]
+        self.assertEqual(state_topic, "ignis/v1/fog/zone/4B/state")
         self.assertEqual(state_payload["state"], "RED")
         self.assertAlmostEqual(state_payload["whi"], 0.85)
         self.assertCountEqual(state_payload["confirming_sensors"], ["temperature_c", "gas_ppm", "thermal_anomaly_c"])
         
-        alert_topic, alert_payload = self.runner.client.published[1]
-        self.assertEqual(alert_topic, "ignis/v1/zone/4B/fog/alert")
+        alert_topic, alert_payload = self.runner.client_local.published[1]
+        self.assertEqual(alert_topic, "ignis/v1/fog/zone/4B/alert")
         self.assertEqual(alert_payload["severity"], "RED")
         self.assertEqual(alert_payload["source_node"], "E12")
         
-        action_topic, action_payload = self.runner.client.published[2]
-        self.assertEqual(action_topic, "ignis/v1/zone/4B/fog/action_log")
+        action_topic, action_payload = self.runner.client_local.published[2]
+        self.assertEqual(action_topic, "ignis/v1/fog/zone/4B/action_log")
         self.assertCountEqual(action_payload["actions"], ["activate_mist_perimeter", "emergency_alert_control_center"])
 
     def test_clamp_propagation(self):
@@ -146,7 +153,7 @@ class TestFogNodeAggregation(unittest.TestCase):
         self.runner.evaluate_and_publish_zone_status()
         
         # Aggregated zone should be YELLOW and clamped
-        topic, payload = self.runner.client.published[0]
+        topic, payload = self.runner.client_local.published[0]
         self.assertEqual(payload["state"], "YELLOW")
         self.assertTrue(payload["is_state_clamped"])
         self.assertCountEqual(payload["confirming_sensors"], ["gas_ppm"])

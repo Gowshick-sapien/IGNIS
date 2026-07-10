@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IGNIS — Central Operations NOC Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        /* Dark Glassmorphism CSS Design System */
+        :root {
+            --bg-color: #080a10;
+            --card-bg: rgba(18, 22, 35, 0.7);
+            --card-border: rgba(255, 255, 255, 0.05);
+            --accent-color: #3b82f6; /* Blue representing Cloud */
+            
+            --color-green: #10b981;
+            --color-yellow: #f59e0b;
+            --color-orange: #f97316;
+            --color-red: #ef4444;
+            --color-offline: #6b7280;
+            
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --text-muted: #4b5563;
+            
+            --glow-green: rgba(16, 185, 129, 0.15);
+            --glow-yellow: rgba(245, 158, 11, 0.15);
+            --glow-orange: rgba(249, 115, 22, 0.15);
+            --glow-red: rgba(239, 68, 68, 0.15);
+            --glow-blue: rgba(59, 130, 246, 0.25);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.05) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(239, 68, 68, 0.02) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(16, 185, 129, 0.02) 0px, transparent 50%);
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Header Layout */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            padding: 16px 24px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent-color), #8b5cf6);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-family: 'Outfit', sans-serif;
+            color: white;
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+        }
+
+        .logo-title-group h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-title-group p {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* Main Workspace Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 320px 1fr 340px;
+            gap: 20px;
+        }
+
+        @media (max-width: 1280px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Section Layout elements */
+        .panel {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        }
+
+        .panel-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Health Grid Indicators */
+        .health-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .health-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .health-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .health-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        /* Status indicator colors */
+        .status-online { background-color: var(--color-green); box-shadow: 0 0 8px var(--color-green); }
+        .status-offline { background-color: var(--color-offline); }
+        .status-alert { background-color: var(--color-red); box-shadow: 0 0 8px var(--color-red); }
+
+        /* Central Zone Status Display Card */
+        .zone-card {
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 14px;
+            padding: 16px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .zone-card.green { background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(8, 10, 16, 0.5)); border-color: rgba(16, 185, 129, 0.2); box-shadow: inset 0 0 15px rgba(16, 185, 129, 0.05); }
+        .zone-card.yellow { background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(8, 10, 16, 0.5)); border-color: rgba(245, 158, 11, 0.2); box-shadow: inset 0 0 15px rgba(245, 158, 11, 0.05); }
+        .zone-card.orange { background: linear-gradient(135deg, rgba(249, 115, 22, 0.08), rgba(8, 10, 16, 0.5)); border-color: rgba(249, 115, 22, 0.2); box-shadow: inset 0 0 15px rgba(249, 115, 22, 0.05); }
+        .zone-card.red { background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(8, 10, 16, 0.5)); border-color: rgba(239, 68, 68, 0.2); box-shadow: inset 0 0 15px rgba(239, 68, 68, 0.05); }
+
+        .zone-header {
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-secondary);
+        }
+
+        .zone-state-badge {
+            font-family: 'Outfit', sans-serif;
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin: 6px 0;
+            text-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
+        }
+
+        .zone-whi-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .zone-whi-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        /* Operator Console Forms */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        select, input, button {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            color: var(--text-primary);
+            padding: 10px 12px;
+            font-family: inherit;
+            font-size: 13px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        select:focus, input:focus {
+            border-color: var(--accent-color);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        button.btn-primary {
+            background: linear-gradient(135deg, var(--accent-color), #2563eb);
+            border: none;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        button.btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        button.btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        button.btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        /* Middle Charts Area */
+        .charts-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .chart-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 960px) {
+            .chart-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-wrapper {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 16px;
+            height: 320px;
+            position: relative;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .chart-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        /* Performance & Stats Cards */
+        .stats-strip {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .stats-strip {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .stat-title {
+            font-size: 10px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        /* Feeds & Audit Tables */
+        .log-feed {
+            max-height: 250px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-right: 4px;
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+
+        .log-item {
+            background: rgba(255, 255, 255, 0.015);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .log-time {
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        .log-desc {
+            font-weight: 500;
+        }
+
+        .audit-table-container {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            text-align: left;
+        }
+
+        th {
+            color: var(--text-secondary);
+            font-weight: 600;
+            padding: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        td {
+            padding: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+            color: var(--text-primary);
+        }
+
+        .status-badge {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 9px;
+            text-transform: uppercase;
+        }
+        .badge-success { background: rgba(16, 185, 129, 0.1); color: var(--color-green); }
+        .badge-pending { background: rgba(245, 158, 11, 0.1); color: var(--color-yellow); }
+        .badge-failed { background: rgba(239, 68, 68, 0.1); color: var(--color-red); }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            background: rgba(18, 22, 35, 0.95);
+            border: 1px solid var(--accent-color);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            display: none;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Dashboard Header -->
+        <header>
+            <div class="logo-section">
+                <div class="logo-icon">C</div>
+                <div class="logo-title-group">
+                    <h1>IGNIS Central NOC Dashboard</h1>
+                    <p>Hierarchical Cloud Control & Trend Analysis Center</p>
+                </div>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="form-group" style="flex-direction: row; align-items: center; gap: 8px;">
+                    <label for="season-select" style="margin: 0;">Baseline Season:</label>
+                    <select id="season-select" style="padding: 6px 12px;">
+                        <option value="summer" selected>Summer Profile</option>
+                        <option value="winter">Winter Profile</option>
+                        <option value="monsoon">Monsoon Profile</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex-direction: row; align-items: center; gap: 8px;">
+                    <label for="time-select" style="margin: 0;">Time Range:</label>
+                    <select id="time-select" style="padding: 6px 12px;">
+                        <option value="15" selected>Last 15 Minutes</option>
+                        <option value="60">Last 60 Minutes</option>
+                    </select>
+                </div>
+            </div>
+        </header>
+
+        <div class="dashboard-grid">
+            <!-- Left Panel: Summary, Status and Overrides -->
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <!-- System Health Monitoring -->
+                <div class="panel">
+                    <div class="panel-title">System Topology Health</div>
+                    <div class="health-grid">
+                        <div class="health-card">
+                            <span class="health-label">Cloud Broker</span>
+                            <span class="health-value"><span id="health-broker" class="status-dot status-offline"></span><span id="text-broker">OFFLINE</span></span>
+                        </div>
+                        <div class="health-card">
+                            <span class="health-label">InfluxDB</span>
+                            <span class="health-value"><span id="health-db" class="status-dot status-offline"></span><span id="text-db">OFFLINE</span></span>
+                        </div>
+                        <div class="health-card">
+                            <span class="health-label">Fog Node (Zone 4B)</span>
+                            <span class="health-value"><span id="health-fog" class="status-dot status-offline"></span><span id="text-fog">OFFLINE</span></span>
+                        </div>
+                        <div class="health-card">
+                            <span class="health-label">Cloud Ingestor</span>
+                            <span class="health-value"><span id="health-ingestor" class="status-dot status-offline"></span><span id="text-ingestor">OFFLINE</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Zone Card Snapshot -->
+                <div class="panel">
+                    <div class="panel-title">Active Forest Division Zone</div>
+                    <div id="zone-card-container" class="zone-card green">
+                        <span class="zone-header">ZONE 4B (Simlipal Core)</span>
+                        <div id="zone-state" class="zone-state-badge" style="color: var(--color-green);">GREEN</div>
+                        <span class="zone-whi-label">Max Wildfire Hazard Index (WHI)</span>
+                        <div id="zone-whi" class="zone-whi-value">0.000</div>
+                        <span id="zone-override-badge" style="font-size: 10px; color: var(--text-secondary); margin-top: 4px; display: none; font-weight: 600;">⚠️ CENTRAL OVERRIDE ACTIVE</span>
+                    </div>
+                </div>
+
+                <!-- Operator Advisory Override Console -->
+                <div class="panel">
+                    <div class="panel-title">Operator Advisory Console</div>
+                    
+                    <div class="form-group">
+                        <label>Manual Override State</label>
+                        <div style="display: flex; gap: 8px;">
+                            <select id="override-state" style="flex: 1;">
+                                <option value="GREEN">GREEN (Normal)</option>
+                                <option value="YELLOW">YELLOW (Alert)</option>
+                                <option value="ORANGE">ORANGE (Mist Perimeter)</option>
+                                <option value="RED">RED (Emergency Actuate)</option>
+                            </select>
+                            <button class="btn-primary" onclick="submitOverride()" style="padding: 10px 16px;">Clamp</button>
+                        </div>
+                        <button class="btn-secondary" onclick="releaseOverride()" style="width: 100%; margin-top: 4px;">Release State Override</button>
+                    </div>
+
+                    <div style="border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 12px; display: flex; flex-direction: column; gap: 10px;">
+                        <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary);">Dynamic Policy Adjustment</span>
+                        
+                        <div class="form-group">
+                            <label>Temperature Threshold (°C)</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="number" id="policy-temp" value="40.0" step="1" style="flex: 1;">
+                                <button class="btn-primary" onclick="submitPolicy('adjust_temperature_threshold', 'policy-temp')" style="padding: 10px 12px;">Set</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Gas Threshold (PPM)</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="number" id="policy-gas" value="30.0" step="5" style="flex: 1;">
+                                <button class="btn-primary" onclick="submitPolicy('adjust_gas_threshold', 'policy-gas')" style="padding: 10px 12px;">Set</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Middle Panel: Historical Trends and Analytics Charts -->
+            <div class="charts-container">
+                <!-- Live strip stats -->
+                <div class="stats-strip">
+                    <div class="stat-card">
+                        <span class="stat-title">Ingestion Throughput</span>
+                        <span id="stat-pps" class="stat-value">0.00 pps</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-title">Messages Archived</span>
+                        <span id="stat-archived" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-title">End-to-End Latency</span>
+                        <span id="stat-latency" class="stat-value">0.00 ms</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-title">Database Write Latency</span>
+                        <span id="stat-db-latency" class="stat-value">0.00 ms</span>
+                    </div>
+                </div>
+
+                <!-- Charts Layout -->
+                <div class="chart-row">
+                    <div class="chart-wrapper">
+                        <div class="chart-header">
+                            <span class="chart-title">Temperature Trend vs Historical Baseline</span>
+                        </div>
+                        <canvas id="tempChart" style="width: 100%; height: 260px;"></canvas>
+                    </div>
+                    <div class="chart-wrapper">
+                        <div class="chart-header">
+                            <span class="chart-title">Humidity Trend vs Historical Baseline</span>
+                        </div>
+                        <canvas id="humidityChart" style="width: 100%; height: 260px;"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-wrapper" style="height: 280px;">
+                    <div class="chart-header">
+                        <span class="chart-title">Gas Concentration Levels (PPM) vs Policy Limit</span>
+                    </div>
+                    <canvas id="gasChart" style="width: 100%; height: 220px;"></canvas>
+                </div>
+            </div>
+
+            <!-- Right Panel: Logs, Incidents and Audit logs -->
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <!-- Real-time Alerts Timeline -->
+                <div class="panel" style="flex: 1;">
+                    <div class="panel-title">Regional Incident Alerts</div>
+                    <div id="alerts-timeline" class="log-feed">
+                        <div class="log-item">No alerts recorded yet.</div>
+                    </div>
+                </div>
+
+                <!-- Fog Actions Log Ticker -->
+                <div class="panel" style="flex: 1;">
+                    <div class="panel-title">Pre-suppression Actions Ticker</div>
+                    <div id="actions-feed" class="log-feed">
+                        <div class="log-item">No actions executed yet.</div>
+                    </div>
+                </div>
+
+                <!-- Advisory Commands Audit Trail -->
+                <div class="panel">
+                    <div class="panel-title">Advisory Command Audit Trail</div>
+                    <div class="audit-table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Operator</th>
+                                    <th>Command</th>
+                                    <th>Status</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="audit-trail-body">
+                                <tr>
+                                    <td colspan="4" style="text-align: center; color: var(--text-secondary);">No logs.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast">Action submitted successfully.</div>
+
+    <!-- Dashboard Core Script -->
+    <script>
+        // Global variables for Chart.js
+        let tempChart = null;
+        let humidityChart = null;
+        let gasChart = null;
+
+        // Colors map
+        const stateColors = {
+            "GREEN": "var(--color-green)",
+            "YELLOW": "var(--color-yellow)",
+            "ORANGE": "var(--color-orange)",
+            "RED": "var(--color-red)"
+        };
+
+        // Toast message display utility
+        function showToast(message, isError = false) {
+            const toast = document.getElementById("toast");
+            toast.textContent = message;
+            toast.style.borderColor = isError ? "var(--color-red)" : "var(--accent-color)";
+            toast.style.display = "block";
+            setTimeout(() => {
+                toast.style.display = "none";
+            }, 3000);
+        }
+
+        // ==========================================
+        // API Calls & Actions
+        // ==========================================
+        function submitOverride() {
+            const state = document.getElementById("override-state").value;
+            postAdvisoryCommand("set_override_state", { "state": state });
+        }
+
+        function releaseOverride() {
+            postAdvisoryCommand("release_override", {});
+        }
+
+        function submitPolicy(commandType, inputId) {
+            const val = parseFloat(document.getElementById(inputId).value);
+            if (isNaN(val)) return showToast("Invalid numeric value", true);
+            postAdvisoryCommand(commandType, { "value": val });
+        }
+
+        function postAdvisoryCommand(command, params) {
+            fetch("/api/advisory", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    command: command,
+                    parameters: params,
+                    issued_by: "NOC_Regional_Operator"
+                })
+            })
+            .then(res => {
+                if (!res.ok) throw new Error("Connection failed or offline.");
+                return res.json();
+            })
+            .then(data => {
+                showToast(`Command sent successfully: ID ${data.command_id.substring(0, 8)}`);
+                pollSnapshot(); // Poll snapshot immediately to trigger audit log sync
+            })
+            .catch(err => {
+                showToast(`Advisory routing failed: ${err.message}`, true);
+            });
+        }
+
+        // ==========================================
+        // Snapshot Polling & UI Rendering
+        // ==========================================
+        function pollSnapshot() {
+            fetch("/api/snapshot")
+            .then(res => res.json())
+            .then(data => {
+                // 1. Database offline check
+                if (data.database_health === "OFFLINE") {
+                    document.getElementById("health-db").className = "status-dot status-offline";
+                    document.getElementById("text-db").textContent = "OFFLINE";
+                    return;
+                }
+                
+                // 2. Health Monitoring Cards
+                updateHealthCard("broker", data.system_health.Cloud_Broker);
+                updateHealthCard("db", data.system_health.InfluxDB);
+                updateHealthCard("fog", data.system_health.Fog_Node);
+                updateHealthCard("ingestor", data.system_health.Cloud_Ingestor);
+
+                // 3. Zone State Card
+                const stateCard = document.getElementById("zone-card-container");
+                const stateText = document.getElementById("zone-state");
+                const whiVal = document.getElementById("zone-whi");
+                const badge = document.getElementById("zone-override-badge");
+                
+                const state = data.zone_state.state || "GREEN";
+                stateCard.className = `zone-card ${state.toLowerCase()}`;
+                stateText.textContent = state;
+                stateText.style.color = stateColors[state] || "var(--color-green)";
+                whiVal.textContent = parseFloat(data.zone_state.whi || 0.0).toFixed(3);
+                badge.style.display = data.zone_state.override_active ? "block" : "none";
+
+                // 4. Performance Statistics panel
+                document.getElementById("stat-pps").textContent = `${data.performance_metrics.telemetry_rate_pps.toFixed(2)} pps`;
+                document.getElementById("stat-archived").textContent = data.performance_metrics.messages_archived;
+                document.getElementById("stat-latency").textContent = `${(data.performance_metrics.cloud_end_to_end_latency * 1000).toFixed(1)} ms`;
+                document.getElementById("stat-db-latency").textContent = `${(data.performance_metrics.influx_write_latency * 1000).toFixed(1)} ms`;
+
+                // 5. Timelines & Incident Log
+                renderAlerts(data.alerts);
+                renderActionLogs(data.action_logs);
+                renderAuditTrail(data.audit_logs);
+            })
+            .catch(err => {
+                console.error("Error polling snapshot data: ", err);
+            });
+        }
+
+        function updateHealthCard(elementId, status) {
+            const dot = document.getElementById(`health-${elementId}`);
+            const text = document.getElementById(`text-${elementId}`);
+            
+            if (status === "ONLINE") {
+                dot.className = "status-dot status-online";
+                text.textContent = "ONLINE";
+            } else if (status === "RECONNECTING") {
+                dot.className = "status-dot status-offline";
+                text.textContent = "RECONNECTING";
+            } else {
+                dot.className = "status-dot status-offline";
+                text.textContent = "OFFLINE";
+            }
+        }
+
+        function renderAlerts(alerts) {
+            const el = document.getElementById("alerts-timeline");
+            if (!alerts || alerts.length === 0) {
+                el.innerHTML = '<div class="log-item">No alerts recorded yet.</div>';
+                return;
+            }
+            
+            el.innerHTML = alerts.map(a => `
+                <div class="log-item" style="border-left: 3px solid ${stateColors[a.severity] || '#ccc'}">
+                    <span class="log-time">${a.timestamp} | Node: ${a.source_node}</span>
+                    <span class="log-desc" style="color: ${stateColors[a.severity] || '#fff'}">Zone escalated to ${a.severity}</span>
+                    <span style="font-size: 10px; color: var(--text-secondary);">WHI Index evaluated at ${parseFloat(a.whi).toFixed(3)}</span>
+                </div>
+            `).join("");
+        }
+
+        function renderActionLogs(logs) {
+            const el = document.getElementById("actions-feed");
+            if (!logs || logs.length === 0) {
+                el.innerHTML = '<div class="log-item">No actions executed yet.</div>';
+                return;
+            }
+            
+            el.innerHTML = logs.map(l => `
+                <div class="log-item">
+                    <span class="log-time">${l.timestamp}</span>
+                    <span class="log-desc">${l.reason}</span>
+                    <div style="margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px;">
+                        ${l.actions.map(act => `<span style="font-size: 9px; padding: 2px 6px; background: rgba(59,130,246,0.1); color: var(--accent-color); border-radius: 4px; border: 1px solid rgba(59,130,246,0.2);">${act}</span>`).join("")}
+                    </div>
+                </div>
+            `).join("");
+        }
+
+        function renderAuditTrail(audits) {
+            const el = document.getElementById("audit-trail-body");
+            if (!audits || audits.length === 0) {
+                el.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-secondary);">No logs.</td></tr>';
+                return;
+            }
+            
+            el.innerHTML = audits.map(a => {
+                let badgeClass = "badge-pending";
+                if (a.status === "SUCCESS") badgeClass = "badge-success";
+                else if (a.status === "FAILED") badgeClass = "badge-failed";
+                
+                return `
+                    <tr>
+                        <td>${a.issued_by}</td>
+                        <td>${a.command}</td>
+                        <td><span class="status-badge ${badgeClass}">${a.status}</span></td>
+                        <td>${a.timestamp.substring(11, 19)}</td>
+                    </tr>
+                `;
+            }).join("");
+        }
+
+        // ==========================================
+        // Time-Series Historical Charts Setup
+        // ==========================================
+        function initCharts() {
+            // Chart.js Default styling tweaks
+            Chart.defaults.color = 'var(--text-secondary)';
+            Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+            Chart.defaults.font.family = "'Inter', sans-serif";
+
+            const options = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top', labels: { boxWidth: 10, font: { size: 10 } } } },
+                scales: {
+                    x: { ticks: { font: { size: 9 } } },
+                    y: { ticks: { font: { size: 9 } } }
+                }
+            };
+
+            // Temperature Chart
+            tempChart = new Chart(document.getElementById("tempChart").getContext("2d"), {
+                type: "line",
+                data: {
+                    labels: [],
+                    datasets: [
+                        { label: "Node E11", data: [], borderColor: "#10b981", tension: 0.2 },
+                        { label: "Node E12", data: [], borderColor: "#3b82f6", tension: 0.2 },
+                        { label: "Node E13", data: [], borderColor: "#ec4899", tension: 0.2 },
+                        { label: "Historical Baseline", data: [], borderColor: "#9ca3af", borderDash: [5, 5], tension: 0.1, fill: false }
+                    ]
+                },
+                options: options
+            });
+
+            // Humidity Chart
+            humidityChart = new Chart(document.getElementById("humidityChart").getContext("2d"), {
+                type: "line",
+                data: {
+                    labels: [],
+                    datasets: [
+                        { label: "Node E11", data: [], borderColor: "#10b981", tension: 0.2 },
+                        { label: "Node E12", data: [], borderColor: "#3b82f6", tension: 0.2 },
+                        { label: "Node E13", data: [], borderColor: "#ec4899", tension: 0.2 },
+                        { label: "Historical Baseline", data: [], borderColor: "#9ca3af", borderDash: [5, 5], tension: 0.1, fill: false }
+                    ]
+                },
+                options: options
+            });
+
+            // Gas Chart
+            gasChart = new Chart(document.getElementById("gasChart").getContext("2d"), {
+                type: "line",
+                data: {
+                    labels: [],
+                    datasets: [
+                        { label: "Node E11", data: [], borderColor: "#10b981", tension: 0.2 },
+                        { label: "Node E12", data: [], borderColor: "#3b82f6", tension: 0.2 },
+                        { label: "Node E13", data: [], borderColor: "#ec4899", tension: 0.2 },
+                        { label: "Policy limit (PPM)", data: [], borderColor: "var(--color-red)", borderDash: [2, 2], pointStyle: false, tension: 0, fill: false }
+                    ]
+                },
+                options: options
+            });
+        }
+
+        function pollHistory() {
+            const minutes = document.getElementById("time-select").value;
+            const season = document.getElementById("season-select").value;
+            
+            fetch(`/api/history?minutes=${minutes}&season=${season}`)
+            .then(res => res.json())
+            .then(data => {
+                const history = data.historical_telemetry;
+                const labels = history.labels || [];
+                
+                // Update charts labels
+                tempChart.data.labels = labels;
+                humidityChart.data.labels = labels;
+                gasChart.data.labels = labels;
+                
+                // Map sensor series
+                tempChart.data.datasets[0].data = (history.E11 || []).map(r => r.temperature_c);
+                tempChart.data.datasets[1].data = (history.E12 || []).map(r => r.temperature_c);
+                tempChart.data.datasets[2].data = (history.E13 || []).map(r => r.temperature_c);
+
+                humidityChart.data.datasets[0].data = (history.E11 || []).map(r => r.humidity_pct);
+                humidityChart.data.datasets[1].data = (history.E12 || []).map(r => r.humidity_pct);
+                humidityChart.data.datasets[2].data = (history.E13 || []).map(r => r.humidity_pct);
+
+                gasChart.data.datasets[0].data = (history.E11 || []).map(r => r.gas_ppm);
+                gasChart.data.datasets[1].data = (history.E12 || []).map(r => r.gas_ppm);
+                gasChart.data.datasets[2].data = (history.E13 || []).map(r => r.gas_ppm);
+                
+                // Overlay Historical Baseline: matches the hour of each timestamp in labels
+                const hourlyBaseline = data.baseline_profile.hourly;
+                const currentHour = new Date().getHours();
+                const baselineItem = hourlyBaseline.find(item => item.hour === currentHour) || { temperature_c: 25, humidity_pct: 50 };
+                
+                tempChart.data.datasets[3].data = labels.map(() => baselineItem.temperature_c);
+                humidityChart.data.datasets[3].data = labels.map(() => baselineItem.humidity_pct);
+                
+                // Policy lines
+                gasChart.data.datasets[3].data = labels.map(() => 30.0); // Temperature threshold is usually 30 PPM for gas confirmation
+                
+                // Render update
+                tempChart.update();
+                humidityChart.update();
+                gasChart.update();
+            })
+            .catch(err => {
+                console.error("Error fetching historical charts data: ", err);
+            });
+        }
+
+        // Initialize loops
+        window.addEventListener("DOMContentLoaded", () => {
+            initCharts();
+            
+            // Poll immediately
+            pollSnapshot();
+            pollHistory();
+            
+            // Start regular stateless polling (3s for snapshot, 6s for history queries)
+            setInterval(pollSnapshot, 3000);
+            setInterval(pollHistory, 6000);
+            
+            // Bind select changes to refresh charts
+            document.getElementById("time-select").addEventListener("change", pollHistory);
+            document.getElementById("season-select").addEventListener("change", pollHistory);
+        });
+    </script>
+</body>
+</html>

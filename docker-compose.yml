@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  # Local zone MQTT Broker
   mqtt-broker:
     image: eclipse-mosquitto:2
     container_name: ignis-mqtt-broker
@@ -10,15 +11,42 @@ services:
       - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
     restart: always
 
+  # Central Cloud MQTT Broker
+  cloud-broker:
+    image: eclipse-mosquitto:2
+    container_name: ignis-cloud-broker
+    ports:
+      - "1884:1883"
+    volumes:
+      - ./config/mosquitto_cloud.conf:/mosquitto/config/mosquitto.conf:ro
+    restart: always
+
+  # InfluxDB Time-Series Database
+  influxdb:
+    image: influxdb:2.7
+    container_name: ignis-influxdb
+    ports:
+      - "8086:8086"
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=adminpassword
+      - DOCKER_INFLUXDB_INIT_ORG=ignis-org
+      - DOCKER_INFLUXDB_INIT_BUCKET=ignis-telemetry
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=ignis-super-secret-token
+    restart: always
+
+  # Edge Simulator Nodes
   edge-sim-e11:
     build: .
     container_name: ignis-edge-sim-e11
     command: python src/edge_sim.py
     depends_on:
       - mqtt-broker
+    env_file:
+      - .env
     environment:
       - NODE_ID=E11
-      - ZONE_ID=4B
       - MQTT_HOST=mqtt-broker
       - MQTT_PORT=1883
       - GPS_LAT=21.940
@@ -33,9 +61,10 @@ services:
     command: python src/edge_sim.py
     depends_on:
       - mqtt-broker
+    env_file:
+      - .env
     environment:
       - NODE_ID=E12
-      - ZONE_ID=4B
       - MQTT_HOST=mqtt-broker
       - MQTT_PORT=1883
       - GPS_LAT=21.950
@@ -50,9 +79,10 @@ services:
     command: python src/edge_sim.py
     depends_on:
       - mqtt-broker
+    env_file:
+      - .env
     environment:
       - NODE_ID=E13
-      - ZONE_ID=4B
       - MQTT_HOST=mqtt-broker
       - MQTT_PORT=1883
       - GPS_LAT=21.930
@@ -61,19 +91,21 @@ services:
       - SEASONAL_BASELINE=0.5
     restart: unless-stopped
 
+  # Local Fog Decision Node
   fog-node:
     build: .
     container_name: ignis-fog-node
     command: python src/fog_node_runner.py
     depends_on:
       - mqtt-broker
+      - cloud-broker
+    env_file:
+      - .env
     environment:
-      - ZONE_ID=4B
-      - MQTT_HOST=mqtt-broker
-      - MQTT_PORT=1883
       - CONFIG_PATH=config/zone_config.json
     restart: unless-stopped
 
+  # Local Range Control Center Dashboard
   control-center:
     build: .
     container_name: ignis-control-center
@@ -82,8 +114,34 @@ services:
       - "8000:8000"
     depends_on:
       - mqtt-broker
-    environment:
-      - ZONE_ID=4B
-      - MQTT_HOST=mqtt-broker
-      - MQTT_PORT=1883
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  # Central Cloud Telemetry Ingestor
+  cloud-ingestor:
+    build: .
+    container_name: ignis-cloud-ingestor
+    command: python src/cloud_ingestor/main.py
+    depends_on:
+      - cloud-broker
+      - influxdb
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  # Central NOC Cloud Dashboard
+  cloud-dashboard:
+    build: .
+    container_name: ignis-cloud-dashboard
+    command: uvicorn src.cloud_dashboard.app:app --host 0.0.0.0 --port 9000
+    ports:
+      - "9000:9000"
+    depends_on:
+      - cloud-broker
+      - influxdb
+    env_file:
+      - .env
+    volumes:
+      - ./historical:/app/historical
     restart: unless-stopped

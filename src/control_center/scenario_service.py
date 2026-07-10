@@ -101,7 +101,7 @@ class ScenarioService:
 
     def _reset_all_nodes(self):
         for node in self.active_nodes:
-            control_topic = f"ignis/v1/zone/{self.zone_id}/edge/{node}/control"
+            control_topic = f"ignis/v1/system/zone/{self.zone_id}/edge/{node}/control"
             payload = {
                 "message_type": "control",
                 "version": "1",
@@ -127,7 +127,7 @@ class ScenarioService:
                 logger.info(f"Publishing Step {self.current_step}/{self.total_steps} for global scenario {scenario_id}")
                 
                 for node in self.active_nodes:
-                    control_topic = f"ignis/v1/zone/{self.zone_id}/edge/{node}/control"
+                    control_topic = f"ignis/v1/system/zone/{self.zone_id}/edge/{node}/control"
                     payload = {
                         "message_type": "control",
                         "version": "1",
@@ -154,12 +154,12 @@ class ScenarioService:
         
         try:
             # Ensure other nodes are in baseline
-            control_topic_e11 = f"ignis/v1/zone/{self.zone_id}/edge/E11/control"
-            control_topic_e13 = f"ignis/v1/zone/{self.zone_id}/edge/E13/control"
+            control_topic_e11 = f"ignis/v1/system/zone/{self.zone_id}/edge/E11/control"
+            control_topic_e13 = f"ignis/v1/system/zone/{self.zone_id}/edge/E13/control"
             self.client.publish(control_topic_e11, json.dumps({"message_type": "control", "version": "1", "command": "set_mode", "mode": "baseline"}))
             self.client.publish(control_topic_e13, json.dumps({"message_type": "control", "version": "1", "command": "set_mode", "mode": "baseline"}))
             
-            control_topic_e12 = f"ignis/v1/zone/{self.zone_id}/edge/E12/control"
+            control_topic_e12 = f"ignis/v1/system/zone/{self.zone_id}/edge/E12/control"
             
             for step_idx, step in enumerate(steps):
                 if self.stop_event.is_set():

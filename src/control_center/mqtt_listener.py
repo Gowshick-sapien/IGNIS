@@ -35,10 +35,10 @@ class MQTTListener:
             logger.info("Control Center MQTT Listener connected.")
             # Subscribe to versioned topics
             topics = [
-                ("ignis/v1/zone/+/edge/+/reading", 0),
-                ("ignis/v1/zone/+/fog/state", 0),
-                ("ignis/v1/zone/+/fog/alert", 0),
-                ("ignis/v1/zone/+/fog/action_log", 0)
+                ("ignis/v1/telemetry/zone/+/edge/+", 0),
+                ("ignis/v1/fog/zone/+/state", 0),
+                ("ignis/v1/fog/zone/+/alert", 0),
+                ("ignis/v1/fog/zone/+/action_log", 0)
             ]
             self.client.subscribe(topics)
             logger.info("Subscribed to all telemetry, state, alert, and log topics.")
@@ -54,20 +54,21 @@ class MQTTListener:
             parts = topic.split('/')
             
             with self.lock:
-                if "reading" in topic:
-                    # ignis/v1/zone/{zone_id}/edge/{node_id}/reading
-                    zone_id = parts[3]
-                    node_id = parts[5]
+                if "telemetry" in topic:
+                    # ignis/v1/telemetry/zone/{zone_id}/edge/{node_id}
+                    zone_id = parts[4]
+                    node_id = parts[6]
                     # Update local cache
                     self.edge_readings[node_id] = payload
                     
                 elif "state" in topic:
-                    # ignis/v1/zone/{zone_id}/fog/state
-                    zone_id = parts[3]
+                    # ignis/v1/fog/zone/{zone_id}/state
+                    zone_id = parts[4]
                     self.zone_states[zone_id] = payload
                     
                 elif "alert" in topic or "action_log" in topic:
-                    # Logs and alerts go to the scrollable event log
+                    # ignis/v1/fog/zone/{zone_id}/alert or action_log
+                    zone_id = parts[4]
                     payload["topic"] = topic
                     payload["local_time"] = time.strftime("%H:%M:%S")
                     self.event_log.appendleft(payload)

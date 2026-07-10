@@ -1,0 +1,29 @@
+{
+  "season": "summer",
+  "hourly": [
+    {"hour": 0, "temperature_c": 30.0, "humidity_pct": 32.0, "soil_moisture_pct": 10.5, "gas_ppm": 12.0, "whi": 0.25},
+    {"hour": 1, "temperature_c": 29.5, "humidity_pct": 33.0, "soil_moisture_pct": 10.5, "gas_ppm": 12.0, "whi": 0.23},
+    {"hour": 2, "temperature_c": 29.0, "humidity_pct": 34.0, "soil_moisture_pct": 10.4, "gas_ppm": 12.0, "whi": 0.22},
+    {"hour": 3, "temperature_c": 28.5, "humidity_pct": 35.0, "soil_moisture_pct": 10.4, "gas_ppm": 12.0, "whi": 0.20},
+    {"hour": 4, "temperature_c": 28.0, "humidity_pct": 36.0, "soil_moisture_pct": 10.3, "gas_ppm": 12.0, "whi": 0.19},
+    {"hour": 5, "temperature_c": 28.2, "humidity_pct": 35.0, "soil_moisture_pct": 10.3, "gas_ppm": 12.0, "whi": 0.20},
+    {"hour": 6, "temperature_c": 29.0, "humidity_pct": 33.0, "soil_moisture_pct": 10.2, "gas_ppm": 12.2, "whi": 0.22},
+    {"hour": 7, "temperature_c": 31.0, "humidity_pct": 30.0, "soil_moisture_pct": 10.0, "gas_ppm": 12.5, "whi": 0.28},
+    {"hour": 8, "temperature_c": 33.0, "humidity_pct": 27.0, "soil_moisture_pct": 9.8, "gas_ppm": 12.8, "whi": 0.35},
+    {"hour": 9, "temperature_c": 35.0, "humidity_pct": 24.0, "soil_moisture_pct": 9.5, "gas_ppm": 13.0, "whi": 0.42},
+    {"hour": 10, "temperature_c": 37.0, "humidity_pct": 21.0, "soil_moisture_pct": 9.2, "gas_ppm": 13.5, "whi": 0.50},
+    {"hour": 11, "temperature_c": 38.5, "humidity_pct": 19.0, "soil_moisture_pct": 9.0, "gas_ppm": 14.0, "whi": 0.58},
+    {"hour": 12, "temperature_c": 39.5, "humidity_pct": 17.0, "soil_moisture_pct": 8.8, "gas_ppm": 14.2, "whi": 0.62},
+    {"hour": 13, "temperature_c": 40.5, "humidity_pct": 16.0, "soil_moisture_pct": 8.5, "gas_ppm": 14.5, "whi": 0.66},
+    {"hour": 14, "temperature_c": 41.0, "humidity_pct": 15.0, "soil_moisture_pct": 8.3, "gas_ppm": 14.8, "whi": 0.68},
+    {"hour": 15, "temperature_c": 40.8, "humidity_pct": 15.5, "soil_moisture_pct": 8.3, "gas_ppm": 14.6, "whi": 0.67},
+    {"hour": 16, "temperature_c": 39.8, "humidity_pct": 17.0, "soil_moisture_pct": 8.5, "gas_ppm": 14.3, "whi": 0.63},
+    {"hour": 17, "temperature_c": 38.0, "humidity_pct": 20.0, "soil_moisture_pct": 8.8, "gas_ppm": 13.8, "whi": 0.55},
+    {"hour": 18, "temperature_c": 36.0, "humidity_pct": 23.0, "soil_moisture_pct": 9.2, "gas_ppm": 13.2, "whi": 0.46},
+    {"hour": 19, "temperature_c": 34.0, "humidity_pct": 26.0, "soil_moisture_pct": 9.6, "gas_ppm": 12.8, "whi": 0.38},
+    {"hour": 20, "temperature_c": 32.5, "humidity_pct": 28.0, "soil_moisture_pct": 10.0, "gas_ppm": 12.4, "whi": 0.33},
+    {"hour": 21, "temperature_c": 31.5, "humidity_pct": 29.5, "soil_moisture_pct": 10.2, "gas_ppm": 12.2, "whi": 0.30},
+    {"hour": 22, "temperature_c": 30.8, "humidity_pct": 30.5, "soil_moisture_pct": 10.3, "gas_ppm": 12.0, "whi": 0.28},
+    {"hour": 23, "temperature_c": 30.2, "humidity_pct": 31.5, "soil_moisture_pct": 10.4, "gas_ppm": 12.0, "whi": 0.26}
+  ]
+}

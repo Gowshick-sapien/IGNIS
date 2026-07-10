@@ -2,8 +2,15 @@ import os
 import sys
 import json
 import time
+import calendar
 import logging
+from datetime import datetime
 import paho.mqtt.client as mqtt
+# pyrefly: ignore [missing-import]
+from dotenv import load_dotenv
+
+# Load .env configurations if available (useful for local host testing)
+load_dotenv()
 
 # Adjust path to import from src
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -15,30 +22,50 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(na
 logger = logging.getLogger("fog_node_runner")
 
 class FogNodeRunner:
-    """Manages the Fog Node service daemon, subscribing to edge nodes and publishing zone state."""
+    """Manages the Fog Node service daemon, communicating with both Local and Cloud Brokers."""
     STATE_ORDER = {"GREEN": 0, "YELLOW": 1, "ORANGE": 2, "RED": 3}
     
     def __init__(self):
+        # 1. Fetch Configuration from Environment (initialized from .env)
         self.zone_id = os.environ.get("ZONE_ID", "4B")
-        self.mqtt_host = os.environ.get("MQTT_HOST", "localhost")
-        self.mqtt_port = int(os.environ.get("MQTT_PORT", 1883))
+        
+        # Local Broker Connection
+        self.local_host = os.environ.get("LOCAL_MQTT_HOST", "localhost")
+        self.local_port = int(os.environ.get("LOCAL_MQTT_PORT", 1883))
+        
+        # Cloud Broker Connection
+        self.cloud_host = os.environ.get("CLOUD_MQTT_HOST", "localhost")
+        self.cloud_port = int(os.environ.get("CLOUD_MQTT_PORT", 1884))
         
         config_path = os.environ.get("CONFIG_PATH", os.path.join("config", "zone_config.json"))
         self.config = self.load_config(config_path)
         
-        # Instantiate the underlying single-node logic processor
+        # 2. Instantiate local decision processor
         self.fog_processor = FogNode(self.zone_id, self.config)
         
-        # In-memory store for the latest decision record of each edge node
-        self.node_states = {} # node_id -> decision_record
-        
-        # Keep track of last published zone state to detect transitions
+        # Telemetry & State caches
+        self.node_states = {}       # node_id -> decision_record
         self.last_zone_state = "GREEN"
         
-        # MQTT Client setup
-        self.client = mqtt.Client(client_id=f"fog_node_runner_{self.zone_id}")
-        self.client.on_connect = self.on_connect
-        self.client.on_message = self.on_message
+        # 3. Advisory Override States
+        self.override_active = False
+        self.override_state = "NONE"
+        self.override_operator = "SYSTEM"
+        self.override_actions = []
+        self.override_reason = ""
+        
+        # 4. Command Security Cache
+        self.processed_command_ids = set()
+        self.last_sequence_number = -1
+        
+        # 5. Initialize MQTT Clients
+        self.client_local = mqtt.Client(client_id=f"fog_node_local_{self.zone_id}")
+        self.client_local.on_connect = self.on_connect_local
+        self.client_local.on_message = self.on_message_local
+        
+        self.client_cloud = mqtt.Client(client_id=f"fog_node_cloud_{self.zone_id}")
+        self.client_cloud.on_connect = self.on_connect_cloud
+        self.client_cloud.on_message = self.on_message_cloud
         
     def load_config(self, path: str) -> dict:
         if not os.path.exists(path):
@@ -46,60 +73,229 @@ class FogNodeRunner:
         with open(path, 'r') as f:
             return json.load(f)
 
-    def on_connect(self, client, userdata, flags, rc):
+    # ==========================================
+    # Local MQTT Callbacks
+    # ==========================================
+    def on_connect_local(self, client, userdata, flags, rc):
         if rc == 0:
-            logger.info("Connected to MQTT broker successfully.")
-            # Subscribe to all edge node readings in this zone
-            reading_topic = f"ignis/v1/zone/{self.zone_id}/edge/+/reading"
-            self.client.subscribe(reading_topic)
-            logger.info(f"Subscribed to readings topic: {reading_topic}")
+            logger.info(f"Connected to LOCAL MQTT broker at {self.local_host}:{self.local_port}")
+            # Subscribe to local edge node readings: ignis/v1/telemetry/zone/{zone}/edge/+
+            telemetry_topic = f"ignis/v1/telemetry/zone/{self.zone_id}/edge/+"
+            self.client_local.subscribe(telemetry_topic)
+            logger.info(f"Subscribed to Local readings topic: {telemetry_topic}")
         else:
-            logger.error(f"Failed to connect, return code: {rc}")
+            logger.error(f"Failed to connect to LOCAL MQTT broker, code: {rc}")
 
-    def on_message(self, client, userdata, msg):
+    def on_message_local(self, client, userdata, msg):
         try:
             payload = json.loads(msg.payload.decode())
             node_id = payload.get("node_id")
             if not node_id:
-                logger.warning("Received telemetry payload without node_id.")
+                logger.warning("Received local telemetry payload without node_id.")
                 return
                 
-            # Process single edge node telemetry using FogNode logic
+            # A. Process telemetry using FogNode decision logic
             decision_record = self.fog_processor.process_reading(payload)
             self.node_states[node_id] = decision_record
             
-            logger.info(f"Ingested E-Node {node_id} | State: {decision_record['state']} (WHI: {decision_record['whi']:.3f})")
+            logger.info(f"Ingested E-Node {node_id} Telemetry | Local State: {decision_record['state']} (WHI: {decision_record['whi']:.3f})")
             
-            # Re-evaluate and publish aggregated Zone status
+            # B. Dual Reporting: Forward raw telemetry to the Cloud Broker
+            # Topic: ignis/v1/telemetry/zone/{zone_id}/edge/{node_id}
+            cloud_telemetry_topic = f"ignis/v1/telemetry/zone/{self.zone_id}/edge/{node_id}"
+            self.client_cloud.publish(cloud_telemetry_topic, json.dumps(payload))
+            
+            # C. Aggregate and Publish Zone Status
             self.evaluate_and_publish_zone_status()
             
         except Exception as e:
-            logger.error(f"Error processing message: {e}")
+            logger.error(f"Error processing local MQTT message: {e}")
 
+    # ==========================================
+    # Cloud MQTT Callbacks
+    # ==========================================
+    def on_connect_cloud(self, client, userdata, flags, rc):
+        if rc == 0:
+            logger.info(f"Connected to CLOUD MQTT broker at {self.cloud_host}:{self.cloud_port}")
+            # Subscribe to Cloud Advisory channel: ignis/v1/advisory/zone/{zone_id}/command
+            advisory_topic = f"ignis/v1/advisory/zone/{self.zone_id}/command"
+            self.client_cloud.subscribe(advisory_topic)
+            logger.info(f"Subscribed to Cloud advisory topic: {advisory_topic}")
+        else:
+            logger.error(f"Failed to connect to CLOUD MQTT broker, code: {rc}")
+
+    def on_message_cloud(self, client, userdata, msg):
+        """Processes advisory commands from the centralized cloud broker."""
+        try:
+            payload = json.loads(msg.payload.decode())
+            logger.info(f"Received Cloud Advisory payload: {payload}")
+            
+            command_id = payload.get("command_id")
+            sequence_number = payload.get("sequence_number", 0)
+            timestamp = payload.get("timestamp")
+            ttl = payload.get("ttl", 300)
+            command = payload.get("command")
+            parameters = payload.get("parameters", {})
+            issued_by = payload.get("issued_by", "anonymous")
+            
+            # A. Basic field validation
+            if not command_id or not command or not timestamp:
+                self.publish_command_response(command_id or "UNKNOWN", "FAILED", "Missing required fields (command_id, command, timestamp)")
+                return
+                
+            # B. Duplicate command prevention
+            if command_id in self.processed_command_ids:
+                self.publish_command_response(command_id, "FAILED", "Duplicate command ID detected")
+                return
+                
+            # C. Monotonic sequence validation
+            if self.last_sequence_number != -1 and sequence_number <= self.last_sequence_number:
+                self.publish_command_response(command_id, "FAILED", f"Out of sequence command. Received: {sequence_number}, Last: {self.last_sequence_number}")
+                return
+                
+            # D. Replay protection (TTL check)
+            try:
+                # Expecting standard ISO format: 2026-07-10T10:25:00Z
+                dt = datetime.strptime(timestamp.replace("Z", "+00:00"), "%Y-%m-%dT%H:%M:%S%z")
+                cmd_epoch = calendar.timegm(dt.utctimetuple())
+            except Exception as e:
+                # Fallback to direct float epoch
+                try:
+                    cmd_epoch = float(timestamp)
+                except Exception:
+                    self.publish_command_response(command_id, "FAILED", f"Invalid timestamp format: {timestamp}")
+                    return
+            
+            now_epoch = calendar.timegm(time.gmtime())
+            elapsed = now_epoch - cmd_epoch
+            if elapsed > ttl or elapsed < -60: # Allow 1 min clock skew
+                self.publish_command_response(command_id, "FAILED", f"Command expired. Elapsed time: {elapsed}s, TTL: {ttl}s")
+                return
+                
+            # E. Validate zone ID matches
+            target_zone = payload.get("zone_id")
+            if target_zone and target_zone != self.zone_id:
+                self.publish_command_response(command_id, "FAILED", f"Command intended for zone {target_zone}, not {self.zone_id}")
+                return
+
+            # Add to security cache
+            self.processed_command_ids.add(command_id)
+            if len(self.processed_command_ids) > 1000:
+                self.processed_command_ids.remove(next(iter(self.processed_command_ids)))
+            self.last_sequence_number = sequence_number
+            
+            # F. Execute Commands
+            success = False
+            msg_details = ""
+            
+            # 1. Manual Overrides
+            if command == "set_override_state":
+                state = parameters.get("state")
+                if state in self.STATE_ORDER:
+                    self.override_active = True
+                    self.override_state = state
+                    self.override_operator = issued_by
+                    self.override_reason = f"Manual override to {state} requested by {issued_by}"
+                    
+                    # Log actions triggered by this override state
+                    if state == "ORANGE":
+                        self.override_actions = ["activate_mist_perimeter", "notify_control_center"]
+                    elif state == "RED":
+                        self.override_actions = [
+                            "escalate_pre_suppression_to_max",
+                            "emergency_alert_control_center",
+                            "broadcast_lateral_orange"
+                        ]
+                    else:
+                        self.override_actions = []
+                        
+                    success = True
+                    msg_details = f"State successfully overridden to {state}"
+                    logger.info(f"FOG MANUAL STATE OVERRIDE: Clamped to {state}")
+                else:
+                    msg_details = f"Invalid state value: {state}"
+                    
+            elif command == "release_override":
+                self.override_active = False
+                self.override_state = "NONE"
+                self.override_operator = "SYSTEM"
+                self.override_actions = []
+                self.override_reason = "Manual override released"
+                success = True
+                msg_details = "Manual override released back to dynamic calculation."
+                logger.info("FOG MANUAL STATE OVERRIDE: Released")
+                
+            # 2. Dynamic Threshold Policy Updates
+            elif command == "adjust_temperature_threshold":
+                val = float(parameters.get("value", 40.0))
+                self.fog_processor.sensor_limits["temperature_c"]["confirmation_threshold"] = val
+                success = True
+                msg_details = f"Temperature confirmation threshold adjusted to {val}°C"
+                logger.info(f"POLICY UPDATE: Temperature threshold updated to {val}")
+                
+            elif command == "adjust_humidity_threshold":
+                val = float(parameters.get("value", 25.0))
+                self.fog_processor.sensor_limits["humidity_pct"]["confirmation_threshold"] = val
+                success = True
+                msg_details = f"Humidity confirmation threshold adjusted to {val}%"
+                logger.info(f"POLICY UPDATE: Humidity threshold updated to {val}")
+                
+            elif command == "adjust_gas_threshold":
+                val = float(parameters.get("value", 30.0))
+                self.fog_processor.sensor_limits["gas_ppm"]["confirmation_threshold"] = val
+                success = True
+                msg_details = f"Gas confirmation threshold adjusted to {val} PPM"
+                logger.info(f"POLICY UPDATE: Gas threshold updated to {val}")
+                
+            else:
+                msg_details = f"Unknown command action: {command}"
+                
+            # G. Publish Result Response
+            if success:
+                self.publish_command_response(command_id, "SUCCESS", msg_details)
+                # Re-evaluate and publish zone state immediately
+                self.evaluate_and_publish_zone_status()
+            else:
+                self.publish_command_response(command_id, "FAILED", msg_details)
+                
+        except Exception as e:
+            logger.error(f"Error handling cloud advisory message: {e}")
+
+    def publish_command_response(self, command_id: str, status: str, details: str):
+        payload = {
+            "message_type": "advisory_response",
+            "version": "1",
+            "command_id": command_id,
+            "zone_id": self.zone_id,
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "status": status,
+            "error_reason": details if status == "FAILED" else "",
+            "details": details if status == "SUCCESS" else ""
+        }
+        response_topic = f"ignis/v1/advisory/zone/{self.zone_id}/response"
+        self.client_cloud.publish(response_topic, json.dumps(payload))
+        logger.info(f"Published command response to cloud: {status} | {details}")
+
+    # ==========================================
+    # Status Aggregation & Heartbeats
+    # ==========================================
     def evaluate_and_publish_zone_status(self):
         if not self.node_states:
             return
             
-        # 1. Determine active nodes (nodes reporting in the last 15 seconds)
         now = time.time()
         active_records = []
         active_node_ids = []
         
-        # For simplicity in simulation, we treat any node we've ever heard of as active, 
-        # unless it hasn't reported for > 15 seconds (resilience check)
+        # Filter timed out nodes (timeout threshold 15s)
         for node_id, record in list(self.node_states.items()):
-            # Parse timestamp (e.g. 2026-07-08T09:40:00Z)
             try:
-                # Basic timestamp parsing to count elapsed time
                 ts_str = record.get("timestamp", "")
                 struct_time = time.strptime(ts_str, "%Y-%m-%dT%H:%M:%SZ")
-                epoch_ts = time.mktime(struct_time)
-                # Note: if simulation uses actual system time UTC, we can check delta.
-                # However, in scenario replays time might be manual. Let's rely on standard elapsed checks.
+                epoch_ts = calendar.timegm(struct_time)
             except Exception:
                 epoch_ts = now
                 
-            # Allow up to 15s timeout
             if now - epoch_ts < 15.0 or "timestamp" not in record:
                 active_records.append(record)
                 active_node_ids.append(node_id)
@@ -110,11 +306,10 @@ class FogNodeRunner:
         if not active_records:
             return
             
-        # 2. Perform aggregation
-        # Zone WHI = Max of active node WHIs
+        # Perform dynamic aggregation calculations
         zone_whi = max(r["whi"] for r in active_records)
         
-        # Zone State = Max State among active nodes
+        # Max state logic
         max_state_val = -1
         zone_state = "GREEN"
         is_clamped = False
@@ -127,19 +322,23 @@ class FogNodeRunner:
                 zone_state = s
                 is_clamped = r.get("is_state_clamped", False)
                 
-        # Confirming sensors = Union of confirming sensors
         confirming_sensors = list(set(
             sensor for r in active_records for sensor in r.get("confirming_sensors", [])
         ))
         
-        # Actions = Union of actions logged
         actions_logged = list(set(
             action for r in active_records for action in r.get("actions_logged", [])
         ))
         
+        # APPLY CENTRAL CLOUD ADVISORY OVERRIDES
+        if self.override_active:
+            zone_state = self.override_state
+            is_clamped = True
+            actions_logged = self.override_actions
+            
         timestamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
         
-        # 3. Publish State Heartbeat
+        # 1. Publish Zone State Heartbeat (to Local & Cloud)
         state_payload = {
             "message_type": "zone_state",
             "version": "1",
@@ -149,24 +348,28 @@ class FogNodeRunner:
             "state": zone_state,
             "is_state_clamped": bool(is_clamped),
             "confirming_sensors": confirming_sensors,
-            "active_nodes": active_node_ids
+            "active_nodes": active_node_ids,
+            "override_active": self.override_active
         }
         
-        state_topic = f"ignis/v1/zone/{self.zone_id}/fog/state"
-        self.client.publish(state_topic, json.dumps(state_payload))
+        state_topic = f"ignis/v1/fog/zone/{self.zone_id}/state"
+        self.client_local.publish(state_topic, json.dumps(state_payload))
+        self.client_cloud.publish(state_topic, json.dumps(state_payload))
         
-        # 4. Trigger alert on state escalation or transition
+        # 2. Trigger Alert on State Transitions
         if zone_state != self.last_zone_state:
             logger.info(f"ZONE {self.zone_id} STATE TRANSITION: {self.last_zone_state} -> {zone_state}")
             
-            # Find source node that triggered maximum state
             source_node = "UNKNOWN"
-            for r in active_records:
-                if r["state"] == zone_state:
-                    source_node = r["raw_reading"].get("node_id", "UNKNOWN")
-                    break
-            
-            # Publish Alert Message
+            if not self.override_active:
+                for r in active_records:
+                    if r["state"] == zone_state:
+                        source_node = r["raw_reading"].get("node_id", "UNKNOWN")
+                        break
+            else:
+                source_node = f"CLOUD_ADVISORY_{self.override_operator}"
+                
+            # Compile Alert Payload
             alert_payload = {
                 "message_type": "alert",
                 "version": "1",
@@ -177,10 +380,11 @@ class FogNodeRunner:
                 "whi": float(zone_whi),
                 "confirming_sensors": confirming_sensors
             }
-            alert_topic = f"ignis/v1/zone/{self.zone_id}/fog/alert"
-            self.client.publish(alert_topic, json.dumps(alert_payload))
+            alert_topic = f"ignis/v1/fog/zone/{self.zone_id}/alert"
+            self.client_local.publish(alert_topic, json.dumps(alert_payload))
+            self.client_cloud.publish(alert_topic, json.dumps(alert_payload))
             
-            # Publish Action Log if ORANGE or RED
+            # Action Logs if ORANGE or RED
             if zone_state in ("ORANGE", "RED"):
                 action_payload = {
                     "message_type": "action_log",
@@ -188,32 +392,65 @@ class FogNodeRunner:
                     "zone_id": self.zone_id,
                     "timestamp": timestamp,
                     "actions": actions_logged,
-                    "reason": f"Risk state escalated to {zone_state}"
+                    "reason": self.override_reason if self.override_active else f"Risk state escalated to {zone_state}"
                 }
-                action_topic = f"ignis/v1/zone/{self.zone_id}/fog/action_log"
-                self.client.publish(action_topic, json.dumps(action_payload))
+                action_topic = f"ignis/v1/fog/zone/{self.zone_id}/action_log"
+                self.client_local.publish(action_topic, json.dumps(action_payload))
+                self.client_cloud.publish(action_topic, json.dumps(action_payload))
                 
             self.last_zone_state = zone_state
 
+    def publish_system_heartbeat(self):
+        """Sends regular system health metric messages."""
+        try:
+            timestamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+            heartbeat = {
+                "message_type": "heartbeat",
+                "version": "1",
+                "zone_id": self.zone_id,
+                "timestamp": timestamp,
+                "status": "ONLINE",
+                "override_active": self.override_active,
+                "override_state": self.override_state,
+                "sensors_policy": {
+                    "temp_c_threshold": self.fog_processor.sensor_limits["temperature_c"]["confirmation_threshold"],
+                    "humidity_pct_threshold": self.fog_processor.sensor_limits["humidity_pct"]["confirmation_threshold"],
+                    "gas_ppm_threshold": self.fog_processor.sensor_limits["gas_ppm"]["confirmation_threshold"]
+                }
+            }
+            heartbeat_topic = f"ignis/v1/system/fog/zone/{self.zone_id}/heartbeat"
+            self.client_local.publish(heartbeat_topic, json.dumps(heartbeat))
+            self.client_cloud.publish(heartbeat_topic, json.dumps(heartbeat))
+        except Exception as e:
+            logger.error(f"Error publishing system heartbeat: {e}")
+
     def start(self):
         logger.info(f"Starting Fog Node runner for Zone {self.zone_id}")
-        logger.info(f"Connecting to MQTT Broker at {self.mqtt_host}:{self.mqtt_port}")
         
-        self.client.connect(self.mqtt_host, self.mqtt_port, 60)
+        # Connect to brokers
+        logger.info(f"Connecting to LOCAL MQTT Broker at {self.local_host}:{self.local_port}")
+        self.client_local.connect(self.local_host, self.local_port, 60)
         
-        # Start a loop in background
-        self.client.loop_start()
+        logger.info(f"Connecting to CLOUD MQTT Broker at {self.cloud_host}:{self.cloud_port}")
+        self.client_cloud.connect(self.cloud_host, self.cloud_port, 60)
+        
+        # Start loops in background
+        self.client_local.loop_start()
+        self.client_cloud.loop_start()
         
         try:
             while True:
-                # Periodic verification / heartbeat (e.g. check for timeouts)
+                # Periodic verification, aggregation timeouts check, and heartbeats (every 5 seconds)
                 self.evaluate_and_publish_zone_status()
+                self.publish_system_heartbeat()
                 time.sleep(5)
         except KeyboardInterrupt:
             logger.info("Interrupt received, stopping...")
         finally:
-            self.client.loop_stop()
-            self.client.disconnect()
+            self.client_local.loop_stop()
+            self.client_cloud.loop_stop()
+            self.client_local.disconnect()
+            self.client_cloud.disconnect()
             logger.info("Fog Node stopped.")
 
 if __name__ == "__main__":
