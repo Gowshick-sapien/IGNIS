@@ -127,7 +127,7 @@ class EdgeNodeSimulator:
         if rc == 0:
             logger.info("Connected to MQTT broker successfully.")
             # Subscribe to control topic
-            control_topic = f"ignis/v1/zone/{self.zone_id}/edge/{self.node_id}/control"
+            control_topic = f"ignis/v1/system/zone/{self.zone_id}/edge/{self.node_id}/control"
             self.client.subscribe(control_topic)
             logger.info(f"Subscribed to control topic: {control_topic}")
         else:
@@ -177,7 +177,7 @@ class EdgeNodeSimulator:
         self.client.loop_start()
         
         self.running = True
-        reading_topic = f"ignis/v1/zone/{self.zone_id}/edge/{self.node_id}/reading"
+        reading_topic = f"ignis/v1/telemetry/zone/{self.zone_id}/edge/{self.node_id}"
         
         try:
             while self.running:
