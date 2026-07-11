@@ -3,6 +3,9 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from .mqtt_listener import MQTTListener
 from .scenario_service import ScenarioService
@@ -12,8 +15,8 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(na
 logger = logging.getLogger("control_center_app")
 
 # Fetch configuration from environment
-MQTT_HOST = os.environ.get("MQTT_HOST", "localhost")
-MQTT_PORT = int(os.environ.get("MQTT_PORT", 1883))
+MQTT_HOST = os.environ.get("LOCAL_MQTT_HOST", os.environ.get("MQTT_HOST", "localhost"))
+MQTT_PORT = int(os.environ.get("LOCAL_MQTT_PORT", os.environ.get("MQTT_PORT", "1883")))
 ZONE_ID = os.environ.get("ZONE_ID", "4B")
 
 # Lifespan manager for startup/shutdown actions

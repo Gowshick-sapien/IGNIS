@@ -96,9 +96,9 @@ class CloudDashboardDB:
           |> range(start: -1d)
           |> filter(fn: (r) => r["_measurement"] == "telemetry")
           |> filter(fn: (r) => r["zone_id"] == "{zone_id}")
-          |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
-          |> group(columns: ["node_id"])
+          |> toFloat()
           |> last()
+          |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
         '''
         try:
             tables = self.query_api.query(query, org=self.org)
@@ -123,12 +123,12 @@ class CloudDashboardDB:
         if not self.query_api:
             return health
             
-        # Query health measurements written within the last 30 seconds
+        # Query health measurements written within the last 2 minutes (to tolerate container clock drift)
         query = f'''
         from(bucket: "{self.bucket}")
-          |> range(start: -30s)
+          |> range(start: -2m)
           |> filter(fn: (r) => r["_measurement"] == "system_health")
-          |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+          |> filter(fn: (r) => r["_field"] == "status")
           |> group(columns: ["component"])
           |> last()
         '''
@@ -137,7 +137,7 @@ class CloudDashboardDB:
             for table in tables:
                 for r in table.records:
                     comp = r.values.get("component")
-                    status = r.values.get("status", "OFFLINE")
+                    status = r.get_value()
                     if comp == f"fog_node_{zone_id}":
                         health["Fog_Node"] = status
                     elif comp == "cloud_ingestor":
@@ -242,14 +242,15 @@ class CloudDashboardDB:
         from(bucket: "{self.bucket}")
           |> range(start: -5m)
           |> filter(fn: (r) => r["_measurement"] == "performance_metrics")
-          |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
           |> last()
+          |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
         '''
         
         count_query = f'''
         from(bucket: "{self.bucket}")
           |> range(start: -24h)
           |> filter(fn: (r) => r["_measurement"] == "telemetry")
+          |> filter(fn: (r) => r["_field"] == "sequence")
           |> count()
         '''
         try:
@@ -264,21 +265,26 @@ class CloudDashboardDB:
             
             # Archive Count Query
             tables = self.query_api.query(count_query, org=self.org)
+            messages_archived = 0
             for table in tables:
                 for r in table.records:
-                    metrics["messages_archived"] = r.get_value()
+                    messages_archived += r.get_value()
+            metrics["messages_archived"] = messages_archived
                     
-            # Calculate Telemetry Packets per second (based on count in last 30 seconds)
+            # Calculate Telemetry Packets per second (based on count in last 2 minutes)
             rate_query = f'''
             from(bucket: "{self.bucket}")
-              |> range(start: -30s)
+              |> range(start: -2m)
               |> filter(fn: (r) => r["_measurement"] == "telemetry")
+              |> filter(fn: (r) => r["_field"] == "sequence")
               |> count()
             '''
             tables = self.query_api.query(rate_query, org=self.org)
+            total_messages_2m = 0
             for table in tables:
                 for r in table.records:
-                    metrics["telemetry_rate_pps"] = round(r.get_value() / 30.0, 2)
+                    total_messages_2m += r.get_value()
+            metrics["telemetry_rate_pps"] = round(total_messages_2m / 120.0, 2)
         except Exception as e:
             logger.error(f"Error querying performance metrics: {e}")
             
