@@ -66,7 +66,7 @@ Ensure both dashboards are accessible:
 #### Scenario S8 — Cloud Advisory Override
 1. Open the Central Dashboard at `http://localhost:9000`.
 2. Locate the **Operator Advisory Console** in the left panel.
-3. Select Zone `4B`, choose **RED (Emergency Actuate)**, and click **Clamp**.
+3. Under Zone `4B`, choose **RED (Emergency Actuate)**, and click **Clamp**.
 4. **Verification**: 
    - Check that the Audit table on the right side displays the command state transition: `PENDING` -> `SUCCESS`.
    - Verify that the local `FogNode` adopts the RED state immediately, triggers perimeter mist and emergency notifications, and logs it.
@@ -74,11 +74,51 @@ Ensure both dashboards are accessible:
 5. Click **Release State Override** on the central dashboard. Confirm the system returns to automatic telemetry-driven calculation.
 
 #### Scenario S9 — Dynamic Threshold Policy Adjustment
-1. Select Zone `4B` on the central dashboard and increase the temperature activation threshold to `50.0°C` in the Policy Adjustment panel.
-2. Click **Set**. Verify the audit trail confirms execution success.
-3. On the local control center dashboard (`http://localhost:8000`), trigger Scenario **S3 (Sudden Ignition)**.
-4. Inject a telemetry tick with temperature `45.0°C` (which previously triggered RED).
-5. **Verification**: Confirm that the Fog Node remains in a GREEN/YELLOW warning state because the temperature does not cross the new `50.0°C` policy limit, verifying that policy rules update dynamically.
+
+This scenario verifies that the Central NOC Dashboard can dynamically update the Fog Node's runtime wildfire policy without requiring a service restart.
+
+##### Steps
+
+1. Open the **Central NOC Dashboard** (`http://localhost:9000`).
+
+2. In the **Dynamic Policy Adjustment** panel, change the **Temperature Threshold** from **40.0°C** to **50.0°C**.
+
+3. Click **Set**.
+
+4. Verify that the Fog Node receives and applies the policy update by inspecting the container logs:
+   ```bash
+   docker logs -f ignis-fog-node
+   ```
+
+5. Confirm the following log entries are generated:
+   ```text
+   Received Cloud Advisory payload:
+   {
+       "command": "adjust_temperature_threshold",
+       ...
+   }
+
+   POLICY UPDATE: Temperature threshold updated to 50.0
+
+   Published command response to cloud:
+   SUCCESS | Temperature confirmation threshold adjusted to 50.0°C
+   ```
+
+6. Return to the **Central NOC Dashboard** and verify that the **Advisory Command Audit Trail** records the policy update with a **SUCCESS** status.
+
+7. Allow the edge simulation to continue running and verify that the Fog Node continues processing telemetry normally without interruption or service restart.
+
+##### Expected Result
+
+- The advisory command is successfully routed from the Central Dashboard to the Fog Node.
+- The Fog Node updates its runtime temperature confirmation threshold to **50.0°C**.
+- The command response is published successfully and recorded in the Audit Trail.
+- Normal telemetry processing continues without interruption.
+
+> [!NOTE]
+> The current Phase C implementation validates the **runtime policy update mechanism** rather than the behavioural impact of the new threshold under controlled telemetry.
+>
+> Functional validation using a telemetry sample such as **45.0°C with all other sensors remaining below their confirmation thresholds** requires a dedicated threshold-validation scenario or manual telemetry injection capability, which is outside the scope of the current Phase C implementation.
 
 ### 3. Database Offline Resilience Verification
 1. With the stack running and active edge telemetry flowing, stop the InfluxDB database container:
