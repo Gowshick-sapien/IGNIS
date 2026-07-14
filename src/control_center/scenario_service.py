@@ -20,7 +20,14 @@ class ScenarioService:
         self.mqtt_port = mqtt_port
         self.zone_id = zone_id
         
-        self.active_nodes = ["E11", "E12", "E13"]
+        if self.zone_id == "4A":
+            self.active_nodes = ["4A-E1", "4A-E2", "4A-E3"]
+        elif self.zone_id == "4B":
+            self.active_nodes = ["4B-E1", "4B-E2", "4B-E3"]
+        elif self.zone_id == "4C":
+            self.active_nodes = ["4C-E1", "4C-E2", "4C-E3"]
+        else:
+            self.active_nodes = ["E11", "E12", "E13"]
         self.current_thread = None
         self.stop_event = threading.Event()
         self.running_scenario = None
@@ -65,6 +72,9 @@ class ScenarioService:
         elif scenario_id == "S4":
             steps = ScenarioGenerator.get_single_sensor_fault_scenario()
             target = self._run_localized_scenario
+        elif scenario_id == "S6":
+            steps = ScenarioGenerator.get_lateral_spread_scenario()
+            target = self._run_global_scenario
         else:
             logger.error(f"Unknown scenario ID: {scenario_id}")
             return False

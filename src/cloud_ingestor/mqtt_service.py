@@ -90,6 +90,11 @@ class CloudMQTTService:
                 zone_id = parts[4]
                 self.process_action_log(payload, zone_id)
                 
+            elif "lateral" in topic:
+                # ignis/v1/fog/zone/{zone_id}/lateral
+                zone_id = parts[4]
+                self.process_lateral_event(payload, zone_id)
+                
             elif "response" in topic:
                 # ignis/v1/advisory/zone/{zone_id}/response
                 zone_id = parts[4]
@@ -189,6 +194,17 @@ class CloudMQTTService:
             "reason": str(payload.get("reason", ""))
         }
         self.safe_write("action_logs", tags, fields, ts_str)
+
+    def process_lateral_event(self, payload: dict, zone_id: str):
+        ts_str = payload.get("timestamp")
+        tags = {"zone_id": zone_id}
+        fields = {
+            "state": str(payload.get("state", "GREEN")),
+            "wind_dir_deg": float(payload.get("wind_dir_deg", 0.0)),
+            "wind_speed_kmh": float(payload.get("wind_speed_kmh", 0.0)),
+            "whi": float(payload.get("whi", 0.0))
+        }
+        self.safe_write("lateral_events", tags, fields, ts_str)
 
     def process_advisory_response(self, payload: dict, zone_id: str):
         ts_str = payload.get("timestamp")

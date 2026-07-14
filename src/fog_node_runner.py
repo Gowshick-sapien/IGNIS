@@ -37,7 +37,7 @@ class FogNodeRunner:
         self.cloud_host = os.environ.get("CLOUD_MQTT_HOST", "localhost")
         self.cloud_port = int(os.environ.get("CLOUD_MQTT_PORT", 1884))
         
-        config_path = os.environ.get("CONFIG_PATH", os.path.join("config", "zone_config.json"))
+        config_path = os.environ.get("CONFIG_PATH", os.path.join("config", "zones_config.json"))
         self.config = self.load_config(config_path)
         
         # 2. Instantiate local decision processor
@@ -67,11 +67,23 @@ class FogNodeRunner:
         self.client_cloud.on_connect = self.on_connect_cloud
         self.client_cloud.on_message = self.on_message_cloud
         
+        # 6. Lateral Coordination State
+        self.neighbors = self.config.get("neighbors", [])
+        self.lateral_warning_timeout = self.config.get("lateral_warning_timeout_sec", 30)
+        self.active_lateral_warnings = {}  # zone_id -> {"zone_id": str, "state": str, "timestamp": float}
+        self.lateral_preemptive_active = False
+        
     def load_config(self, path: str) -> dict:
         if not os.path.exists(path):
             raise FileNotFoundError(f"Configuration file not found: {path}")
         with open(path, 'r') as f:
-            return json.load(f)
+            full_config = json.load(f)
+        defaults = full_config.get("defaults", {})
+        zone_data = full_config.get("zones", {}).get(self.zone_id, {})
+        # Merge: zone-specific overrides take precedence over defaults
+        config = {**defaults, **zone_data}
+        config["zone_id"] = self.zone_id
+        return config
 
     # ==========================================
     # Local MQTT Callbacks
@@ -121,15 +133,31 @@ class FogNodeRunner:
             advisory_topic = f"ignis/v1/advisory/zone/{self.zone_id}/command"
             self.client_cloud.subscribe(advisory_topic)
             logger.info(f"Subscribed to Cloud advisory topic: {advisory_topic}")
+            
+            # Sub-Phase D3: Subscribe to lateral coordination topic
+            lateral_topic = "ignis/v1/fog/zone/+/lateral"
+            self.client_cloud.subscribe(lateral_topic)
+            logger.info(f"Subscribed to lateral coordination topic: {lateral_topic}")
         else:
             logger.error(f"Failed to connect to CLOUD MQTT broker, code: {rc}")
 
     def on_message_cloud(self, client, userdata, msg):
-        """Processes advisory commands from the centralized cloud broker."""
+        """Processes incoming messages from the centralized cloud broker."""
         try:
+            topic = str(msg.topic) if msg.topic else ""
             payload = json.loads(msg.payload.decode())
-            logger.info(f"Received Cloud Advisory payload: {payload}")
             
+            # Route by message signature or topic
+            if "lateral" in topic or payload.get("message_type") == "lateral_broadcast" or "wind_dir_deg" in payload:
+                self._handle_lateral_warning(payload)
+            else:
+                logger.info(f"Received Cloud Advisory payload: {payload}")
+                self._handle_advisory_command(payload)
+        except Exception as e:
+            logger.error(f"Error handling cloud message: {e}")
+
+    def _handle_advisory_command(self, payload: dict):
+        try:
             command_id = payload.get("command_id")
             sequence_number = payload.get("sequence_number", 0)
             timestamp = payload.get("timestamp")
@@ -259,7 +287,95 @@ class FogNodeRunner:
                 self.publish_command_response(command_id, "FAILED", msg_details)
                 
         except Exception as e:
-            logger.error(f"Error handling cloud advisory message: {e}")
+            logger.error(f"Error executing cloud advisory command: {e}")
+
+    def _handle_lateral_warning(self, payload: dict):
+        try:
+            source_zone_id = payload.get("zone_id")
+            state = payload.get("state")
+            wind_dir_deg = payload.get("wind_dir_deg")
+            wind_speed_kmh = payload.get("wind_speed_kmh")
+            
+            if not source_zone_id or not state:
+                logger.warning("Received lateral warning payload missing zone_id or state.")
+                return
+                
+            if source_zone_id == self.zone_id:
+                # Ignore own broadcasts
+                return
+                
+            # Find the matching neighbor entry
+            neighbor = None
+            for n in self.neighbors:
+                if n.get("zone_id") == source_zone_id:
+                    neighbor = n
+                    break
+                    
+            if not neighbor:
+                # Not a neighbor, ignore
+                return
+                
+            # Check wind alignment and source state severity
+            aligned = self.check_wind_alignment(
+                wind_dir_deg, 
+                neighbor.get("bearing_from_neighbor", 0.0), 
+                neighbor.get("bearing_tolerance", 45.0)
+            )
+            
+            # Convert states to values for comparison
+            state_val = self.STATE_ORDER.get(state, 0)
+            yellow_val = self.STATE_ORDER.get("YELLOW", 1)
+            
+            if aligned and state_val >= yellow_val:
+                self.active_lateral_warnings[source_zone_id] = {
+                    "zone_id": source_zone_id,
+                    "state": state,
+                    "timestamp": time.time()
+                }
+                logger.info(f"Registered lateral warning from neighbor {source_zone_id} | State: {state}")
+            else:
+                # If not aligned, remove warning if it was previously registered
+                if source_zone_id in self.active_lateral_warnings:
+                    self.active_lateral_warnings.pop(source_zone_id)
+                    logger.info(f"Cleared lateral warning from neighbor {source_zone_id} (wind shifted or state reduced)")
+        except Exception as e:
+            logger.error(f"Error handling lateral warning: {e}")
+
+    @staticmethod
+    def check_wind_alignment(wind_deg: float, target_bearing: float, tolerance: float) -> bool:
+        """Returns True if wind_deg is within ±tolerance of target_bearing, handling 360° wrap."""
+        diff = abs(wind_deg - target_bearing) % 360
+        diff = min(diff, 360 - diff)
+        return diff <= tolerance
+
+    @staticmethod
+    def compute_vector_wind_average(readings: list) -> tuple:
+        """Returns (avg_dir_deg, avg_speed_kmh) using circular vector averaging."""
+        import math
+        if not readings:
+            return (0.0, 0.0)
+        sin_sum = sum(math.sin(math.radians(r.get("wind_dir_deg", 0))) for r in readings)
+        cos_sum = sum(math.cos(math.radians(r.get("wind_dir_deg", 0))) for r in readings)
+        avg_dir = math.degrees(math.atan2(sin_sum / len(readings), cos_sum / len(readings))) % 360
+        if avg_dir >= 360.0 - 1e-7:
+            avg_dir = 0.0
+        avg_speed = sum(r.get("wind_speed_kmh", 0) for r in readings) / len(readings)
+        return (avg_dir, avg_speed)
+
+    def _publish_lateral_broadcast(self, zone_state, zone_whi, wind_dir, wind_speed):
+        payload = {
+            "message_type": "lateral_broadcast",
+            "version": "1",
+            "zone_id": self.zone_id,
+            "state": zone_state,
+            "whi": float(zone_whi),
+            "wind_dir_deg": float(wind_dir),
+            "wind_speed_kmh": float(wind_speed),
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        }
+        topic = f"ignis/v1/fog/zone/{self.zone_id}/lateral"
+        self.client_cloud.publish(topic, json.dumps(payload))
+        logger.info(f"Published lateral broadcast: {zone_state} wind={wind_dir:.0f}°")
 
     def publish_command_response(self, command_id: str, status: str, details: str):
         payload = {
@@ -330,6 +446,30 @@ class FogNodeRunner:
             action for r in active_records for action in r.get("actions_logged", [])
         ))
         
+        # --- Lateral Pre-emptive Logic ---
+        # 1. Expire stale warnings
+        if not hasattr(self, "active_lateral_warnings"):
+            self.active_lateral_warnings = {}
+        if not hasattr(self, "lateral_warning_timeout"):
+            self.lateral_warning_timeout = 30
+        if not hasattr(self, "lateral_preemptive_active"):
+            self.lateral_preemptive_active = False
+
+        now = time.time()
+        self.active_lateral_warnings = {
+            zid: w for zid, w in self.active_lateral_warnings.items()
+            if now - w["timestamp"] < self.lateral_warning_timeout
+        }
+        
+        # 2. Pre-emptive escalation: if any active warnings and we are GREEN
+        lateral_sources = []
+        if self.active_lateral_warnings and zone_state == "GREEN":
+            zone_state = "YELLOW"
+            self.lateral_preemptive_active = True
+            lateral_sources = list(self.active_lateral_warnings.values())
+        else:
+            self.lateral_preemptive_active = False
+
         # APPLY CENTRAL CLOUD ADVISORY OVERRIDES
         if self.override_active:
             zone_state = self.override_state
@@ -349,7 +489,9 @@ class FogNodeRunner:
             "is_state_clamped": bool(is_clamped),
             "confirming_sensors": confirming_sensors,
             "active_nodes": active_node_ids,
-            "override_active": self.override_active
+            "override_active": self.override_active,
+            "preemptive_escalation": self.lateral_preemptive_active,
+            "lateral_warning_sources": lateral_sources
         }
         
         state_topic = f"ignis/v1/fog/zone/{self.zone_id}/state"
@@ -398,6 +540,12 @@ class FogNodeRunner:
                 self.client_local.publish(action_topic, json.dumps(action_payload))
                 self.client_cloud.publish(action_topic, json.dumps(action_payload))
                 
+            # Publish lateral broadcast on state transitions (YELLOW+)
+            if self.STATE_ORDER.get(zone_state, 0) >= self.STATE_ORDER["YELLOW"]:
+                raw_readings = [r.get("raw_reading", {}) for r in active_records if r.get("raw_reading")]
+                wind_dir_avg, wind_speed_avg = self.compute_vector_wind_average(raw_readings)
+                self._publish_lateral_broadcast(zone_state, zone_whi, wind_dir_avg, wind_speed_avg)
+
             self.last_zone_state = zone_state
 
     def publish_system_heartbeat(self):

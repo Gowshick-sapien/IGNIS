@@ -16,6 +16,7 @@ class AdvisoryCommandRequest(BaseModel):
     parameters: dict
     issued_by: str = "regional_operator"
     ttl: int = 300
+    zone_id: str = "4B"
 
 @router.get("/", response_class=HTMLResponse)
 async def read_index():
@@ -26,11 +27,20 @@ async def read_index():
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Cloud dashboard index template not found.")
 
+@router.get("/api/zones")
+async def get_zones(request: Request):
+    db = request.app.state.db
+    return db.get_all_zone_states()
+
+@router.get("/api/lateral-timeline")
+async def get_lateral_timeline(request: Request, minutes: int = 10):
+    db = request.app.state.db
+    return db.get_lateral_events(minutes)
+
 @router.get("/api/snapshot")
-async def get_snapshot(request: Request):
+async def get_snapshot(request: Request, zone_id: str = "4B"):
     """Statelessly aggregates snapshot details by querying InfluxDB."""
     db = request.app.state.db
-    zone_id = request.app.state.zone_id
     
     # Check InfluxDB health
     influx_health = db.ping_influx()
@@ -80,10 +90,9 @@ async def get_snapshot(request: Request):
     }
 
 @router.get("/api/history")
-async def get_history(request: Request, minutes: int = 15, season: str = "summer"):
+async def get_history(request: Request, zone_id: str = "4B", minutes: int = 15, season: str = "summer"):
     """Queries time-series averages and merges them with local historical baseline overlays."""
     db = request.app.state.db
-    zone_id = request.app.state.zone_id
     
     # 1. Fetch Influx historical data
     ts_data = db.get_historical_chart_data(zone_id, minutes)
@@ -99,7 +108,7 @@ async def get_history(request: Request, minutes: int = 15, season: str = "summer
 @router.post("/api/advisory")
 async def post_advisory(request: Request, body: AdvisoryCommandRequest):
     """Routes advisory commands from NOC dashboard to Fog Node using a one-off publish client."""
-    zone_id = request.app.state.zone_id
+    zone_id = body.zone_id
     
     # Generate monotonic sequence number in-memory
     request.app.state.command_sequence += 1
