@@ -1,0 +1,38 @@
+{
+  "decision_latency": {
+    "avg_sec": 0.12,
+    "max_sec": 0.15,
+    "min_sec": 0.08,
+    "all_latencies": [
+      0.12,
+      0.15,
+      0.08,
+      0.14,
+      0.11
+    ]
+  },
+  "lateral_propagation": {
+    "avg_propagation_sec": 3.4,
+    "propagation_times": [
+      3.4,
+      3.2,
+      3.6
+    ]
+  },
+  "false_positive_rate": {
+    "rate": 0.0,
+    "total_trials": 5,
+    "false_positives": 0
+  },
+  "offline_continuity": {
+    "uninterrupted_execution": false,
+    "total_enqueued": 0,
+    "flushed_count": 0,
+    "flush_success_rate": 1.0
+  },
+  "concurrent_zone_integrity": {
+    "cross_talk_detected": 0,
+    "total_messages_processed": 173,
+    "message_loss_pct": 0.0
+  }
+}

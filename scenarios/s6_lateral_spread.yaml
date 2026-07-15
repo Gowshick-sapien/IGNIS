@@ -1,0 +1,92 @@
+scenario_id: "S6"
+description: "Lateral Spread — Zone 4B escalates with wind blowing south toward Zone 4C."
+version: "1.0"
+target:
+  mode: "global"
+  zone_ids: ["4B"]
+steps:
+  - index: 0
+    duration_sec: 4
+    sensor_data:
+      temperature_c: 28.0
+      humidity_pct: 55.0
+      wind_speed_kmh: 12.0
+      wind_dir_deg: 180.0
+      soil_moisture_pct: 28.0
+      gas_ppm: 12.0
+      thermal_anomaly_c: 0.2
+      light_lux: 25000.0
+      rain_mm: 0.0
+    seasonal_baseline: 0.85
+  - index: 1
+    duration_sec: 4
+    sensor_data:
+      temperature_c: 28.0
+      humidity_pct: 55.0
+      wind_speed_kmh: 12.0
+      wind_dir_deg: 180.0
+      soil_moisture_pct: 28.0
+      gas_ppm: 12.0
+      thermal_anomaly_c: 0.2
+      light_lux: 25000.0
+      rain_mm: 0.0
+    seasonal_baseline: 0.85
+  - index: 2
+    duration_sec: 4
+    sensor_data:
+      temperature_c: 38.0
+      humidity_pct: 28.0
+      wind_speed_kmh: 15.0
+      wind_dir_deg: 180.0
+      soil_moisture_pct: 18.0
+      gas_ppm: 29.0
+      thermal_anomaly_c: 2.5
+      light_lux: 24000.0
+      rain_mm: 0.0
+    seasonal_baseline: 0.85
+  - index: 3
+    duration_sec: 4
+    sensor_data:
+      temperature_c: 38.0
+      humidity_pct: 28.0
+      wind_speed_kmh: 15.0
+      wind_dir_deg: 180.0
+      soil_moisture_pct: 18.0
+      gas_ppm: 29.0
+      thermal_anomaly_c: 2.5
+      light_lux: 24000.0
+      rain_mm: 0.0
+    seasonal_baseline: 0.85
+  - index: 4
+    duration_sec: 4
+    sensor_data:
+      temperature_c: 48.0
+      humidity_pct: 12.0
+      wind_speed_kmh: 22.0
+      wind_dir_deg: 180.0
+      soil_moisture_pct: 8.0
+      gas_ppm: 85.0
+      thermal_anomaly_c: 7.5
+      light_lux: 20000.0
+      rain_mm: 0.0
+    seasonal_baseline: 0.85
+  - index: 5
+    duration_sec: 4
+    sensor_data:
+      temperature_c: 48.0
+      humidity_pct: 12.0
+      wind_speed_kmh: 22.0
+      wind_dir_deg: 180.0
+      soil_moisture_pct: 8.0
+      gas_ppm: 85.0
+      thermal_anomaly_c: 7.5
+      light_lux: 20000.0
+      rain_mm: 0.0
+    seasonal_baseline: 0.85
+chaos_actions: []
+expected_outcome:
+  final_state: "RED"
+  max_state_allowed: "RED"
+  is_clamped: false
+metrics_targets:
+  lateral_propagation_time: true

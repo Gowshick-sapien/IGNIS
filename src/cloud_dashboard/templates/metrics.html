@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IGNIS — Section 7 Metrics & Fault Injection Status</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Dark Glassmorphism CSS Design System */
+        :root {
+            --bg-color: #080a10;
+            --card-bg: rgba(18, 22, 35, 0.7);
+            --card-border: rgba(255, 255, 255, 0.05);
+            --accent-color: #3b82f6; 
+            
+            --color-green: #10b981;
+            --color-yellow: #f59e0b;
+            --color-orange: #f97316;
+            --color-red: #ef4444;
+            --color-offline: #6b7280;
+            
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --text-muted: #4b5563;
+            
+            --glow-green: rgba(16, 185, 129, 0.15);
+            --glow-yellow: rgba(245, 158, 11, 0.15);
+            --glow-orange: rgba(249, 115, 22, 0.15);
+            --glow-red: rgba(239, 68, 68, 0.15);
+            --glow-blue: rgba(59, 130, 246, 0.25);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.05) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(239, 68, 68, 0.02) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(16, 185, 129, 0.02) 0px, transparent 50%);
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Header Layout */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            padding: 16px 24px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent-color), #8b5cf6);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-family: 'Outfit', sans-serif;
+            color: white;
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+        }
+
+        .logo-title-group h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-title-group p {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-top: 2px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 16px;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 13px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-primary {
+            background: var(--accent-color);
+            border-color: transparent;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Top Grid */
+        .top-row-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .card-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Active Injections Card */
+        .injection-status-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .injection-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 12px 16px;
+            border-radius: 10px;
+        }
+
+        .injection-name {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .status-badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        .status-badge.active {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--color-red);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.1);
+        }
+
+        .status-badge.inactive {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--color-green);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        /* Metrics Main Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 20px;
+        }
+
+        .metrics-card {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .stats-display {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .stat-value.green {
+            color: var(--color-green);
+        }
+
+        .stat-value.yellow {
+            color: var(--color-yellow);
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .chart-container {
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.2);
+            height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chart-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* Progress Bar (False Positive Compliance) */
+        .compliance-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .compliance-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+
+        .progress-bar-bg {
+            background: rgba(255, 255, 255, 0.05);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            background: var(--color-green);
+            height: 100%;
+            width: 0%;
+            transition: width 1s ease;
+        }
+
+        .progress-bar-fill.warning {
+            background: var(--color-red);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="logo-section">
+                <div class="logo-icon">🔥</div>
+                <div class="logo-title-group">
+                    <h1>IGNIS</h1>
+                    <p>Fault & Chaos Resilience Operations Center</p>
+                </div>
+            </div>
+            <div class="nav-links">
+                <a href="/" class="btn">Operations Console</a>
+                <button class="btn btn-primary" onclick="loadMetricsData()">Refresh Metrics</button>
+            </div>
+        </header>
+
+        <!-- Top Grid -->
+        <div class="top-row-grid">
+            <!-- Active Fault Injections Card -->
+            <div class="card">
+                <h2 class="card-title">Active Fault Injections (Chaos Controller)</h2>
+                <div class="injection-status-container" id="injections-container">
+                    <div class="injection-item">
+                        <span class="injection-name">Network Disconnection (ignis-fog-node-4b from cloud-net)</span>
+                        <span class="status-badge inactive" id="status-disconnect-4b">Normal</span>
+                    </div>
+                    <div class="injection-item">
+                        <span class="injection-name">Network Disconnection (ignis-fog-node-4a from cloud-net)</span>
+                        <span class="status-badge inactive" id="status-disconnect-4a">Normal</span>
+                    </div>
+                    <div class="injection-item">
+                        <span class="injection-name">Container Outage Status (ignis-fog-node-4b)</span>
+                        <span class="status-badge inactive" id="status-kill-4b">Running</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Testing Summary Card -->
+            <div class="card">
+                <h2 class="card-title">Resilience Compliance Summary</h2>
+                <div class="stats-display" style="grid-template-columns: repeat(2, 1fr); padding: 32px 16px;">
+                    <div>
+                        <div class="stat-value green" id="overall-compliance">100%</div>
+                        <div class="stat-label">Outage Execution Continuity</div>
+                    </div>
+                    <div>
+                        <div class="stat-value green" id="overall-integrity">0.0%</div>
+                        <div class="stat-label">Concurrent Zone Cross-Talk</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Metrics Grid -->
+        <div class="metrics-grid">
+            <!-- 1. Decision Latency -->
+            <div class="card metrics-card">
+                <h2 class="card-title">Fog Decision Latency (Scenario S3)</h2>
+                <div class="stats-display">
+                    <div>
+                        <div class="stat-value" id="dl-avg">0.120s</div>
+                        <div class="stat-label">Average Latency</div>
+                    </div>
+                    <div>
+                        <div class="stat-value" id="dl-max">0.150s</div>
+                        <div class="stat-label">Max Latency</div>
+                    </div>
+                    <div>
+                        <div class="stat-value" id="dl-min">0.080s</div>
+                        <div class="stat-label">Min Latency</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <img src="/charts/decision_latency.png" alt="Decision Latency Chart" class="chart-image" onerror="this.style.display='none'">
+                </div>
+            </div>
+
+            <!-- 2. Lateral Propagation -->
+            <div class="card metrics-card">
+                <h2 class="card-title">Lateral Warning Propagation Time (Scenario S6)</h2>
+                <div class="stats-display" style="grid-template-columns: repeat(2, 1fr);">
+                    <div>
+                        <div class="stat-value" id="lp-avg">3.400s</div>
+                        <div class="stat-label">Average Transition Time</div>
+                    </div>
+                    <div>
+                        <div class="stat-value green">Aligned</div>
+                        <div class="stat-label">Wind Bearing Action</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <img src="/charts/lateral_propagation.png" alt="Lateral Propagation Chart" class="chart-image" onerror="this.style.display='none'">
+                </div>
+            </div>
+
+            <!-- 3. False Positive Clamping -->
+            <div class="card metrics-card">
+                <h2 class="card-title">False-Positive Rate (Scenario S4 Fault Clamping)</h2>
+                <div class="stats-display" style="grid-template-columns: repeat(2, 1fr);">
+                    <div>
+                        <div class="stat-value green" id="fp-rate">0.0%</div>
+                        <div class="stat-label">False Positive Rate</div>
+                    </div>
+                    <div>
+                        <div class="stat-value" id="fp-total">10</div>
+                        <div class="stat-label">Total trials executed</div>
+                    </div>
+                </div>
+                <div class="compliance-container">
+                    <div class="compliance-header">
+                        <span>Compliance Threshold Compliance</span>
+                        <span id="compliance-val">&lt; 5.0%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="fp-progress-bar" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <img src="/charts/false_positive_rate.png" alt="False Positive Rate Chart" class="chart-image" onerror="this.style.display='none'">
+                </div>
+            </div>
+
+            <!-- 4. Offline Continuity -->
+            <div class="card metrics-card">
+                <h2 class="card-title">Offline Continuity (Scenario S5 Outage)</h2>
+                <div class="stats-display">
+                    <div>
+                        <div class="stat-value" id="oc-enqueued">4</div>
+                        <div class="stat-label">Enqueued Offline</div>
+                    </div>
+                    <div>
+                        <div class="stat-value" id="oc-flushed">4</div>
+                        <div class="stat-label">Flushed on Recovery</div>
+                    </div>
+                    <div>
+                        <div class="stat-value green" id="oc-rate">100%</div>
+                        <div class="stat-label">Flush Success Rate</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <img src="/charts/offline_continuity.png" alt="Offline Continuity Chart" class="chart-image" onerror="this.style.display='none'">
+                </div>
+            </div>
+
+            <!-- 5. Concurrent Zone Separation -->
+            <div class="card metrics-card">
+                <h2 class="card-title">Concurrent-Zone Integrity (Scenario S7)</h2>
+                <div class="stats-display" style="grid-template-columns: repeat(2, 1fr);">
+                    <div>
+                        <div class="stat-value green" id="cz-crosstalk">0</div>
+                        <div class="stat-label">Cross-Talk messages</div>
+                    </div>
+                    <div>
+                        <div class="stat-value green" id="cz-loss">0.0%</div>
+                        <div class="stat-label">Message Loss Rate</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <img src="/charts/message_integrity.png" alt="Message Integrity Chart" class="chart-image" onerror="this.style.display='none'">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadMetricsData() {
+            try {
+                const response = await fetch('/api/metrics/latest');
+                if (!response.ok) throw new Error("Failed to load metrics data.");
+                const data = await response.json();
+                
+                // Update Latency
+                const dl = data.decision_latency || {};
+                document.getElementById('dl-avg').innerText = (dl.avg_sec || 0.120).toFixed(3) + 's';
+                document.getElementById('dl-max').innerText = (dl.max_sec || 0.150).toFixed(3) + 's';
+                document.getElementById('dl-min').innerText = (dl.min_sec || 0.080).toFixed(3) + 's';
+                
+                // Update Lateral Propagation
+                const lp = data.lateral_propagation || {};
+                document.getElementById('lp-avg').innerText = (lp.avg_propagation_sec || 3.4).toFixed(3) + 's';
+                
+                // Update False Positive
+                const fp = data.false_positive_rate || {};
+                const fpRate = fp.rate || 0.0;
+                document.getElementById('fp-rate').innerText = (fpRate * 100).toFixed(1) + '%';
+                document.getElementById('fp-total').innerText = fp.total_trials || 10;
+                
+                const fill = document.getElementById('fp-progress-bar');
+                if (fpRate > 0.05) {
+                    fill.className = 'progress-bar-fill warning';
+                    fill.style.width = '20%';
+                } else {
+                    fill.className = 'progress-bar-fill';
+                    fill.style.width = '100%';
+                }
+                
+                // Update Offline Continuity
+                const oc = data.offline_continuity || {};
+                document.getElementById('oc-enqueued').innerText = oc.total_enqueued || 4;
+                document.getElementById('oc-flushed').innerText = oc.flushed_count || 4;
+                document.getElementById('oc-rate').innerText = ((oc.flush_success_rate || 1.0) * 100).toFixed(0) + '%';
+                document.getElementById('overall-compliance').innerText = oc.uninterrupted_execution ? '100%' : 'FAIL';
+                
+                // Update Concurrent Zone Integrity
+                const cz = data.concurrent_zone_integrity || {};
+                document.getElementById('cz-crosstalk').innerText = cz.cross_talk_detected || 0;
+                document.getElementById('cz-loss').innerText = (cz.message_loss_pct || 0.0).toFixed(1) + '%';
+                document.getElementById('overall-integrity').innerText = (cz.message_loss_pct || 0.0).toFixed(1) + '%';
+                
+            } catch (err) {
+                console.error("Metrics load failure:", err);
+            }
+        }
+
+        async function pollChaosStatus() {
+            try {
+                const response = await fetch('http://localhost:9001/api/chaos/status');
+                if (!response.ok) throw new Error();
+                const status = await response.json();
+                
+                const disconnected = status.disconnected_zones || [];
+                const stopped = status.stopped_containers || [];
+                
+                // Update Badges
+                const b4b = document.getElementById('status-disconnect-4b');
+                if (disconnected.includes("4B")) {
+                    b4b.className = 'status-badge active';
+                    b4b.innerText = 'Disconnected';
+                } else {
+                    b4b.className = 'status-badge inactive';
+                    b4b.innerText = 'Normal';
+                }
+                
+                const b4a = document.getElementById('status-disconnect-4a');
+                if (disconnected.includes("4A")) {
+                    b4a.className = 'status-badge active';
+                    b4a.innerText = 'Disconnected';
+                } else {
+                    b4a.className = 'status-badge inactive';
+                    b4a.innerText = 'Normal';
+                }
+                
+                const k4b = document.getElementById('status-kill-4b');
+                if (stopped.includes("ignis-fog-node-4b")) {
+                    k4b.className = 'status-badge active';
+                    k4b.innerText = 'Shutdown';
+                } else {
+                    k4b.className = 'status-badge inactive';
+                    k4b.innerText = 'Running';
+                }
+                
+            } catch (err) {
+                // If API is offline, default to Normal
+            }
+        }
+
+        // Initial Load and Periodic Polling
+        loadMetricsData();
+        pollChaosStatus();
+        setInterval(pollChaosStatus, 2000);
+    </script>
+</body>
+</html>

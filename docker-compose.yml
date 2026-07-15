@@ -37,6 +37,9 @@ services:
     volumes:
       - ./config/mosquitto_cloud.conf:/mosquitto/config/mosquitto.conf:ro
     restart: always
+    networks:
+      - cloud-net
+
 
   influxdb:
     image: influxdb:2.7
@@ -50,6 +53,9 @@ services:
       - DOCKER_INFLUXDB_INIT_BUCKET=ignis-telemetry
       - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=ignis-super-secret-token
     restart: always
+    networks:
+      - cloud-net
+
 
   cloud-ingestor:
     build: .
@@ -58,6 +64,9 @@ services:
     depends_on: [cloud-broker, influxdb]
     env_file: [.env]
     restart: unless-stopped
+    networks:
+      - cloud-net
+
 
   cloud-dashboard:
     build: .
@@ -66,8 +75,13 @@ services:
     ports: ["9000:9000"]
     depends_on: [cloud-broker, influxdb]
     env_file: [.env]
-    volumes: [./historical:/app/historical]
+    volumes:
+      - ./historical:/app/historical
+      - ./docs:/app/docs
     restart: unless-stopped
+    networks:
+      - cloud-net
+
 
   # =============================================
   # Zone 4A — Simlipal North
@@ -85,6 +99,10 @@ services:
       - ZONE_ID=4A
       - LOCAL_MQTT_HOST=mqtt-broker-4a
       - CONFIG_PATH=config/zones_config.json
+    networks:
+      - default
+      - cloud-net
+
 
   edge-sim-4a-e1:
     <<: *edge-template
@@ -135,6 +153,10 @@ services:
       - ZONE_ID=4B
       - LOCAL_MQTT_HOST=mqtt-broker-4b
       - CONFIG_PATH=config/zones_config.json
+    networks:
+      - default
+      - cloud-net
+
 
   edge-sim-4b-e1:
     <<: *edge-template
@@ -185,6 +207,10 @@ services:
       - ZONE_ID=4C
       - LOCAL_MQTT_HOST=mqtt-broker-4c
       - CONFIG_PATH=config/zones_config.json
+    networks:
+      - default
+      - cloud-net
+
 
   edge-sim-4c-e1:
     <<: *edge-template
@@ -233,3 +259,8 @@ services:
       - ZONE_ID=4B
       - LOCAL_MQTT_HOST=mqtt-broker-4b
     restart: unless-stopped
+ 
+networks:
+  cloud-net:
+    driver: bridge
+

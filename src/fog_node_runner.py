@@ -16,6 +16,8 @@ load_dotenv()
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from src.fog_node import FogNode
+from src.clock import default_clock
+from src.buffered_publisher import BufferedPublisher
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -25,7 +27,31 @@ class FogNodeRunner:
     """Manages the Fog Node service daemon, communicating with both Local and Cloud Brokers."""
     STATE_ORDER = {"GREEN": 0, "YELLOW": 1, "ORANGE": 2, "RED": 3}
     
-    def __init__(self):
+    @property
+    def clock(self):
+        if not hasattr(self, "_clock"):
+            self._clock = default_clock
+        return self._clock
+
+    @clock.setter
+    def clock(self, val):
+        self._clock = val
+
+    @property
+    def cloud_publisher(self):
+        if not hasattr(self, "_cloud_publisher"):
+            client = getattr(self, "client_cloud", None)
+            self._cloud_publisher = BufferedPublisher(client, clock=self.clock)
+            self._cloud_publisher.on_connect()
+        return self._cloud_publisher
+
+    @cloud_publisher.setter
+    def cloud_publisher(self, val):
+        self._cloud_publisher = val
+
+    def __init__(self, clock=default_clock):
+        self.clock = clock
+        
         # 1. Fetch Configuration from Environment (initialized from .env)
         self.zone_id = os.environ.get("ZONE_ID", "4B")
         
@@ -66,6 +92,9 @@ class FogNodeRunner:
         self.client_cloud = mqtt.Client(client_id=f"fog_node_cloud_{self.zone_id}")
         self.client_cloud.on_connect = self.on_connect_cloud
         self.client_cloud.on_message = self.on_message_cloud
+        self.client_cloud.on_disconnect = self.on_disconnect_cloud
+        
+        self.cloud_publisher = BufferedPublisher(self.client_cloud, clock=self.clock)
         
         # 6. Lateral Coordination State
         self.neighbors = self.config.get("neighbors", [])
@@ -115,7 +144,7 @@ class FogNodeRunner:
             # B. Dual Reporting: Forward raw telemetry to the Cloud Broker
             # Topic: ignis/v1/telemetry/zone/{zone_id}/edge/{node_id}
             cloud_telemetry_topic = f"ignis/v1/telemetry/zone/{self.zone_id}/edge/{node_id}"
-            self.client_cloud.publish(cloud_telemetry_topic, json.dumps(payload))
+            self.cloud_publisher.publish(cloud_telemetry_topic, json.dumps(payload))
             
             # C. Aggregate and Publish Zone Status
             self.evaluate_and_publish_zone_status()
@@ -129,6 +158,10 @@ class FogNodeRunner:
     def on_connect_cloud(self, client, userdata, flags, rc):
         if rc == 0:
             logger.info(f"Connected to CLOUD MQTT broker at {self.cloud_host}:{self.cloud_port}")
+            self.cloud_publisher.on_connect()
+            flushed = self.cloud_publisher.flush()
+            if flushed > 0:
+                logger.info(f"Flushed {flushed} buffered messages to cloud broker.")
             # Subscribe to Cloud Advisory channel: ignis/v1/advisory/zone/{zone_id}/command
             advisory_topic = f"ignis/v1/advisory/zone/{self.zone_id}/command"
             self.client_cloud.subscribe(advisory_topic)
@@ -140,6 +173,10 @@ class FogNodeRunner:
             logger.info(f"Subscribed to lateral coordination topic: {lateral_topic}")
         else:
             logger.error(f"Failed to connect to CLOUD MQTT broker, code: {rc}")
+
+    def on_disconnect_cloud(self, client, userdata, rc):
+        self.cloud_publisher.on_disconnect()
+        logger.warning(f"Disconnected from CLOUD MQTT broker. Return code: {rc}")
 
     def on_message_cloud(self, client, userdata, msg):
         """Processes incoming messages from the centralized cloud broker."""
@@ -194,7 +231,7 @@ class FogNodeRunner:
                     self.publish_command_response(command_id, "FAILED", f"Invalid timestamp format: {timestamp}")
                     return
             
-            now_epoch = calendar.timegm(time.gmtime())
+            now_epoch = self.clock.time()
             elapsed = now_epoch - cmd_epoch
             if elapsed > ttl or elapsed < -60: # Allow 1 min clock skew
                 self.publish_command_response(command_id, "FAILED", f"Command expired. Elapsed time: {elapsed}s, TTL: {ttl}s")
@@ -330,7 +367,7 @@ class FogNodeRunner:
                 self.active_lateral_warnings[source_zone_id] = {
                     "zone_id": source_zone_id,
                     "state": state,
-                    "timestamp": time.time()
+                    "timestamp": self.clock.time()
                 }
                 logger.info(f"Registered lateral warning from neighbor {source_zone_id} | State: {state}")
             else:
@@ -340,14 +377,14 @@ class FogNodeRunner:
                     logger.info(f"Cleared lateral warning from neighbor {source_zone_id} (wind shifted or state reduced)")
         except Exception as e:
             logger.error(f"Error handling lateral warning: {e}")
-
+ 
     @staticmethod
     def check_wind_alignment(wind_deg: float, target_bearing: float, tolerance: float) -> bool:
         """Returns True if wind_deg is within ±tolerance of target_bearing, handling 360° wrap."""
         diff = abs(wind_deg - target_bearing) % 360
         diff = min(diff, 360 - diff)
         return diff <= tolerance
-
+ 
     @staticmethod
     def compute_vector_wind_average(readings: list) -> tuple:
         """Returns (avg_dir_deg, avg_speed_kmh) using circular vector averaging."""
@@ -361,7 +398,7 @@ class FogNodeRunner:
             avg_dir = 0.0
         avg_speed = sum(r.get("wind_speed_kmh", 0) for r in readings) / len(readings)
         return (avg_dir, avg_speed)
-
+ 
     def _publish_lateral_broadcast(self, zone_state, zone_whi, wind_dir, wind_speed):
         payload = {
             "message_type": "lateral_broadcast",
@@ -371,10 +408,10 @@ class FogNodeRunner:
             "whi": float(zone_whi),
             "wind_dir_deg": float(wind_dir),
             "wind_speed_kmh": float(wind_speed),
-            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+            "timestamp": self.clock.strftime("%Y-%m-%dT%H:%M:%SZ")
         }
         topic = f"ignis/v1/fog/zone/{self.zone_id}/lateral"
-        self.client_cloud.publish(topic, json.dumps(payload))
+        self.cloud_publisher.publish(topic, json.dumps(payload))
         logger.info(f"Published lateral broadcast: {zone_state} wind={wind_dir:.0f}°")
 
     def publish_command_response(self, command_id: str, status: str, details: str):
@@ -383,13 +420,13 @@ class FogNodeRunner:
             "version": "1",
             "command_id": command_id,
             "zone_id": self.zone_id,
-            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "timestamp": self.clock.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "status": status,
             "error_reason": details if status == "FAILED" else "",
             "details": details if status == "SUCCESS" else ""
         }
         response_topic = f"ignis/v1/advisory/zone/{self.zone_id}/response"
-        self.client_cloud.publish(response_topic, json.dumps(payload))
+        self.cloud_publisher.publish(response_topic, json.dumps(payload))
         logger.info(f"Published command response to cloud: {status} | {details}")
 
     # ==========================================
@@ -399,7 +436,7 @@ class FogNodeRunner:
         if not self.node_states:
             return
             
-        now = time.time()
+        now = self.clock.time()
         active_records = []
         active_node_ids = []
         
@@ -455,7 +492,7 @@ class FogNodeRunner:
         if not hasattr(self, "lateral_preemptive_active"):
             self.lateral_preemptive_active = False
 
-        now = time.time()
+        now = self.clock.time()
         self.active_lateral_warnings = {
             zid: w for zid, w in self.active_lateral_warnings.items()
             if now - w["timestamp"] < self.lateral_warning_timeout
@@ -476,7 +513,7 @@ class FogNodeRunner:
             is_clamped = True
             actions_logged = self.override_actions
             
-        timestamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        timestamp = self.clock.strftime("%Y-%m-%dT%H:%M:%SZ")
         
         # 1. Publish Zone State Heartbeat (to Local & Cloud)
         state_payload = {
@@ -496,7 +533,7 @@ class FogNodeRunner:
         
         state_topic = f"ignis/v1/fog/zone/{self.zone_id}/state"
         self.client_local.publish(state_topic, json.dumps(state_payload))
-        self.client_cloud.publish(state_topic, json.dumps(state_payload))
+        self.cloud_publisher.publish(state_topic, json.dumps(state_payload))
         
         # 2. Trigger Alert on State Transitions
         if zone_state != self.last_zone_state:
@@ -524,7 +561,7 @@ class FogNodeRunner:
             }
             alert_topic = f"ignis/v1/fog/zone/{self.zone_id}/alert"
             self.client_local.publish(alert_topic, json.dumps(alert_payload))
-            self.client_cloud.publish(alert_topic, json.dumps(alert_payload))
+            self.cloud_publisher.publish(alert_topic, json.dumps(alert_payload))
             
             # Action Logs if ORANGE or RED
             if zone_state in ("ORANGE", "RED"):
@@ -538,7 +575,11 @@ class FogNodeRunner:
                 }
                 action_topic = f"ignis/v1/fog/zone/{self.zone_id}/action_log"
                 self.client_local.publish(action_topic, json.dumps(action_payload))
-                self.client_cloud.publish(action_topic, json.dumps(action_payload))
+                self.cloud_publisher.publish(action_topic, json.dumps(action_payload))
+                
+                # Local continuity logging during offline periods
+                if not self.cloud_publisher.is_connected:
+                    logger.info(f"[Offline Continuity] Action Log: {json.dumps(action_payload)}")
                 
             # Publish lateral broadcast on state transitions (YELLOW+)
             if self.STATE_ORDER.get(zone_state, 0) >= self.STATE_ORDER["YELLOW"]:
@@ -551,7 +592,7 @@ class FogNodeRunner:
     def publish_system_heartbeat(self):
         """Sends regular system health metric messages."""
         try:
-            timestamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+            timestamp = self.clock.strftime("%Y-%m-%dT%H:%M:%SZ")
             heartbeat = {
                 "message_type": "heartbeat",
                 "version": "1",
@@ -568,7 +609,7 @@ class FogNodeRunner:
             }
             heartbeat_topic = f"ignis/v1/system/fog/zone/{self.zone_id}/heartbeat"
             self.client_local.publish(heartbeat_topic, json.dumps(heartbeat))
-            self.client_cloud.publish(heartbeat_topic, json.dumps(heartbeat))
+            self.cloud_publisher.publish(heartbeat_topic, json.dumps(heartbeat))
         except Exception as e:
             logger.error(f"Error publishing system heartbeat: {e}")
 
@@ -591,7 +632,7 @@ class FogNodeRunner:
                 # Periodic verification, aggregation timeouts check, and heartbeats (every 5 seconds)
                 self.evaluate_and_publish_zone_status()
                 self.publish_system_heartbeat()
-                time.sleep(5)
+                self.clock.sleep(5)
         except KeyboardInterrupt:
             logger.info("Interrupt received, stopping...")
         finally:

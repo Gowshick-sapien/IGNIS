@@ -57,4 +57,9 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Mount charts static files
+from fastapi.staticfiles import StaticFiles
+os.makedirs("docs/phase-e/charts", exist_ok=True)
+app.mount("/charts", StaticFiles(directory="docs/phase-e/charts"), name="charts")
+
 app.include_router(router)

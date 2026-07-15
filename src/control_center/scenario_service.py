@@ -159,17 +159,21 @@ class ScenarioService:
             self.running_scenario = None
 
     def _run_localized_scenario(self, scenario_id: str, steps: list):
-        """Runs scenarios that affect a specific localized node (E12), keeping others in baseline (S3, S4)."""
-        logger.info(f"Running localized scenario {scenario_id} on E12 ({len(steps)} steps)")
+        """Runs scenarios that affect a specific localized node (middle node in active_nodes), keeping others in baseline (S3, S4)."""
+        target_node = self.active_nodes[1]
+        baseline_node_1 = self.active_nodes[0]
+        baseline_node_2 = self.active_nodes[2]
+        
+        logger.info(f"Running localized scenario {scenario_id} on {target_node} ({len(steps)} steps)")
         
         try:
             # Ensure other nodes are in baseline
-            control_topic_e11 = f"ignis/v1/system/zone/{self.zone_id}/edge/E11/control"
-            control_topic_e13 = f"ignis/v1/system/zone/{self.zone_id}/edge/E13/control"
-            self.client.publish(control_topic_e11, json.dumps({"message_type": "control", "version": "1", "command": "set_mode", "mode": "baseline"}))
-            self.client.publish(control_topic_e13, json.dumps({"message_type": "control", "version": "1", "command": "set_mode", "mode": "baseline"}))
+            control_topic_b1 = f"ignis/v1/system/zone/{self.zone_id}/edge/{baseline_node_1}/control"
+            control_topic_b2 = f"ignis/v1/system/zone/{self.zone_id}/edge/{baseline_node_2}/control"
+            self.client.publish(control_topic_b1, json.dumps({"message_type": "control", "version": "1", "command": "set_mode", "mode": "baseline"}))
+            self.client.publish(control_topic_b2, json.dumps({"message_type": "control", "version": "1", "command": "set_mode", "mode": "baseline"}))
             
-            control_topic_e12 = f"ignis/v1/system/zone/{self.zone_id}/edge/E12/control"
+            control_topic_target = f"ignis/v1/system/zone/{self.zone_id}/edge/{target_node}/control"
             
             for step_idx, step in enumerate(steps):
                 if self.stop_event.is_set():
@@ -179,7 +183,7 @@ class ScenarioService:
                 sensor_data = step["sensor_data"]
                 seasonal_baseline = step["seasonal_baseline"]
                 
-                logger.info(f"Publishing Step {self.current_step}/{self.total_steps} for localized node E12")
+                logger.info(f"Publishing Step {self.current_step}/{self.total_steps} for localized node {target_node}")
                 
                 payload = {
                     "message_type": "control",
@@ -205,7 +209,7 @@ class ScenarioService:
                         "fault_value": 100.0
                     }
                     
-                self.client.publish(control_topic_e12, json.dumps(payload))
+                self.client.publish(control_topic_target, json.dumps(payload))
                 
                 time.sleep(4)
                 
