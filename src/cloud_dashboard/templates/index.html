@@ -482,6 +482,14 @@
             
             <div style="display: flex; align-items: center; gap: 12px;">
                 <div class="form-group" style="flex-direction: row; align-items: center; gap: 8px;">
+                    <label for="zone-select" style="margin: 0;">Monitor Zone:</label>
+                    <select id="zone-select" style="padding: 6px 12px;" onchange="changeZone()">
+                        <option value="4A">Zone 4A (North)</option>
+                        <option value="4B" selected>Zone 4B (Core)</option>
+                        <option value="4C">Zone 4C (South)</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex-direction: row; align-items: center; gap: 8px;">
                     <label for="season-select" style="margin: 0;">Baseline Season:</label>
                     <select id="season-select" style="padding: 6px 12px;">
                         <option value="summer" selected>Summer Profile</option>
@@ -499,6 +507,11 @@
             </div>
         </header>
 
+        <!-- Zone Overview Bar -->
+        <div id="zones-bar" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+            <!-- Zone cards generated dynamically -->
+        </div>
+
         <div class="dashboard-grid">
             <!-- Left Panel: Summary, Status and Overrides -->
             <div style="display: flex; flex-direction: column; gap: 20px;">
@@ -515,7 +528,7 @@
                             <span class="health-value"><span id="health-db" class="status-dot status-offline"></span><span id="text-db">OFFLINE</span></span>
                         </div>
                         <div class="health-card">
-                            <span class="health-label">Fog Node (Zone 4B)</span>
+                            <span class="health-label">Fog Node</span>
                             <span class="health-value"><span id="health-fog" class="status-dot status-offline"></span><span id="text-fog">OFFLINE</span></span>
                         </div>
                         <div class="health-card">
@@ -525,15 +538,16 @@
                     </div>
                 </div>
 
-                <!-- Zone Card Snapshot -->
+                <!-- Zone Card Snapshot Details -->
                 <div class="panel">
-                    <div class="panel-title">Active Forest Division Zone</div>
+                    <div class="panel-title">Zone Detail Status</div>
                     <div id="zone-card-container" class="zone-card green">
-                        <span class="zone-header">ZONE 4B (Simlipal Core)</span>
+                        <span id="zone-detail-header" class="zone-header">ZONE 4B (Simlipal Core)</span>
                         <div id="zone-state" class="zone-state-badge" style="color: var(--color-green);">GREEN</div>
                         <span class="zone-whi-label">Max Wildfire Hazard Index (WHI)</span>
                         <div id="zone-whi" class="zone-whi-value">0.000</div>
                         <span id="zone-override-badge" style="font-size: 10px; color: var(--text-secondary); margin-top: 4px; display: none; font-weight: 600;">⚠️ CENTRAL OVERRIDE ACTIVE</span>
+                        <div id="zone-lateral-banner" style="font-size: 10px; color: var(--color-yellow); border: 1px solid var(--color-yellow); border-radius: 6px; padding: 4px 8px; margin-top: 8px; font-weight: 600; display: none; background: rgba(245, 158, 11, 0.05);"></div>
                     </div>
                 </div>
 
@@ -641,6 +655,14 @@
                     </div>
                 </div>
 
+                <!-- Lateral Timeline Ticker -->
+                <div class="panel" style="flex: 1;">
+                    <div class="panel-title">Fog-to-Fog Lateral Timeline</div>
+                    <div id="lateral-timeline" class="log-feed">
+                        <div class="log-item">No lateral events recorded yet.</div>
+                    </div>
+                </div>
+
                 <!-- Advisory Commands Audit Trail -->
                 <div class="panel">
                     <div class="panel-title">Advisory Command Audit Trail</div>
@@ -684,6 +706,8 @@
             "RED": "var(--color-red)"
         };
 
+        const colorPalette = ["#10b981", "#3b82f6", "#ec4899", "#a855f7", "#f97316"];
+
         // Toast message display utility
         function showToast(message, isError = false) {
             const toast = document.getElementById("toast");
@@ -714,13 +738,15 @@
         }
 
         function postAdvisoryCommand(command, params) {
+            const zone_id = document.getElementById("zone-select").value;
             fetch("/api/advisory", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     command: command,
                     parameters: params,
-                    issued_by: "NOC_Regional_Operator"
+                    issued_by: "NOC_Regional_Operator",
+                    zone_id: zone_id
                 })
             })
             .then(res => {
@@ -740,7 +766,8 @@
         // Snapshot Polling & UI Rendering
         // ==========================================
         function pollSnapshot() {
-            fetch("/api/snapshot")
+            const zone_id = document.getElementById("zone-select").value;
+            fetch(`/api/snapshot?zone_id=${zone_id}`)
             .then(res => res.json())
             .then(data => {
                 // 1. Database offline check
@@ -756,11 +783,15 @@
                 updateHealthCard("fog", data.system_health.Fog_Node);
                 updateHealthCard("ingestor", data.system_health.Cloud_Ingestor);
 
-                // 3. Zone State Card
+                // 3. Zone State Card Detail
                 const stateCard = document.getElementById("zone-card-container");
                 const stateText = document.getElementById("zone-state");
                 const whiVal = document.getElementById("zone-whi");
                 const badge = document.getElementById("zone-override-badge");
+                const header = document.getElementById("zone-detail-header");
+                
+                const names = { "4A": "Simlipal North Zone", "4B": "Simlipal Core Zone", "4C": "Simlipal South Zone" };
+                header.textContent = `ZONE ${zone_id} (${names[zone_id] || 'Tiger Reserve Area'})`;
                 
                 const state = data.zone_state.state || "GREEN";
                 stateCard.className = `zone-card ${state.toLowerCase()}`;
@@ -768,6 +799,16 @@
                 stateText.style.color = stateColors[state] || "var(--color-green)";
                 whiVal.textContent = parseFloat(data.zone_state.whi || 0.0).toFixed(3);
                 badge.style.display = data.zone_state.override_active ? "block" : "none";
+
+                // Preemptive warnings lateral banner
+                const lateralBanner = document.getElementById("zone-lateral-banner");
+                if (data.zone_state.preemptive_escalation) {
+                    const sources = data.zone_state.lateral_warning_sources.map(s => s.zone_id).join(", ");
+                    lateralBanner.textContent = `⚠️ Pre-emptive Escalation: Warning from Zone ${sources}`;
+                    lateralBanner.style.display = "block";
+                } else {
+                    lateralBanner.style.display = "none";
+                }
 
                 // 4. Performance Statistics panel
                 document.getElementById("stat-pps").textContent = `${data.performance_metrics.telemetry_rate_pps.toFixed(2)} pps`;
@@ -799,6 +840,52 @@
                 dot.className = "status-dot status-offline";
                 text.textContent = "OFFLINE";
             }
+        }
+
+        function pollZones() {
+            fetch("/api/zones")
+            .then(res => res.json())
+            .then(zones => {
+                const bar = document.getElementById("zones-bar");
+                if (!zones || zones.length === 0) {
+                    bar.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 12px; background: var(--card-bg); border-radius: 12px;">No active zones detected.</div>';
+                    return;
+                }
+                
+                const selectedZone = document.getElementById("zone-select").value;
+                const names = { "4A": "Simlipal North", "4B": "Simlipal Core", "4C": "Simlipal South" };
+                
+                bar.innerHTML = zones.map(z => {
+                    const isSelected = z.zone_id === selectedZone ? 'style="border-color: var(--accent-color); box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);"' : '';
+                    const stateClass = z.state.toLowerCase();
+                    const lateralWarning = z.preemptive_escalation 
+                        ? `<span class="status-badge badge-failed" style="margin-top: 4px; display: inline-block;">⚠️ WARNING WIND FROM ${z.lateral_warning_sources.map(s => s.zone_id).join(', ')}</span>`
+                        : '';
+                    
+                    return `
+                        <div class="zone-card ${stateClass}" ${isSelected} onclick="selectZone('${z.zone_id}')" style="cursor: pointer;">
+                            <span class="zone-header">${names[z.zone_id] || ('Zone ' + z.zone_id)}</span>
+                            <div class="zone-state-badge" style="color: ${stateColors[z.state] || 'var(--color-green)'};">${z.state}</div>
+                            <span class="zone-whi-label">Max WHI: <strong>${parseFloat(z.whi).toFixed(3)}</strong></span>
+                            ${lateralWarning}
+                        </div>
+                    `;
+                }).join("");
+            })
+            .catch(err => {
+                console.error("Error fetching zones overview: ", err);
+            });
+        }
+
+        function selectZone(zoneId) {
+            document.getElementById("zone-select").value = zoneId;
+            changeZone();
+        }
+
+        function changeZone() {
+            pollSnapshot();
+            pollHistory();
+            pollZones();
         }
 
         function renderAlerts(alerts) {
@@ -858,11 +945,64 @@
             }).join("");
         }
 
+        function pollLateralTimeline() {
+            fetch("/api/lateral-timeline?minutes=10")
+            .then(res => res.json())
+            .then(events => {
+                const el = document.getElementById("lateral-timeline");
+                if (!events || events.length === 0) {
+                    el.innerHTML = '<div class="log-item">No lateral events recorded yet.</div>';
+                    return;
+                }
+                
+                el.innerHTML = events.map(e => `
+                    <div class="log-item" style="border-left: 3px solid var(--accent-color)">
+                        <span class="log-time">${e.timestamp}</span>
+                        <span class="log-desc" style="color: var(--accent-color)">Zone ${e.zone_id} Broadcasted ${e.state}</span>
+                        <span style="font-size: 10px; color: var(--text-secondary);">
+                            Wind: ${parseFloat(e.wind_dir_deg).toFixed(0)}° at ${parseFloat(e.wind_speed_kmh).toFixed(1)} km/h
+                        </span>
+                    </div>
+                `).join("");
+            })
+            .catch(err => {
+                console.error("Error fetching lateral timeline: ", err);
+            });
+        }
+
         // ==========================================
         // Time-Series Historical Charts Setup
         // ==========================================
+        function updateChartDatasets(chart, nodesData, fieldName, isGas = false) {
+            const nodeIds = Object.keys(nodesData || {});
+            
+            const datasets = nodeIds.map((nodeId, idx) => {
+                const color = colorPalette[idx % colorPalette.length];
+                return {
+                    label: `Node ${nodeId}`,
+                    data: nodesData[nodeId].map(r => r[fieldName]),
+                    borderColor: color,
+                    tension: 0.2,
+                    fill: false
+                };
+            });
+            
+            if (isGas) {
+                datasets.push({
+                    label: "Policy limit (PPM)",
+                    data: chart.data.labels.map(() => 30.0),
+                    borderColor: "var(--color-red)",
+                    borderDash: [2, 2],
+                    pointStyle: false,
+                    tension: 0,
+                    fill: false
+                });
+            }
+            
+            chart.data.datasets = datasets;
+        }
+
         function initCharts() {
-            // Chart.js Default styling tweaks
             Chart.defaults.color = 'var(--text-secondary)';
             Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
             Chart.defaults.font.family = "'Inter', sans-serif";
@@ -877,48 +1017,21 @@
                 }
             };
 
-            // Temperature Chart
             tempChart = new Chart(document.getElementById("tempChart").getContext("2d"), {
                 type: "line",
-                data: {
-                    labels: [],
-                    datasets: [
-                        { label: "Node E11", data: [], borderColor: "#10b981", tension: 0.2 },
-                        { label: "Node E12", data: [], borderColor: "#3b82f6", tension: 0.2 },
-                        { label: "Node E13", data: [], borderColor: "#ec4899", tension: 0.2 },
-                        { label: "Historical Baseline", data: [], borderColor: "#9ca3af", borderDash: [5, 5], tension: 0.1, fill: false }
-                    ]
-                },
+                data: { labels: [], datasets: [] },
                 options: options
             });
 
-            // Humidity Chart
             humidityChart = new Chart(document.getElementById("humidityChart").getContext("2d"), {
                 type: "line",
-                data: {
-                    labels: [],
-                    datasets: [
-                        { label: "Node E11", data: [], borderColor: "#10b981", tension: 0.2 },
-                        { label: "Node E12", data: [], borderColor: "#3b82f6", tension: 0.2 },
-                        { label: "Node E13", data: [], borderColor: "#ec4899", tension: 0.2 },
-                        { label: "Historical Baseline", data: [], borderColor: "#9ca3af", borderDash: [5, 5], tension: 0.1, fill: false }
-                    ]
-                },
+                data: { labels: [], datasets: [] },
                 options: options
             });
 
-            // Gas Chart
             gasChart = new Chart(document.getElementById("gasChart").getContext("2d"), {
                 type: "line",
-                data: {
-                    labels: [],
-                    datasets: [
-                        { label: "Node E11", data: [], borderColor: "#10b981", tension: 0.2 },
-                        { label: "Node E12", data: [], borderColor: "#3b82f6", tension: 0.2 },
-                        { label: "Node E13", data: [], borderColor: "#ec4899", tension: 0.2 },
-                        { label: "Policy limit (PPM)", data: [], borderColor: "var(--color-red)", borderDash: [2, 2], pointStyle: false, tension: 0, fill: false }
-                    ]
-                },
+                data: { labels: [], datasets: [] },
                 options: options
             });
         }
@@ -926,43 +1039,46 @@
         function pollHistory() {
             const minutes = document.getElementById("time-select").value;
             const season = document.getElementById("season-select").value;
+            const zone_id = document.getElementById("zone-select").value;
             
-            fetch(`/api/history?minutes=${minutes}&season=${season}`)
+            fetch(`/api/history?zone_id=${zone_id}&minutes=${minutes}&season=${season}`)
             .then(res => res.json())
             .then(data => {
                 const history = data.historical_telemetry;
                 const labels = history.labels || [];
                 
-                // Update charts labels
                 tempChart.data.labels = labels;
                 humidityChart.data.labels = labels;
                 gasChart.data.labels = labels;
                 
-                // Map sensor series
-                tempChart.data.datasets[0].data = (history.E11 || []).map(r => r.temperature_c);
-                tempChart.data.datasets[1].data = (history.E12 || []).map(r => r.temperature_c);
-                tempChart.data.datasets[2].data = (history.E13 || []).map(r => r.temperature_c);
-
-                humidityChart.data.datasets[0].data = (history.E11 || []).map(r => r.humidity_pct);
-                humidityChart.data.datasets[1].data = (history.E12 || []).map(r => r.humidity_pct);
-                humidityChart.data.datasets[2].data = (history.E13 || []).map(r => r.humidity_pct);
-
-                gasChart.data.datasets[0].data = (history.E11 || []).map(r => r.gas_ppm);
-                gasChart.data.datasets[1].data = (history.E12 || []).map(r => r.gas_ppm);
-                gasChart.data.datasets[2].data = (history.E13 || []).map(r => r.gas_ppm);
+                updateChartDatasets(tempChart, history.nodes, "temperature_c", false);
+                updateChartDatasets(humidityChart, history.nodes, "humidity_pct", false);
+                updateChartDatasets(gasChart, history.nodes, "gas_ppm", true);
                 
-                // Overlay Historical Baseline: matches the hour of each timestamp in labels
                 const hourlyBaseline = data.baseline_profile.hourly;
                 const currentHour = new Date().getHours();
                 const baselineItem = hourlyBaseline.find(item => item.hour === currentHour) || { temperature_c: 25, humidity_pct: 50 };
                 
-                tempChart.data.datasets[3].data = labels.map(() => baselineItem.temperature_c);
-                humidityChart.data.datasets[3].data = labels.map(() => baselineItem.humidity_pct);
+                tempChart.data.datasets.push({
+                    label: "Historical Baseline",
+                    data: labels.map(() => baselineItem.temperature_c),
+                    borderColor: "#9ca3af",
+                    borderDash: [5, 5],
+                    tension: 0.1,
+                    fill: false,
+                    pointStyle: 'line'
+                });
                 
-                // Policy lines
-                gasChart.data.datasets[3].data = labels.map(() => 30.0); // Temperature threshold is usually 30 PPM for gas confirmation
+                humidityChart.data.datasets.push({
+                    label: "Historical Baseline",
+                    data: labels.map(() => baselineItem.humidity_pct),
+                    borderColor: "#9ca3af",
+                    borderDash: [5, 5],
+                    tension: 0.1,
+                    fill: false,
+                    pointStyle: 'line'
+                });
                 
-                // Render update
                 tempChart.update();
                 humidityChart.update();
                 gasChart.update();
@@ -976,15 +1092,16 @@
         window.addEventListener("DOMContentLoaded", () => {
             initCharts();
             
-            // Poll immediately
             pollSnapshot();
             pollHistory();
+            pollZones();
+            pollLateralTimeline();
             
-            // Start regular stateless polling (3s for snapshot, 6s for history queries)
             setInterval(pollSnapshot, 3000);
             setInterval(pollHistory, 6000);
+            setInterval(pollZones, 3000);
+            setInterval(pollLateralTimeline, 4000);
             
-            // Bind select changes to refresh charts
             document.getElementById("time-select").addEventListener("change", pollHistory);
             document.getElementById("season-select").addEventListener("change", pollHistory);
         });

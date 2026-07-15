@@ -49,6 +49,7 @@ def main():
             # Log ingestor's own health state
             try:
                 if db.ping():
+                    service.db_online = True
                     db.write_record(
                         measurement="system_health",
                         tags={"component": "cloud_ingestor"},
@@ -57,7 +58,12 @@ def main():
                     )
                     # Periodically try flushing the buffer
                     service.flush_buffer()
+                else:
+                    service.db_online = False
+                    service.last_db_check_time = time.time()
             except Exception as ex:
+                service.db_online = False
+                service.last_db_check_time = time.time()
                 logger.warning(f"Could not log ingestor health to DB: {ex}")
                 
             time.sleep(5)

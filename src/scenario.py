@@ -190,3 +190,61 @@ class ScenarioGenerator:
                 "seasonal_baseline": 0.8  # Dry summer baseline
             })
         return scenario
+
+    @staticmethod
+    def get_lateral_spread_scenario(steps: int = 6) -> list:
+        """
+        Scenario S6: Lateral Spread.
+        Zone 4B escalates from GREEN -> YELLOW -> ORANGE -> RED, with wind blowing south (180 deg) toward Zone 4C.
+        """
+        scenario = []
+        for i in range(steps):
+            hour = 14 + i
+            timestamp = f"2026-07-06T{hour:02d}:00:00"
+            
+            # Steps 0-1: Baseline green, wind blowing 180 deg (South)
+            if i < 2:
+                sensor_data = {
+                    "temperature_c": 28.0,
+                    "humidity_pct": 55.0,
+                    "wind_speed_kmh": 12.0,
+                    "wind_dir_deg": 180.0,
+                    "soil_moisture_pct": 28.0,
+                    "gas_ppm": 12.0,
+                    "thermal_anomaly_c": 0.2,
+                    "light_lux": 25000,
+                    "rain_mm": 0.0
+                }
+            # Steps 2-3: Escalating fire (YELLOW -> ORANGE), wind remains 180 deg
+            elif i < 4:
+                sensor_data = {
+                    "temperature_c": 38.0,
+                    "humidity_pct": 28.0,
+                    "wind_speed_kmh": 15.0,
+                    "wind_dir_deg": 180.0,
+                    "soil_moisture_pct": 18.0,
+                    "gas_ppm": 29.0,
+                    "thermal_anomaly_c": 2.5,
+                    "light_lux": 24000,
+                    "rain_mm": 0.0
+                }
+            # Steps 4-5: Full fire (RED), wind remains 180 deg
+            else:
+                sensor_data = {
+                    "temperature_c": 48.0,
+                    "humidity_pct": 12.0,
+                    "wind_speed_kmh": 22.0,
+                    "wind_dir_deg": 180.0,
+                    "soil_moisture_pct": 8.0,
+                    "gas_ppm": 85.0,
+                    "thermal_anomaly_c": 7.5,
+                    "light_lux": 20000,
+                    "rain_mm": 0.0
+                }
+                
+            scenario.append({
+                "timestamp": timestamp,
+                "sensor_data": sensor_data,
+                "seasonal_baseline": 0.85
+            })
+        return scenario

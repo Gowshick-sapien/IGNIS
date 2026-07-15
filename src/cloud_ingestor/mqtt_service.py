@@ -24,6 +24,10 @@ class CloudMQTTService:
         self.offline_buffer = []
         self.max_buffer_size = 5000
         
+        # InfluxDB online/offline cache state to avoid blocking the MQTT thread
+        self.db_online = True
+        self.last_db_check_time = 0
+        
     def on_connect(self, client, userdata, flags, rc):
         if rc == 0:
             logger.info("Connected to central Cloud Broker successfully.")
@@ -85,6 +89,11 @@ class CloudMQTTService:
                 # ignis/v1/fog/zone/{zone_id}/action_log
                 zone_id = parts[4]
                 self.process_action_log(payload, zone_id)
+                
+            elif "lateral" in topic:
+                # ignis/v1/fog/zone/{zone_id}/lateral
+                zone_id = parts[4]
+                self.process_lateral_event(payload, zone_id)
                 
             elif "response" in topic:
                 # ignis/v1/advisory/zone/{zone_id}/response
@@ -186,6 +195,17 @@ class CloudMQTTService:
         }
         self.safe_write("action_logs", tags, fields, ts_str)
 
+    def process_lateral_event(self, payload: dict, zone_id: str):
+        ts_str = payload.get("timestamp")
+        tags = {"zone_id": zone_id}
+        fields = {
+            "state": str(payload.get("state", "GREEN")),
+            "wind_dir_deg": float(payload.get("wind_dir_deg", 0.0)),
+            "wind_speed_kmh": float(payload.get("wind_speed_kmh", 0.0)),
+            "whi": float(payload.get("whi", 0.0))
+        }
+        self.safe_write("lateral_events", tags, fields, ts_str)
+
     def process_advisory_response(self, payload: dict, zone_id: str):
         ts_str = payload.get("timestamp")
         tags = {
@@ -214,24 +234,43 @@ class CloudMQTTService:
     # ==========================================
     def safe_write(self, measurement: str, tags: dict, fields: dict, timestamp: str = None):
         """Performs a write, buffering if InfluxDB is offline."""
+        current_time = time.time()
+        
+        # If DB is marked offline, check if we should retry connecting/pinging
+        if not self.db_online:
+            # 10 second cooldown period to prevent blocking the MQTT thread
+            if current_time - self.last_db_check_time < 10:
+                self._buffer_record(measurement, tags, fields, timestamp)
+                return
+                
         try:
-            # Check if database is offline or write API fails
-            if not self.db.ping():
-                raise ConnectionError("InfluxDB ping failed.")
+            # Check if database is offline or write API fails (only ping if we were offline)
+            if not self.db_online:
+                if not self.db.ping():
+                    raise ConnectionError("InfluxDB ping failed.")
+                self.db_online = True
+                logger.info("InfluxDB connection restored on MQTT service.")
                 
             # Perform any buffered flushes first
-            self.flush_buffer()
+            if self.offline_buffer:
+                self.flush_buffer()
             
             # Write current record
             self.db.write_record(measurement, tags, fields, timestamp)
+            self.db_online = True
         except Exception as e:
             logger.warning(f"InfluxDB write failed. Buffering record. Error: {e}")
-            if len(self.offline_buffer) < self.max_buffer_size:
-                self.offline_buffer.append((measurement, tags, fields, timestamp))
-            else:
-                logger.error("Database offline buffer full! Dropping oldest record.")
-                self.offline_buffer.pop(0)
-                self.offline_buffer.append((measurement, tags, fields, timestamp))
+            self.db_online = False
+            self.last_db_check_time = current_time
+            self._buffer_record(measurement, tags, fields, timestamp)
+
+    def _buffer_record(self, measurement: str, tags: dict, fields: dict, timestamp: str):
+        if len(self.offline_buffer) < self.max_buffer_size:
+            self.offline_buffer.append((measurement, tags, fields, timestamp))
+        else:
+            logger.error("Database offline buffer full! Dropping oldest record.")
+            self.offline_buffer.pop(0)
+            self.offline_buffer.append((measurement, tags, fields, timestamp))
 
     def flush_buffer(self):
         """Flushes the buffered items when database returns online."""
@@ -247,8 +286,12 @@ class CloudMQTTService:
                 self.offline_buffer.pop(0)
                 flushed_count += 1
             logger.info(f"Successfully flushed {flushed_count} records.")
+            self.db_online = True
         except Exception as e:
+            self.db_online = False
+            self.last_db_check_time = time.time()
             logger.warning(f"Flush interrupted, InfluxDB went offline again. Buffered remaining: {len(self.offline_buffer)}. Error: {e}")
+            raise e
 
     # ==========================================
     # Service Lifecycle

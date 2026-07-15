@@ -1,0 +1,93 @@
+scenario_id: "S4"
+description: "Single sensor fault — validates 3-sensor confirmation rule"
+version: "1.0"
+target:
+  mode: "localized"
+  zone_ids: ["4B"]
+  target_node_index: 1
+steps:
+  - index: 0
+    duration_sec: 4
+    sensor_data:
+      temperature_c: 38.0
+      humidity_pct: 30.0
+      wind_speed_kmh: 12.0
+      wind_dir_deg: 180.0
+      soil_moisture_pct: 20.0
+      gas_ppm: 12.0
+      thermal_anomaly_c: 0.2
+      light_lux: 45000.0
+      rain_mm: 0.0
+    seasonal_baseline: 0.8
+  - index: 1
+    duration_sec: 4
+    sensor_data:
+      temperature_c: 38.0
+      humidity_pct: 30.0
+      wind_speed_kmh: 12.0
+      wind_dir_deg: 180.0
+      soil_moisture_pct: 20.0
+      gas_ppm: 12.0
+      thermal_anomaly_c: 0.2
+      light_lux: 45000.0
+      rain_mm: 0.0
+    seasonal_baseline: 0.8
+  - index: 2
+    duration_sec: 4
+    sensor_data:
+      temperature_c: 39.0
+      humidity_pct: 30.0
+      wind_speed_kmh: 12.0
+      wind_dir_deg: 185.0
+      soil_moisture_pct: 20.0
+      gas_ppm: 100.0
+      thermal_anomaly_c: 0.2
+      light_lux: 45000.0
+      rain_mm: 0.0
+    seasonal_baseline: 0.8
+  - index: 3
+    duration_sec: 4
+    sensor_data:
+      temperature_c: 39.0
+      humidity_pct: 30.0
+      wind_speed_kmh: 12.0
+      wind_dir_deg: 185.0
+      soil_moisture_pct: 20.0
+      gas_ppm: 100.0
+      thermal_anomaly_c: 0.2
+      light_lux: 45000.0
+      rain_mm: 0.0
+    seasonal_baseline: 0.8
+  - index: 4
+    duration_sec: 4
+    sensor_data:
+      temperature_c: 39.0
+      humidity_pct: 30.0
+      wind_speed_kmh: 12.0
+      wind_dir_deg: 185.0
+      soil_moisture_pct: 20.0
+      gas_ppm: 100.0
+      thermal_anomaly_c: 0.2
+      light_lux: 45000.0
+      rain_mm: 0.0
+    seasonal_baseline: 0.8
+  - index: 5
+    duration_sec: 4
+    sensor_data:
+      temperature_c: 39.0
+      humidity_pct: 30.0
+      wind_speed_kmh: 12.0
+      wind_dir_deg: 185.0
+      soil_moisture_pct: 20.0
+      gas_ppm: 100.0
+      thermal_anomaly_c: 0.2
+      light_lux: 45000.0
+      rain_mm: 0.0
+    seasonal_baseline: 0.8
+chaos_actions: []
+expected_outcome:
+  final_state: "YELLOW"
+  max_state_allowed: "YELLOW"
+  is_clamped: true
+metrics_targets:
+  false_positive_rate: 0.0

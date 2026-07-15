@@ -154,6 +154,12 @@ class TestCloudResilience(unittest.TestCase):
         db_mock = MagicMock()
         db_mock.ping.return_value = False # DB offline
         
+        # Simulate write failing when database is offline
+        def mock_write_record(measurement, tags, fields, timestamp=None):
+            if not db_mock.ping():
+                raise ConnectionError("InfluxDB write failed because database is offline.")
+        db_mock.write_record.side_effect = mock_write_record
+        
         service = CloudMQTTService(db_mock)
         
         # Process a telemetry reading message while DB offline
@@ -179,9 +185,9 @@ class TestCloudResilience(unittest.TestCase):
         db_mock.ping.return_value = True
         service.flush_buffer()
         
-        # Buffer must be empty and write record called 2 times
+        # Buffer must be empty and write record called 3 times (1 failed attempt, 2 successful flushes)
         self.assertEqual(len(service.offline_buffer), 0)
-        self.assertEqual(db_mock.write_record.call_count, 2)
+        self.assertEqual(db_mock.write_record.call_count, 3)
 
 if __name__ == '__main__':
     unittest.main()

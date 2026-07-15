@@ -15,8 +15,7 @@ from .routes import router
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("cloud_dashboard_app")
 
-# Fetch config from environment
-ZONE_ID = os.environ.get("ZONE_ID", "4B")
+# Lifespan manager
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -39,7 +38,6 @@ async def lifespan(app: FastAPI):
             
     # 2. Store references in app state
     app.state.db = db
-    app.state.zone_id = ZONE_ID
     app.state.command_sequence = 100 # Sequence numbers start at 100
     
     logger.info("Central Cloud Dashboard initialized.")
@@ -58,5 +56,10 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+
+# Mount charts static files
+from fastapi.staticfiles import StaticFiles
+os.makedirs("docs/phase-e/charts", exist_ok=True)
+app.mount("/charts", StaticFiles(directory="docs/phase-e/charts"), name="charts")
 
 app.include_router(router)

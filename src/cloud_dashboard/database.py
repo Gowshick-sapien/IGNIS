@@ -60,6 +60,54 @@ class CloudDashboardDB:
     # ==========================================
     # Flux Queries for Dashboard Snapshot
     # ==========================================
+    def get_all_zone_states(self) -> list:
+        """Fetches the latest states for all discovered zones."""
+        if not self.query_api:
+            return []
+            
+        query = f'''
+        from(bucket: "{self.bucket}")
+          |> range(start: -1d)
+          |> filter(fn: (r) => r["_measurement"] == "zone_state")
+          |> last()
+          |> pivot(rowKey:["_time", "zone_id"], columnKey: ["_field"], valueColumn: "_value")
+        '''
+        try:
+            tables = self.query_api.query(query, org=self.org)
+            zones = []
+            for table in tables:
+                for r in table.records:
+                    # Deserialize lateral_warning_sources if present as JSON string
+                    sources = r.values.get("lateral_warning_sources", "[]")
+                    if isinstance(sources, str):
+                        try:
+                            sources = json.loads(sources)
+                        except Exception:
+                            sources = []
+                    
+                    preemptive = r.values.get("preemptive_escalation")
+                    if isinstance(preemptive, str):
+                        preemptive = (preemptive.lower() == "true")
+                    elif preemptive is not None:
+                        preemptive = bool(preemptive)
+                    else:
+                        preemptive = False
+
+                    zones.append({
+                        "zone_id": r.values.get("zone_id"),
+                        "timestamp": r.get_time().strftime("%Y-%m-%dT%H:%M:%SZ"),
+                        "state": r.values.get("state", "GREEN"),
+                        "whi": float(r.values.get("whi", 0.0) or 0.0),
+                        "is_state_clamped": bool(r.values.get("is_state_clamped")),
+                        "override_active": bool(r.values.get("override_active")),
+                        "preemptive_escalation": preemptive,
+                        "lateral_warning_sources": sources
+                    })
+            return zones
+        except Exception as e:
+            logger.error(f"Error querying all zone states: {e}")
+        return []
+
     def get_latest_zone_state(self, zone_id: str) -> dict:
         """Fetches the latest state for a specific zone."""
         if not self.query_api:
@@ -96,9 +144,9 @@ class CloudDashboardDB:
           |> range(start: -1d)
           |> filter(fn: (r) => r["_measurement"] == "telemetry")
           |> filter(fn: (r) => r["zone_id"] == "{zone_id}")
-          |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
-          |> group(columns: ["node_id"])
+          |> toFloat()
           |> last()
+          |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
         '''
         try:
             tables = self.query_api.query(query, org=self.org)
@@ -123,12 +171,12 @@ class CloudDashboardDB:
         if not self.query_api:
             return health
             
-        # Query health measurements written within the last 30 seconds
+        # Query health measurements written within the last 2 minutes (to tolerate container clock drift)
         query = f'''
         from(bucket: "{self.bucket}")
-          |> range(start: -30s)
+          |> range(start: -2m)
           |> filter(fn: (r) => r["_measurement"] == "system_health")
-          |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+          |> filter(fn: (r) => r["_field"] == "status")
           |> group(columns: ["component"])
           |> last()
         '''
@@ -137,7 +185,7 @@ class CloudDashboardDB:
             for table in tables:
                 for r in table.records:
                     comp = r.values.get("component")
-                    status = r.values.get("status", "OFFLINE")
+                    status = r.get_value()
                     if comp == f"fog_node_{zone_id}":
                         health["Fog_Node"] = status
                     elif comp == "cloud_ingestor":
@@ -242,14 +290,15 @@ class CloudDashboardDB:
         from(bucket: "{self.bucket}")
           |> range(start: -5m)
           |> filter(fn: (r) => r["_measurement"] == "performance_metrics")
-          |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
           |> last()
+          |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
         '''
         
         count_query = f'''
         from(bucket: "{self.bucket}")
           |> range(start: -24h)
           |> filter(fn: (r) => r["_measurement"] == "telemetry")
+          |> filter(fn: (r) => r["_field"] == "sequence")
           |> count()
         '''
         try:
@@ -264,21 +313,26 @@ class CloudDashboardDB:
             
             # Archive Count Query
             tables = self.query_api.query(count_query, org=self.org)
+            messages_archived = 0
             for table in tables:
                 for r in table.records:
-                    metrics["messages_archived"] = r.get_value()
+                    messages_archived += r.get_value()
+            metrics["messages_archived"] = messages_archived
                     
-            # Calculate Telemetry Packets per second (based on count in last 30 seconds)
+            # Calculate Telemetry Packets per second (based on count in last 2 minutes)
             rate_query = f'''
             from(bucket: "{self.bucket}")
-              |> range(start: -30s)
+              |> range(start: -2m)
               |> filter(fn: (r) => r["_measurement"] == "telemetry")
+              |> filter(fn: (r) => r["_field"] == "sequence")
               |> count()
             '''
             tables = self.query_api.query(rate_query, org=self.org)
+            total_messages_2m = 0
             for table in tables:
                 for r in table.records:
-                    metrics["telemetry_rate_pps"] = round(r.get_value() / 30.0, 2)
+                    total_messages_2m += r.get_value()
+            metrics["telemetry_rate_pps"] = round(total_messages_2m / 120.0, 2)
         except Exception as e:
             logger.error(f"Error querying performance metrics: {e}")
             
@@ -286,7 +340,7 @@ class CloudDashboardDB:
 
     def get_historical_chart_data(self, zone_id: str, minutes: int = 15) -> dict:
         """Fetches historical time-series telemetry data for the dashboard charts."""
-        chart_data = {"labels": [], "E11": [], "E12": [], "E13": []}
+        chart_data = {"labels": [], "nodes": {}}
         if not self.query_api:
             return chart_data
             
@@ -321,19 +375,59 @@ class CloudDashboardDB:
             sorted_times = sorted(time_map.keys())
             chart_data["labels"] = sorted_times
             
+            # Discover all nodes dynamically
+            all_nodes = set()
+            for ts in sorted_times:
+                for node_id in time_map[ts]:
+                    all_nodes.add(node_id)
+            
+            # Initialize lists for each discovered node
+            for node_id in all_nodes:
+                chart_data["nodes"][node_id] = []
+                
             # Map values
             for ts in sorted_times:
                 nodes_data = time_map[ts]
-                for node in ["E11", "E12", "E13"]:
+                for node in all_nodes:
                     if node in nodes_data:
-                        chart_data[node].append(nodes_data[node])
+                        chart_data["nodes"][node].append(nodes_data[node])
                     else:
                         # Append None or last known to prevent chart breaking
-                        chart_data[node].append({"temperature_c": None, "humidity_pct": None, "gas_ppm": None})
+                        chart_data["nodes"][node].append({"temperature_c": None, "humidity_pct": None, "gas_ppm": None})
         except Exception as e:
             logger.error(f"Error querying historical chart data: {e}")
             
         return chart_data
+
+    def get_lateral_events(self, minutes: int = 15) -> list:
+        """Queries recent lateral events from InfluxDB."""
+        if not self.query_api:
+            return []
+            
+        query = f'''
+        from(bucket: "{self.bucket}")
+          |> range(start: -{minutes}m)
+          |> filter(fn: (r) => r["_measurement"] == "lateral_events")
+          |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+          |> sort(columns: ["_time"], desc: true)
+        '''
+        try:
+            tables = self.query_api.query(query, org=self.org)
+            events = []
+            for table in tables:
+                for r in table.records:
+                    events.append({
+                        "timestamp": r.get_time().strftime("%Y-%m-%dT%H:%M:%SZ"),
+                        "zone_id": r.values.get("zone_id"),
+                        "target_direction": r.values.get("target_direction"),
+                        "state": r.values.get("state", "GREEN"),
+                        "wind_dir_deg": float(r.values.get("wind_dir_deg", 0.0) or 0.0),
+                        "wind_speed_kmh": float(r.values.get("wind_speed_kmh", 0.0) or 0.0)
+                    })
+            return events
+        except Exception as e:
+            logger.error(f"Error querying lateral events: {e}")
+        return []
 
     def close(self):
         if self.client:

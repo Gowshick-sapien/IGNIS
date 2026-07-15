@@ -647,6 +647,10 @@
                         <span class="btn-title">S4 - Single Sensor Fault</span>
                         <span class="btn-desc">Gas spikes on E12. Clamped to YELLOW.</span>
                     </button>
+                    <button class="btn" onclick="triggerScenario('S6')">
+                        <span class="btn-title">S6 - Lateral Spread</span>
+                        <span class="btn-desc">Fire in Zone 4B. Wind blowing south toward Zone 4C.</span>
+                    </button>
                 </div>
                 
                 <button class="btn btn-stop" style="text-align: center; display: block;" onclick="stopScenario()">
@@ -822,8 +826,33 @@
         // Update Node visual cards
         function updateEdgeCard(reading) {
             const nodeId = reading.node_id;
-            const card = document.getElementById(`card-${nodeId}`);
-            if (!card) return;
+            let card = document.getElementById(`card-${nodeId}`);
+            if (!card) {
+                const container = document.getElementById('edge-nodes-container');
+                // Clean up placeholder nodes if we are dealing with formatted zone node IDs
+                if (nodeId.includes('-') && (document.getElementById('card-E11') || document.getElementById('card-E12') || document.getElementById('card-E13'))) {
+                    container.innerHTML = '';
+                }
+                
+                card = document.createElement('div');
+                card.className = 'edge-card';
+                card.id = `card-${nodeId}`;
+                card.innerHTML = `
+                    <div class="edge-card-header">
+                        <span class="edge-name">Edge Node ${nodeId}</span>
+                        <span class="edge-meta">Waiting for data...</span>
+                    </div>
+                    <div class="edge-parameters">
+                        <div class="param-box"><span class="param-label">Temp</span><span class="param-val">--</span></div>
+                        <div class="param-box"><span class="param-label">Humid</span><span class="param-val">--</span></div>
+                        <div class="param-box"><span class="param-label">Wind</span><span class="param-val">--</span></div>
+                        <div class="param-box"><span class="param-label">Soil M.</span><span class="param-val">--</span></div>
+                        <div class="param-box"><span class="param-label">Gas</span><span class="param-val">--</span></div>
+                        <div class="param-box"><span class="param-label">Thermal</span><span class="param-val">--</span></div>
+                    </div>
+                `;
+                container.appendChild(card);
+            }
             
             // Remove disconnected styling if active
             card.classList.remove('edge-disconnected-overlay');
@@ -929,11 +958,12 @@
             const topic = event.topic || '';
             
             if (topic.includes('alert')) {
+                const sourceNode = event.source_node || 'E12';
                 item.className = 'event-item type-alert';
                 item.innerHTML = `
                     <div class="event-left">
                         <span class="event-badge state-${event.severity}">${event.severity} ALERT</span>
-                        <span class="event-text">State transition detected on node E12. Zone escalates.</span>
+                        <span class="event-text">State transition detected on node ${sourceNode}. Zone escalates.</span>
                     </div>
                     <span class="event-time">${localTime}</span>
                 `;

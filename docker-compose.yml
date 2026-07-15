@@ -1,32 +1,50 @@
 version: '3.8'
 
-services:
-  # Local zone MQTT Broker
-  mqtt-broker:
-    image: eclipse-mosquitto:2
-    container_name: ignis-mqtt-broker
-    ports:
-      - "1883:1883"
-    volumes:
-      - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
-    restart: always
+# =============================================
+# YAML Anchor Templates
+# =============================================
+x-edge-template: &edge-template
+  build: .
+  command: python src/edge_sim.py
+  env_file: [.env]
+  environment:
+    - TICK_INTERVAL=3.0
+    - SEASONAL_BASELINE=0.5
+  restart: unless-stopped
 
-  # Central Cloud MQTT Broker
+x-fog-template: &fog-template
+  build: .
+  command: python src/fog_node_runner.py
+  env_file: [.env]
+  environment:
+    - CONFIG_PATH=config/zones_config.json
+  restart: unless-stopped
+
+x-broker-template: &broker-template
+  image: eclipse-mosquitto:2
+  volumes:
+    - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+  restart: always
+
+services:
+  # =============================================
+  # Central Cloud Infrastructure (shared)
+  # =============================================
   cloud-broker:
     image: eclipse-mosquitto:2
     container_name: ignis-cloud-broker
-    ports:
-      - "1884:1883"
+    ports: ["1884:1883"]
     volumes:
       - ./config/mosquitto_cloud.conf:/mosquitto/config/mosquitto.conf:ro
     restart: always
+    networks:
+      - cloud-net
 
-  # InfluxDB Time-Series Database
+
   influxdb:
     image: influxdb:2.7
     container_name: ignis-influxdb
-    ports:
-      - "8086:8086"
+    ports: ["8086:8086"]
     environment:
       - DOCKER_INFLUXDB_INIT_MODE=setup
       - DOCKER_INFLUXDB_INIT_USERNAME=admin
@@ -35,113 +53,214 @@ services:
       - DOCKER_INFLUXDB_INIT_BUCKET=ignis-telemetry
       - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=ignis-super-secret-token
     restart: always
+    networks:
+      - cloud-net
 
-  # Edge Simulator Nodes
-  edge-sim-e11:
-    build: .
-    container_name: ignis-edge-sim-e11
-    command: python src/edge_sim.py
-    depends_on:
-      - mqtt-broker
-    env_file:
-      - .env
-    environment:
-      - NODE_ID=E11
-      - MQTT_HOST=mqtt-broker
-      - MQTT_PORT=1883
-      - GPS_LAT=21.940
-      - GPS_LON=86.320
-      - TICK_INTERVAL=3.0
-      - SEASONAL_BASELINE=0.5
-    restart: unless-stopped
 
-  edge-sim-e12:
-    build: .
-    container_name: ignis-edge-sim-e12
-    command: python src/edge_sim.py
-    depends_on:
-      - mqtt-broker
-    env_file:
-      - .env
-    environment:
-      - NODE_ID=E12
-      - MQTT_HOST=mqtt-broker
-      - MQTT_PORT=1883
-      - GPS_LAT=21.950
-      - GPS_LON=86.330
-      - TICK_INTERVAL=3.0
-      - SEASONAL_BASELINE=0.5
-    restart: unless-stopped
-
-  edge-sim-e13:
-    build: .
-    container_name: ignis-edge-sim-e13
-    command: python src/edge_sim.py
-    depends_on:
-      - mqtt-broker
-    env_file:
-      - .env
-    environment:
-      - NODE_ID=E13
-      - MQTT_HOST=mqtt-broker
-      - MQTT_PORT=1883
-      - GPS_LAT=21.930
-      - GPS_LON=86.310
-      - TICK_INTERVAL=3.0
-      - SEASONAL_BASELINE=0.5
-    restart: unless-stopped
-
-  # Local Fog Decision Node
-  fog-node:
-    build: .
-    container_name: ignis-fog-node
-    command: python src/fog_node_runner.py
-    depends_on:
-      - mqtt-broker
-      - cloud-broker
-    env_file:
-      - .env
-    environment:
-      - CONFIG_PATH=config/zone_config.json
-    restart: unless-stopped
-
-  # Local Range Control Center Dashboard
-  control-center:
-    build: .
-    container_name: ignis-control-center
-    command: uvicorn src.control_center.app:app --host 0.0.0.0 --port 8000
-    ports:
-      - "8000:8000"
-    depends_on:
-      - mqtt-broker
-    env_file:
-      - .env
-    restart: unless-stopped
-
-  # Central Cloud Telemetry Ingestor
   cloud-ingestor:
     build: .
     container_name: ignis-cloud-ingestor
     command: python src/cloud_ingestor/main.py
-    depends_on:
-      - cloud-broker
-      - influxdb
-    env_file:
-      - .env
+    depends_on: [cloud-broker, influxdb]
+    env_file: [.env]
     restart: unless-stopped
+    networks:
+      - cloud-net
 
-  # Central NOC Cloud Dashboard
+
   cloud-dashboard:
     build: .
     container_name: ignis-cloud-dashboard
     command: uvicorn src.cloud_dashboard.app:app --host 0.0.0.0 --port 9000
-    ports:
-      - "9000:9000"
-    depends_on:
-      - cloud-broker
-      - influxdb
-    env_file:
-      - .env
+    ports: ["9000:9000"]
+    depends_on: [cloud-broker, influxdb]
+    env_file: [.env]
     volumes:
       - ./historical:/app/historical
+      - ./docs:/app/docs
     restart: unless-stopped
+    networks:
+      - cloud-net
+
+
+  # =============================================
+  # Zone 4A — Simlipal North
+  # =============================================
+  mqtt-broker-4a:
+    <<: *broker-template
+    container_name: ignis-mqtt-broker-4a
+    ports: ["1881:1883"]
+
+  fog-node-4a:
+    <<: *fog-template
+    container_name: ignis-fog-node-4a
+    depends_on: [mqtt-broker-4a, cloud-broker]
+    environment:
+      - ZONE_ID=4A
+      - LOCAL_MQTT_HOST=mqtt-broker-4a
+      - CONFIG_PATH=config/zones_config.json
+    networks:
+      - default
+      - cloud-net
+
+
+  edge-sim-4a-e1:
+    <<: *edge-template
+    container_name: ignis-edge-4a-e1
+    depends_on: [mqtt-broker-4a]
+    environment:
+      - NODE_ID=4A-E1
+      - ZONE_ID=4A
+      - MQTT_HOST=mqtt-broker-4a
+      - GPS_LAT=22.010
+      - GPS_LON=86.340
+
+  edge-sim-4a-e2:
+    <<: *edge-template
+    container_name: ignis-edge-4a-e2
+    depends_on: [mqtt-broker-4a]
+    environment:
+      - NODE_ID=4A-E2
+      - ZONE_ID=4A
+      - MQTT_HOST=mqtt-broker-4a
+      - GPS_LAT=22.020
+      - GPS_LON=86.350
+
+  edge-sim-4a-e3:
+    <<: *edge-template
+    container_name: ignis-edge-4a-e3
+    depends_on: [mqtt-broker-4a]
+    environment:
+      - NODE_ID=4A-E3
+      - ZONE_ID=4A
+      - MQTT_HOST=mqtt-broker-4a
+      - GPS_LAT=22.000
+      - GPS_LON=86.330
+
+  # =============================================
+  # Zone 4B — Simlipal Core
+  # =============================================
+  mqtt-broker-4b:
+    <<: *broker-template
+    container_name: ignis-mqtt-broker-4b
+    ports: ["1883:1883"]
+
+  fog-node-4b:
+    <<: *fog-template
+    container_name: ignis-fog-node-4b
+    depends_on: [mqtt-broker-4b, cloud-broker]
+    environment:
+      - ZONE_ID=4B
+      - LOCAL_MQTT_HOST=mqtt-broker-4b
+      - CONFIG_PATH=config/zones_config.json
+    networks:
+      - default
+      - cloud-net
+
+
+  edge-sim-4b-e1:
+    <<: *edge-template
+    container_name: ignis-edge-4b-e1
+    depends_on: [mqtt-broker-4b]
+    environment:
+      - NODE_ID=4B-E1
+      - ZONE_ID=4B
+      - MQTT_HOST=mqtt-broker-4b
+      - GPS_LAT=21.940
+      - GPS_LON=86.320
+
+  edge-sim-4b-e2:
+    <<: *edge-template
+    container_name: ignis-edge-4b-e2
+    depends_on: [mqtt-broker-4b]
+    environment:
+      - NODE_ID=4B-E2
+      - ZONE_ID=4B
+      - MQTT_HOST=mqtt-broker-4b
+      - GPS_LAT=21.950
+      - GPS_LON=86.330
+
+  edge-sim-4b-e3:
+    <<: *edge-template
+    container_name: ignis-edge-4b-e3
+    depends_on: [mqtt-broker-4b]
+    environment:
+      - NODE_ID=4B-E3
+      - ZONE_ID=4B
+      - MQTT_HOST=mqtt-broker-4b
+      - GPS_LAT=21.930
+      - GPS_LON=86.310
+
+  # =============================================
+  # Zone 4C — Simlipal South
+  # =============================================
+  mqtt-broker-4c:
+    <<: *broker-template
+    container_name: ignis-mqtt-broker-4c
+    ports: ["1885:1883"]
+
+  fog-node-4c:
+    <<: *fog-template
+    container_name: ignis-fog-node-4c
+    depends_on: [mqtt-broker-4c, cloud-broker]
+    environment:
+      - ZONE_ID=4C
+      - LOCAL_MQTT_HOST=mqtt-broker-4c
+      - CONFIG_PATH=config/zones_config.json
+    networks:
+      - default
+      - cloud-net
+
+
+  edge-sim-4c-e1:
+    <<: *edge-template
+    container_name: ignis-edge-4c-e1
+    depends_on: [mqtt-broker-4c]
+    environment:
+      - NODE_ID=4C-E1
+      - ZONE_ID=4C
+      - MQTT_HOST=mqtt-broker-4c
+      - GPS_LAT=21.870
+      - GPS_LON=86.300
+
+  edge-sim-4c-e2:
+    <<: *edge-template
+    container_name: ignis-edge-4c-e2
+    depends_on: [mqtt-broker-4c]
+    environment:
+      - NODE_ID=4C-E2
+      - ZONE_ID=4C
+      - MQTT_HOST=mqtt-broker-4c
+      - GPS_LAT=21.880
+      - GPS_LON=86.310
+
+  edge-sim-4c-e3:
+    <<: *edge-template
+    container_name: ignis-edge-4c-e3
+    depends_on: [mqtt-broker-4c]
+    environment:
+      - NODE_ID=4C-E3
+      - ZONE_ID=4C
+      - MQTT_HOST=mqtt-broker-4c
+      - GPS_LAT=21.860
+      - GPS_LON=86.290
+
+  # =============================================
+  # Local Control Center (Zone 4B only)
+  # =============================================
+  control-center:
+    build: .
+    container_name: ignis-control-center
+    command: uvicorn src.control_center.app:app --host 0.0.0.0 --port 8000
+    ports: ["8000:8000"]
+    depends_on: [mqtt-broker-4b]
+    env_file: [.env]
+    environment:
+      - ZONE_ID=4B
+      - LOCAL_MQTT_HOST=mqtt-broker-4b
+    restart: unless-stopped
+ 
+networks:
+  cloud-net:
+    driver: bridge
+

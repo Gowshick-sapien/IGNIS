@@ -22,3 +22,17 @@ ENV/
 .env
 .env.*
 !.env.example
+
+# IDE / Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker / Local Database Volumes / Generated Data
+historical/
+*.log
+
+# System files
+.DS_Store
+Thumbs.db
