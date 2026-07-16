@@ -296,8 +296,10 @@ flowchart LR
     B --> C["Phase C<br/>Cloud layer:<br/>broker + TSDB + dashboard,<br/>dual reporting + commands"]
     C --> D["Phase D<br/>Multi-zone + lateral:<br/>3+ zones, adjacency/bearing<br/>config, S6 logic"]
     D --> E["Phase E<br/>Fault/chaos testing:<br/>S4, S5, S7, metric collection"]
-    E --> F["Phase F<br/>Scenario library +<br/>reporting, feeds parent<br/>project report"]
+    E --> F["Phase F<br/>Scenario validation & reporting:<br/>hardened YAML schemas,<br/>automated orchestrator,<br/>statistical reports + charts"]
 ```
+
+Phase F serves as the **experimental validation and reporting layer**. By formalizing test cases as versioned, tamper-evident YAML configurations, the orchestrator computes 95% Student-t confidence intervals across multi-trial sweeps and asserts exact pass/fail metrics. The output report maps these statistical aggregates directly to architecture validation claims, confirming the real-time latencies and resilient continuity targets.
 
 ---
 

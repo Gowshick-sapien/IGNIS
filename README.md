@@ -72,9 +72,10 @@ This repository currently implements:
 |---------|:------:|------------|
 | Phase A | ✅ | Core wildfire decision pipeline |
 | Phase B | ✅ | MQTT communication & Docker architecture |
-| Phase C | ⏳ | Cloud integration |
-| Phase D | ⏳ | Multi-zone coordination |
-| Phase E | ⏳ | Hardware integration |
+| Phase C | ✅ | Cloud integration layer |
+| Phase D | ✅ | Multi-zone & lateral coordination |
+| Phase E | ✅ | Fault & chaos resilience testing |
+| Phase F | ✅ | Scenario library & consolidated reporting |
 
 ---
 
@@ -281,6 +282,30 @@ Edge Node
 
 ---
 
+# Phase C
+
+Phase C introduces the central cloud coordinator and data storage layers. Local zone events are split into Report A (high-priority alerts to the local NOC) and Report B (telemetry updates pushed to the central cloud broker for storage in InfluxDB and visualization via Grafana).
+
+---
+
+# Phase D
+
+Phase D scales the topology to a multi-zone configuration (Zones 4A, 4B, 4C). Local fog nodes coordinate laterally on topic `region/lateral/{zone_id}` to broadcast active warnings and evaluate fire propagation speeds based on local wind bearing.
+
+---
+
+# Phase E
+
+Phase E implements the fault injection infrastructure. A host-side Chaos Controller REST API disconnects fog nodes from the cloud network or stops containers dynamically to test local offline buffering continuity and clamp sensor failures to prevent false alarms.
+
+---
+
+# Phase F
+
+Phase F establishes the experimental validation framework. All scenario trajectories are hardened as YAML configuration files, validated against schema checks, orchestrated by a single-command test harness, and analyzed using Matplotlib graphs and a 9-section report.
+
+---
+
 # Data Flow
 
 The complete system executes the following pipeline:
@@ -474,44 +499,36 @@ Features include:
 ```
 
 IGNIS/
-
 ├── config/
-
-│ ├── zone_config.json
-
-│ └── mosquitto.conf
-
-│
-
+│   ├── zone_config.json
+│   └── mosquitto.conf
+├── docs/
+│   ├── phase-f/
+│   │   ├── f1/
+│   │   ├── f2/
+│   │   ├── f3/
+│   │   ├── f4/
+│   │   ├── walkthrough.md
+│   │   └── testing.md
+│   └── architecture.md
+├── scenarios/
+│   ├── s1_normal.yaml
+│   └── ...
 ├── src/
-
-│ ├── scoring/
-
-│ ├── control_center/
-
-│ ├── edge_sim.py
-
-│ ├── fog_node.py
-
-│ ├── fog_node_runner.py
-
-│ ├── scenario.py
-
-│ └── presenter.py
-
-│
-
+│   ├── scoring/
+│   ├── control_center/
+│   ├── scenarios/
+│   │   └── yaml_validator.py
+│   ├── edge_sim.py
+│   ├── fog_node.py
+│   ├── fog_node_runner.py
+│   ├── run_experiment.py
+│   └── ...
 ├── tests/
-
-│
-
 ├── Dockerfile
-
 ├── docker-compose.yml
-
 ├── requirements.txt
-
-└── run_phase_a.py
+└── ...
 
 ```
 
@@ -540,6 +557,16 @@ docker compose up --build
 
 ```
 http://localhost:8000
+```
+
+---
+
+## Running the Experiment Orchestrator
+
+The orchestrator pipeline runs all validation checks, scenario trials, and generates the reports and charts:
+
+```bash
+python -m src.run_experiment --trials 10 --clean
 ```
 
 ---
