@@ -88,4 +88,19 @@ expected_outcome:
   final_state: "YELLOW"
   max_state_allowed: "YELLOW"
   is_clamped: false
-metrics_targets: {}
+metrics_targets:
+  false_positive_rate: 0.0
+
+validation:
+  require_events: true
+  min_event_count: 1
+  timeout_sec: 60
+  assertions:
+    - metric: "max_state"
+      operator: "<="
+      threshold: "YELLOW"
+      unit: "state"
+
+metadata:
+  forest_type: "tropical_dry_deciduous"
+  zone_profile: "simlipal_buffer"

@@ -91,3 +91,21 @@ expected_outcome:
   is_clamped: true
 metrics_targets:
   false_positive_rate: 0.0
+
+validation:
+  require_events: true
+  min_event_count: 1
+  timeout_sec: 60
+  assertions:
+    - metric: "false_positive_count"
+      operator: "=="
+      threshold: 0
+      unit: "count"
+    - metric: "is_clamped"
+      operator: "=="
+      threshold: 1.0
+      unit: "bool"
+
+metadata:
+  forest_type: "moist_deciduous"
+  zone_profile: "simlipal_hills"
