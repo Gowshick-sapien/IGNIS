@@ -89,4 +89,23 @@ expected_outcome:
   final_state: "RED"
   max_state_allowed: "RED"
   is_clamped: false
-metrics_targets: {}
+metrics_targets:
+  fog_decision_latency: 1.0
+
+validation:
+  require_events: true
+  min_event_count: 1
+  timeout_sec: 60
+  assertions:
+    - metric: "fog_decision_latency"
+      operator: "<="
+      threshold: 1.0
+      unit: "seconds"
+    - metric: "final_state"
+      operator: "=="
+      threshold: "RED"
+      unit: "state"
+
+metadata:
+  forest_type: "dry_deciduous"
+  zone_profile: "simlipal_core"

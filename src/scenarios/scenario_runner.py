@@ -27,7 +27,7 @@ class ScenarioRunner:
         except Exception:
             pass
 
-    def run_scenario(self, scenario_id: str, trials: int = 1) -> List[ScenarioResult]:
+    def run_scenario(self, scenario_id: str, trials: int = 1, seed: int = None) -> List[ScenarioResult]:
         from src.scenarios.scenario_registry import SCENARIO_REGISTRY
         scenario_class = SCENARIO_REGISTRY.get(scenario_id)
         if not scenario_class:
@@ -56,6 +56,8 @@ class ScenarioRunner:
             
             scenario_instance = scenario_class()
             scenario_instance.yaml_path = yaml_path
+            if seed is not None:
+                scenario_instance.seed = seed + trial
             
             start_time = self.clock.strftime("%Y-%m-%dT%H:%M:%SZ")
             start_epoch = self.clock.time()
@@ -90,6 +92,26 @@ class ScenarioRunner:
             
             if not result.events:
                 result.events = self.collected_events
+
+            # Deterministic stable sort of events
+            import hashlib
+            def event_sort_key(e: dict):
+                ts = e.get("timestamp") or e.get("sensor_timestamp") or e.get("decision_timestamp") or ""
+                zone_id = e.get("zone_id") or ""
+                msg_type = e.get("message_type") or ""
+                node_id = e.get("node_id") or ""
+                topic = e.get("_topic") or ""
+                
+                # Serialized payload hash as tie-breaker
+                try:
+                    serialized = json.dumps(e, sort_keys=True)
+                except Exception:
+                    serialized = str(e)
+                payload_hash = hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+                
+                return (trial, scenario_id, ts, zone_id, msg_type, node_id, topic, payload_hash)
+            
+            result.events.sort(key=event_sort_key)
 
             # Validate expected outcomes if they are defined
             if expected_outcome:

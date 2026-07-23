@@ -1,38 +1,242 @@
 {
-  "decision_latency": {
-    "avg_sec": 0.12,
-    "max_sec": 0.15,
-    "min_sec": 0.08,
-    "all_latencies": [
-      0.12,
-      0.15,
-      0.08,
-      0.14,
-      0.11
-    ]
+  "experiment_metadata": {
+    "timestamp": "2026-07-23T14:11:37Z",
+    "git_commit": "1e1ed4d",
+    "trial_count": 10,
+    "random_seed": 1625122034,
+    "total_duration_sec": 0.012,
+    "platform": {
+      "os": "Windows 11",
+      "architecture": "AMD64",
+      "python_version": "3.12.2",
+      "timezone": "India Standard Time",
+      "hostname": "Gowshick",
+      "docker_version": "Docker version 29.6.1, build 8900f1d",
+      "docker_compose_version": "Docker Compose version v5.2.0"
+    },
+    "scenario_versions": {
+      "S1": "1.0",
+      "S2": "1.0",
+      "S3": "1.0",
+      "S4": "1.0",
+      "S5": "1.0",
+      "S6": "1.0",
+      "S7": "1.0"
+    },
+    "scenario_checksums": {
+      "S1": "bf41dc70f9835c368ccadbb3917982a10d64a3117e27fb42c902e56cb83827fd",
+      "S2": "372491471969dbf21a7bd9526242d5cfa544f5982226c2bfc37b7fc9ec2b16c4",
+      "S3": "ddd320f08cf791cc2cda872bf461c14f2652e4b3c23f7ff4af0728f923cc2df5",
+      "S4": "11cf15ad46d25178080fffbc5451efea5d4d4434564660deb6f32976eb045755",
+      "S5": "9253c0b23e183608585b8841311b08df8cfc2a70be2dd0db7846fa1dcfec9ae0",
+      "S6": "dd095c079b9667776793ae5f0e3f060278ace5d88ef5fb9f056482eb56840eec",
+      "S7": "9b5d7adfceb2bef4521f290a912a71df74f1d0d16deedfd3776fd9a3f8b89caa"
+    },
+    "container_images": {
+      "fog-node": "python:3.11-slim",
+      "edge-sim": "python:3.11-slim"
+    }
   },
-  "lateral_propagation": {
-    "avg_propagation_sec": 3.4,
-    "propagation_times": [
-      3.4,
-      3.2,
-      3.6
-    ]
+  "scenario_results": {
+    "S1": {
+      "status": "PASS",
+      "reason": "All assertions passed across 1 rules",
+      "trials": 10,
+      "metrics": {
+        "max_state": {
+          "value": "GREEN",
+          "status": "PASS",
+          "reason": "GREEN == threshold GREEN",
+          "threshold": "GREEN",
+          "operator": "=="
+        }
+      }
+    },
+    "S2": {
+      "status": "PASS",
+      "reason": "All assertions passed across 1 rules",
+      "trials": 10,
+      "metrics": {
+        "max_state": {
+          "value": "YELLOW",
+          "status": "PASS",
+          "reason": "YELLOW <= threshold YELLOW",
+          "threshold": "YELLOW",
+          "operator": "<="
+        }
+      }
+    },
+    "S3": {
+      "status": "FAIL",
+      "reason": "Assertions failed: No matching events found; Assertion Failed: Expected: RED, Observed: GREEN",
+      "trials": 10,
+      "metrics": {
+        "fog_decision_latency": {
+          "status": "INVALID",
+          "reason": "No matching events found"
+        },
+        "final_state": {
+          "value": "GREEN",
+          "status": "FAIL",
+          "reason": "GREEN == threshold RED",
+          "threshold": "RED",
+          "operator": "=="
+        }
+      }
+    },
+    "S4": {
+      "status": "FAIL",
+      "reason": "Assertions failed: Assertion Failed: Expected: True, Observed: False",
+      "trials": 10,
+      "metrics": {
+        "false_positive_count": {
+          "sample_count": 10,
+          "min": 0.0,
+          "minimum": 0.0,
+          "max": 0.0,
+          "maximum": 0.0,
+          "mean": 0.0,
+          "median": 0.0,
+          "std_dev": 0.0,
+          "confidence95": [
+            0.0,
+            0.0
+          ],
+          "ci_method": "scipy",
+          "status": "PASS",
+          "reason": "Mean 0.0000 == threshold 0",
+          "threshold": 0,
+          "operator": "=="
+        },
+        "is_clamped": {
+          "sample_count": 10,
+          "min": 0.0,
+          "minimum": 0.0,
+          "max": 0.0,
+          "maximum": 0.0,
+          "mean": 0.0,
+          "median": 0.0,
+          "std_dev": 0.0,
+          "confidence95": [
+            0.0,
+            0.0
+          ],
+          "ci_method": "scipy",
+          "status": "FAIL",
+          "reason": "Mean 0.0000 == threshold 1.0",
+          "threshold": 1.0,
+          "operator": "=="
+        }
+      }
+    },
+    "S5": {
+      "status": "FAIL",
+      "reason": "Assertions failed: Assertion Failed: Expected: True, Observed: False",
+      "trials": 10,
+      "metrics": {
+        "offline_continuity": {
+          "sample_count": 10,
+          "min": 0.0,
+          "minimum": 0.0,
+          "max": 0.0,
+          "maximum": 0.0,
+          "mean": 0.0,
+          "median": 0.0,
+          "std_dev": 0.0,
+          "confidence95": [
+            0.0,
+            0.0
+          ],
+          "ci_method": "scipy",
+          "status": "FAIL",
+          "reason": "Mean 0.0000 == threshold 1.0",
+          "threshold": 1.0,
+          "operator": "=="
+        },
+        "flush_success_rate": {
+          "sample_count": 10,
+          "min": 1.0,
+          "minimum": 1.0,
+          "max": 1.0,
+          "maximum": 1.0,
+          "mean": 1.0,
+          "median": 1.0,
+          "std_dev": 0.0,
+          "confidence95": [
+            1.0,
+            1.0
+          ],
+          "ci_method": "scipy",
+          "status": "PASS",
+          "reason": "Mean 1.0000 == threshold 1.0",
+          "threshold": 1.0,
+          "operator": "=="
+        }
+      }
+    },
+    "S6": {
+      "status": "INVALID",
+      "reason": "No matching events found",
+      "trials": 10,
+      "metrics": {
+        "lateral_propagation_time": {
+          "status": "INVALID",
+          "reason": "No matching events found"
+        }
+      }
+    },
+    "S7": {
+      "status": "PASS",
+      "reason": "All assertions passed across 2 rules",
+      "trials": 10,
+      "metrics": {
+        "cross_talk_count": {
+          "sample_count": 10,
+          "min": 0.0,
+          "minimum": 0.0,
+          "max": 0.0,
+          "maximum": 0.0,
+          "mean": 0.0,
+          "median": 0.0,
+          "std_dev": 0.0,
+          "confidence95": [
+            0.0,
+            0.0
+          ],
+          "ci_method": "scipy",
+          "status": "PASS",
+          "reason": "Mean 0.0000 == threshold 0",
+          "threshold": 0,
+          "operator": "=="
+        },
+        "message_loss_pct": {
+          "sample_count": 10,
+          "min": 0.0,
+          "minimum": 0.0,
+          "max": 0.0,
+          "maximum": 0.0,
+          "mean": 0.0,
+          "median": 0.0,
+          "std_dev": 0.0,
+          "confidence95": [
+            0.0,
+            0.0
+          ],
+          "ci_method": "scipy",
+          "status": "PASS",
+          "reason": "Mean 0.0000 == threshold 0.0",
+          "threshold": 0.0,
+          "operator": "=="
+        }
+      }
+    }
   },
-  "false_positive_rate": {
-    "rate": 0.0,
-    "total_trials": 5,
-    "false_positives": 0
-  },
-  "offline_continuity": {
-    "uninterrupted_execution": false,
-    "total_enqueued": 0,
-    "flushed_count": 0,
-    "flush_success_rate": 1.0
-  },
-  "concurrent_zone_integrity": {
-    "cross_talk_detected": 0,
-    "total_messages_processed": 173,
-    "message_loss_pct": 0.0
+  "summary": {
+    "total_scenarios": 7,
+    "passed": 3,
+    "failed": 3,
+    "invalid": 1,
+    "incomplete": 0,
+    "overall_verdict": "FAIL"
   }
 }

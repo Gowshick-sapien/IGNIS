@@ -21,6 +21,8 @@ class ScenarioS7(GenericScenario):
                 
             sub = SubScenario()
             sub.yaml_path = self.yaml_path
+            if hasattr(self, "seed") and self.seed is not None:
+                sub.seed = self.seed
             sub.setup(self.client, zone_id, self.clock)
             res = sub.run()
             sub.teardown()

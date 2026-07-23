@@ -44,6 +44,10 @@ class ScenarioS4(GenericScenario):
                     "fault_value": 100.0
                 }
                 
+            if hasattr(self, "seed") and self.seed is not None:
+                node_hash = hash(f"{self.zone_id}_{target_node}") & 0xffffffff
+                payload["seed"] = (self.seed + node_hash) & 0xffffffff
+
             topic = f"ignis/v1/system/zone/{self.zone_id}/edge/{target_node}/control"
             self.client.publish(topic, json.dumps(payload))
             logs.append(f"Step {step_idx}: Published localized override control to {target_node} (mode: {payload['mode']})")

@@ -33,6 +33,12 @@ ENV/
 historical/
 *.log
 
+# Temporary test runs & generated test data
+results/run_*/
+docs/phase-f/run_*/
+dummy_charts_dir/
+tests/temp_experiment_reports/
+
 # System files
 .DS_Store
 Thumbs.db

@@ -94,3 +94,22 @@ expected_outcome:
   is_clamped: false
 metrics_targets:
   offline_continuity: true
+  flush_success_rate: 1.0
+
+validation:
+  require_events: true
+  min_event_count: 1
+  timeout_sec: 120
+  assertions:
+    - metric: "offline_continuity"
+      operator: "=="
+      threshold: 1.0
+      unit: "bool"
+    - metric: "flush_success_rate"
+      operator: "=="
+      threshold: 1.0
+      unit: "ratio"
+
+metadata:
+  forest_type: "sal_forest"
+  zone_profile: "simlipal_south"

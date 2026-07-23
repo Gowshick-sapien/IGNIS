@@ -89,4 +89,23 @@ expected_outcome:
   max_state_allowed: "RED"
   is_clamped: false
 metrics_targets:
-  concurrent_zone_integrity: true
+  cross_talk_count: 0
+  message_loss_pct: 0.0
+
+validation:
+  require_events: true
+  min_event_count: 1
+  timeout_sec: 90
+  assertions:
+    - metric: "cross_talk_count"
+      operator: "=="
+      threshold: 0
+      unit: "count"
+    - metric: "message_loss_pct"
+      operator: "=="
+      threshold: 0.0
+      unit: "percent"
+
+metadata:
+  forest_type: "mixed_deciduous"
+  zone_profile: "simlipal_multi_zone"

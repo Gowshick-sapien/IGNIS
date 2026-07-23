@@ -628,11 +628,11 @@ class TestMetricsCollector(unittest.TestCase):
         }
         
         generate_charts(dummy_metrics, "dummy_charts_dir")
-        self.assertEqual(mock_savefig.call_count, 5)
+        self.assertEqual(mock_savefig.call_count, 10)
         
         with patch('builtins.open', mock_open()) as mock_file:
             generate_report(dummy_metrics, "dummy_report.md")
-            mock_file.assert_called_with("dummy_report.md", 'w')
+            mock_file.assert_called_with("dummy_report.md", 'w', encoding='utf-8')
             handle = mock_file()
             handle.write.assert_called_once()
 
