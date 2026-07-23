@@ -80,12 +80,20 @@ class GenericScenario(BaseScenario):
             if mode == "localized":
                 target_node = self.active_nodes[1]
                 topic = f"ignis/v1/system/zone/{self.zone_id}/edge/{target_node}/control"
-                self.client.publish(topic, json.dumps(payload))
+                payload_copy = payload.copy()
+                if hasattr(self, "seed") and self.seed is not None:
+                    node_hash = hash(f"{self.zone_id}_{target_node}") & 0xffffffff
+                    payload_copy["seed"] = (self.seed + node_hash) & 0xffffffff
+                self.client.publish(topic, json.dumps(payload_copy))
                 logs.append(f"Step {step.get('index')}: Published localized scenario control to {target_node}")
             else:  # global or multi_zone
                 for node in self.active_nodes:
                     topic = f"ignis/v1/system/zone/{self.zone_id}/edge/{node}/control"
-                    self.client.publish(topic, json.dumps(payload))
+                    payload_copy = payload.copy()
+                    if hasattr(self, "seed") and self.seed is not None:
+                        node_hash = hash(f"{self.zone_id}_{node}") & 0xffffffff
+                        payload_copy["seed"] = (self.seed + node_hash) & 0xffffffff
+                    self.client.publish(topic, json.dumps(payload_copy))
                 logs.append(f"Step {step.get('index')}: Published global scenario control to all nodes")
                 
             self.clock.sleep(duration)
@@ -150,4 +158,7 @@ class GenericScenario(BaseScenario):
                 "command": "set_mode",
                 "mode": "baseline"
             }
+            if hasattr(self, "seed") and self.seed is not None:
+                node_hash = hash(f"{self.zone_id}_{node}") & 0xffffffff
+                payload["seed"] = (self.seed + node_hash) & 0xffffffff
             self.client.publish(control_topic, json.dumps(payload))

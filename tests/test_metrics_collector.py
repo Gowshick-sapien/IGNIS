@@ -7,6 +7,7 @@ import math
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from src.metrics_collector import (
+    calculate_stats,
     calculate_decision_latency,
     calculate_lateral_propagation,
     calculate_false_positive_rate,
@@ -205,6 +206,14 @@ class TestMetricsCollector(unittest.TestCase):
         s3_res = output["scenario_results"]["S3"]
         self.assertEqual(s3_res["status"], "PASS")
         self.assertEqual(s3_res["trials"], 1)
+
+    def test_calculate_stats_zero_variance(self):
+        data = [0.0, 0.0, 0.0, 0.0, 0.0]
+        stats = calculate_stats(data)
+        self.assertEqual(stats["mean"], 0.0)
+        self.assertEqual(stats["std_dev"], 0.0)
+        self.assertEqual(stats["confidence95"], [0.0, 0.0])
+        self.assertFalse(any(math.isnan(x) for x in stats["confidence95"]))
 
 if __name__ == "__main__":
     unittest.main()

@@ -218,7 +218,7 @@ def generate_charts(metrics: dict, charts_dir: str, raw_results: dict = None):
         plt.errorbar([1], [mean_val], yerr=[[mean_val - ci_lower], [ci_upper - mean_val]], fmt='o', color='darkred', elinewidth=3, capsize=8, markersize=8)
         plt.xlim(0.5, 1.5)
         plt.xticks([1], ["S6 Lateral Propagation"])
-        plt.title("S6: Mean Propagation Time with 95% CI")
+        plt.title("Scenario S6\nMean Lateral Propagation Time\n(95% Confidence Interval)")
         plt.ylabel("Time (seconds)")
         plt.grid(True, linestyle='--', alpha=0.5)
         save_fig("lateral_propagation_ci.png")
@@ -267,15 +267,25 @@ def generate_charts(metrics: dict, charts_dir: str, raw_results: dict = None):
             enqueued_counts = [4] * 10
             flushed_counts = [4] * 10
             
-        x = range(1, len(enqueued_counts) + 1)
+        is_empty = (not enqueued_counts) or (sum(enqueued_counts) == 0 and sum(flushed_counts) == 0)
+        
         plt.figure(figsize=(7, 4))
-        plt.bar([i - 0.2 for i in x], enqueued_counts, width=0.4, label="Enqueued (Offline)", color='navy')
-        plt.bar([i + 0.2 for i in x], flushed_counts, width=0.4, label="Flushed (Restored)", color='steelblue')
-        plt.title("S5: Telemetry Caching & Flushing per Trial")
-        plt.xlabel("Trial Index")
-        plt.ylabel("Message Count")
-        plt.legend()
-        plt.grid(axis='y', linestyle='--', alpha=0.5)
+        if is_empty:
+            plt.text(0.5, 0.5, "No events captured during experiment", ha="center", va="center", fontsize=14, color="gray")
+            plt.xlim(0, 1)
+            plt.ylim(0, 1)
+            plt.xticks([])
+            plt.yticks([])
+        else:
+            x = range(1, len(enqueued_counts) + 1)
+            plt.bar([i - 0.2 for i in x], enqueued_counts, width=0.4, label="Enqueued (Offline)", color='navy')
+            plt.bar([i + 0.2 for i in x], flushed_counts, width=0.4, label="Flushed (Restored)", color='steelblue')
+            plt.xlabel("Trial Index")
+            plt.ylabel("Message Count")
+            plt.legend()
+            plt.grid(axis='y', linestyle='--', alpha=0.5)
+            
+        plt.title("Scenario S5\nTelemetry Caching & Flushing per Trial")
         save_fig("offline_buffering_timeline.png")
     except Exception as e:
         logger.error(f"Failed to generate offline_buffering_timeline.png: {e}")
@@ -307,7 +317,7 @@ def generate_charts(metrics: dict, charts_dir: str, raw_results: dict = None):
             
         plt.figure(figsize=(6, 5))
         plt.imshow(crosstalk_matrix, cmap='Purples', interpolation='nearest')
-        plt.title("S7: Message Ingestion Crosstalk Heatmap")
+        plt.title("Scenario S7\nCross-Zone Message Crosstalk Heatmap")
         plt.colorbar(label="Message Count")
         plt.xticks(range(len(zones)), [f"Topic Zone {z}" for z in zones])
         plt.yticks(range(len(zones)), [f"Payload Zone {z}" for z in zones])
@@ -459,15 +469,32 @@ def generate_report(metrics: dict, report_path: str):
     scenario_results = metrics.get("scenario_results", {})
     summary = metrics.get("summary", {})
     
+    passed_cnt = summary.get("passed", 0)
+    failed_cnt = summary.get("failed", 0)
+    invalid_cnt = summary.get("invalid", 0)
+    incomplete_cnt = summary.get("incomplete", 0)
+    overall_verdict = summary.get("overall_verdict", "INCOMPLETE")
+    
+    passed_text = f"{passed_cnt} scenario" + ("s" if passed_cnt != 1 else "") + " successfully satisfied all assertions."
+    failed_text = f"{failed_cnt} scenario" + ("s" if failed_cnt != 1 else "") + " failed assertion checks."
+    invalid_text = f"{invalid_cnt} scenario" + ("s" if invalid_cnt != 1 else "") + " could not be evaluated because required events were unavailable."
+    
     exec_summary = f"""## 1. Executive Summary
-- **Overall Verdict**: **{summary.get("overall_verdict", "INCOMPLETE")}**
+- **Overall Verdict**: **{overall_verdict}**
 - **Total Scenarios Evaluated**: {summary.get("total_scenarios", 0)}
 - **Verdict Breakdown**:
-  - **Passed**: {summary.get("passed", 0)}
-  - **Failed**: {summary.get("failed", 0)}
-  - **Invalid**: {summary.get("invalid", 0)}
-  - **Incomplete**: {summary.get("incomplete", 0)}
-- **Key Findings**: The IGNIS decentralized fault clamping and local consensus execution successfully maintained edge operations and suppressed false alerts during single-sensor failure injections. Lateral propagation constraints are validated under windy propagation configurations.
+  - **Passed**: {passed_cnt}
+  - **Failed**: {failed_cnt}
+  - **Invalid**: {invalid_cnt}
+  - **Incomplete**: {incomplete_cnt}
+- **Key Findings**:
+  {passed_text}
+  
+  {failed_text}
+  
+  {invalid_text}
+  
+  Overall experiment verdict: {overall_verdict}.
 """
 
     platform = metadata.get("platform", {})
@@ -535,12 +562,26 @@ Where degrees of freedom $df = N-1$. (CI calculation method: `{metadata.get("ci_
             results_section += "| Metric | Value / Aggregates | Target | Operator | Status | Reason |\n"
             results_section += "|---|---|---|---|---|---|\n"
             for m_name, m_val in metrics_dict.items():
-                if "mean" in m_val:
-                    stats_str = f"Mean: {m_val['mean']:.4f}s (Min: {m_val['min']:.4f}s, Max: {m_val['max']:.4f}s, Med: {m_val['median']:.4f}s, StdDev: {m_val['std_dev']:.4f}s, CI95: {m_val['confidence95']})"
+                if m_val.get("status") == "INVALID":
+                    stats_str = "Metric unavailable"
+                    target_str = "None"
+                    op_str = "None"
+                    reason_str = m_val.get("reason") or "No matching events found"
                 else:
-                    stats_str = f"Value: {m_val.get('value')}"
+                    target_str = str(m_val.get("threshold", "None"))
+                    op_str = str(m_val.get("operator", "None"))
+                    reason_str = m_val.get("reason", "")
+                    if "mean" in m_val:
+                        unit_suffix = " s" if m_name in ["fog_decision_latency", "lateral_propagation_time"] else ""
+                        min_val = m_val.get("minimum") if m_val.get("minimum") is not None else m_val.get("min")
+                        max_val = m_val.get("maximum") if m_val.get("maximum") is not None else m_val.get("max")
+                        if min_val is None: min_val = 0.0
+                        if max_val is None: max_val = 0.0
+                        stats_str = f"Mean: {m_val['mean']:.4f}{unit_suffix} (Min: {min_val:.4f}{unit_suffix}, Max: {max_val:.4f}{unit_suffix}, Med: {m_val['median']:.4f}{unit_suffix}, StdDev: {m_val['std_dev']:.4f}{unit_suffix}, CI95: {m_val['confidence95']})"
+                    else:
+                        stats_str = f"Value: {m_val.get('value')}"
                 
-                results_section += f"| {m_name} | {stats_str} | {m_val.get('threshold')} | {m_val.get('operator')} | **{m_val.get('status')}** | {m_val.get('reason')} |\n"
+                results_section += f"| {m_name} | {stats_str} | {target_str} | {op_str} | **{m_val.get('status')}** | {reason_str} |\n"
             results_section += "\n"
         else:
             results_section += "*No numerical metrics recorded.*\n\n"
@@ -561,26 +602,93 @@ Where degrees of freedom $df = N-1$. (CI calculation method: `{metadata.get("ci_
             
         results_section += "---\n\n"
 
-    cross_analysis = """## 5. Cross-Scenario Analysis
-A comparative analysis shows that localized scenarios (S1-S6) display predictable and linear execution overheads. The complexity of multi-zone outbreaks (S7) leads to an increased network throughput demand but zero recorded crosstalk, establishing that isolation barriers prevent coordination errors.
+    pass_sids = [sid for sid, res in scenario_results.items() if res.get("status") == "PASS"]
+    fail_sids = [sid for sid, res in scenario_results.items() if res.get("status") == "FAIL"]
+    invalid_sids = [sid for sid, res in scenario_results.items() if res.get("status") == "INVALID"]
+    
+    cross_analysis = "## 5. Cross-Scenario Analysis\n\n"
+    if pass_sids:
+        cross_analysis += f"The following scenarios successfully passed their validation checks: {', '.join(pass_sids)}. "
+        cross_analysis += "These results confirm that under normal and minor risk conditions (such as S1 and S2) and isolated multi-zone events (S7), the fog nodes correctly execute local and bridged protocols.\n\n"
+        
+    if fail_sids:
+        cross_analysis += f"However, critical failures were observed in scenarios: {', '.join(fail_sids)}. "
+        if "S5" in fail_sids:
+            cross_analysis += "Specifically, Scenario S5 failed assertion checks for offline continuity, indicating that the buffering pipeline or recovery flush mechanisms did not function correctly. "
+        if "S4" in fail_sids:
+            cross_analysis += "Scenario S4 failed its false-positive suppression check, indicating that transient sensor faults successfully escalated or were not clamped. "
+        cross_analysis += "These failures imply that future testing and development must focus on strengthening the robustness of state clamping and offline synchronization.\n\n"
+        
+    if invalid_sids:
+        cross_analysis += f"The following scenarios could not be evaluated and were marked INVALID: {', '.join(invalid_sids)}. "
+        if "S3" in invalid_sids:
+            cross_analysis += "Scenario S3 was marked INVALID because it generated no matching events, indicating that the sudden ignition event did not trigger telemetry or that the logging queue failed to capture the transition. "
+        if "S6" in invalid_sids:
+            cross_analysis += "Scenario S6 was marked INVALID because of missing propagation event sequences, meaning the lateral warning pre-emption did not execute or record its operations. "
+        cross_analysis += "Addressing these measurement gaps is critical for verifying the corresponding real-time latency claims in future runs.\n\n"
+        
+    cross_analysis += "\n![Scenario Comparison Durations](charts/scenario_comparison_summary.png)\n"
 
-![Scenario Comparison Durations](charts/scenario_comparison_summary.png)
-"""
+    def get_validation_status(sid: str) -> tuple[str, str]:
+        res = scenario_results.get(sid, {})
+        status = res.get("status", "INCOMPLETE")
+        reason = res.get("reason", "No results calculated.")
+        
+        status_map = {
+            "PASS": "✅ Validated",
+            "FAIL": "❌ Validation Failed",
+            "INVALID": "⚠ Not Validated",
+            "INCOMPLETE": "⚪ Not Executed"
+        }
+        val_status = status_map.get(status, "⚪ Not Executed")
+        evidence = "All assertions passed" if status == "PASS" else reason
+        return val_status, evidence
 
-    arch_validation = """## 6. Architecture Validation Summary
+    s3_val, s3_ev = get_validation_status("S3")
+    s6_val, s6_ev = get_validation_status("S6")
+    s4_val, s4_ev = get_validation_status("S4")
+    s5_val, s5_ev = get_validation_status("S5")
+    s7_val, s7_ev = get_validation_status("S7")
 
-| Core Architecture Claim | Reference Scenario | Validation Status | Evidence |
+    arch_validation = f"""## 6. Architecture Validation Summary
+
+| Core Architecture Claim | Reference Scenario | Validation Status | Evidence / Reason |
 |---|---|---|---|
-| **Fog Decision Latency** (<1.0s target) | S3 | ✅ Validated | Fast local detection & RED alert propagation |
-| **Lateral Warning Propagation** (<10s window) | S6 | ✅ Validated | Sub-4s warning pre-emption in adjacent zone |
-| **False-Positive Suppression** (Local 3-Node check) | S4 | ✅ Validated | Single sensor failure clamped without escalation |
-| **Offline Continuity Cache** (Local mitigation action) | S5 | ✅ Validated | Telemetry buffered during disconnect & flushed on link restore |
-| **Concurrent Outbreak Integrity** (No cross-talk) | S7 | ✅ Validated | Multi-zone events parsed separated by topic boundary |
+| **Fog Decision Latency** (<1.0s target) | S3 | {s3_val} | {s3_ev} |
+| **Lateral Warning Propagation** (<10s window) | S6 | {s6_val} | {s6_ev} |
+| **False-Positive Suppression** (Local 3-Node check) | S4 | {s4_val} | {s4_ev} |
+| **Offline Continuity Cache** (Local mitigation action) | S5 | {s5_val} | {s5_ev} |
+| **Concurrent Outbreak Integrity** (No cross-talk) | S7 | {s7_val} | {s7_ev} |
 """
 
-    discussion = """## 7. Discussion
-The empirical results confirm that decentralized consensus and fog coordinator topologies meet and exceed real-time critical latency limits. By offloading decisions to the fog boundary, average decision latency remains below 0.15s, validating the primary value proposition of the edge architecture.
-"""
+    discussion = "## 7. Discussion\n\n"
+    s3_status = scenario_results.get("S3", {}).get("status", "INCOMPLETE")
+    if s3_status == "PASS":
+        s3_lat_metric = scenario_results["S3"].get("metrics", {}).get("fog_decision_latency", {})
+        mean_lat = s3_lat_metric.get("mean", 0.12)
+        discussion += f"The empirical results confirm that decentralized consensus and fog coordinator topologies meet and exceed real-time critical latency limits. Average decision latency remains below {mean_lat:.4f}s, validating the primary value proposition of the edge architecture.\n\n"
+    elif s3_status == "FAIL":
+        s3_lat_metric = scenario_results["S3"].get("metrics", {}).get("fog_decision_latency", {})
+        mean_lat = s3_lat_metric.get("mean", 1.2)
+        discussion += f"Decision latency assertions failed (average latency: {mean_lat:.4f}s), indicating the detection or coordination process exceeded the 1.0s target.\n\n"
+    else:
+        discussion += "Decision latency measurements could not be validated because Scenario S3 failed to generate sufficient events.\n\n"
+        
+    s5_status = scenario_results.get("S5", {}).get("status", "INCOMPLETE")
+    if s5_status == "PASS":
+        discussion += "Offline continuity remained successful, validating the buffering and recovery pipeline.\n\n"
+    elif s5_status == "FAIL":
+        discussion += "Offline continuity assertions failed, indicating the buffering pipeline requires further investigation.\n\n"
+    else:
+        discussion += "Offline continuity could not be validated because Scenario S5 produced insufficient evidence.\n\n"
+        
+    s7_status = scenario_results.get("S7", {}).get("status", "INCOMPLETE")
+    if s7_status == "PASS":
+        discussion += "Concurrent multi-zone integrity remained successful.\n\n"
+    elif s7_status == "FAIL":
+        discussion += "Concurrent multi-zone integrity assertions failed, indicating cross-talk or message loss between zones.\n\n"
+    else:
+        discussion += "Concurrent multi-zone integrity could not be validated due to insufficient events.\n\n"
 
     limitations = """## 8. Limitations
 - **Synthetic Sensor Emulation**: Telemetry is generated via mock generators rather than actual outdoor wireless sensors.
@@ -588,9 +696,16 @@ The empirical results confirm that decentralized consensus and fog coordinator t
 - **False-Positive Lower Bound**: With 10–30 trials, the statistical confidence for very rare false-positive rates remains bounded.
 """
 
-    conclusion = """## 9. Conclusion
-The pipeline successfully completed all validation and verification criteria. All core architecture claims in Section 12 are fully supported by empirical data. The system is validated for staging and pilot testing in physical testbeds.
-"""
+    if overall_verdict == "PASS":
+        conclusion = """## 9. Conclusion
+The orchestration, reporting, and analytics pipeline successfully completed. All core architecture claims are fully validated by empirical data. The system is validated for staging and pilot testing in physical testbeds."""
+    else:
+        conclusion = """## 9. Conclusion
+The orchestration, reporting and analytics pipeline successfully completed.
+
+However, multiple experimental scenarios failed or produced insufficient evidence.
+
+Additional implementation work is required before the architecture can be considered fully validated."""
 
     report_content = f"""# IGNIS — Consolidated Simulation Results Report
 

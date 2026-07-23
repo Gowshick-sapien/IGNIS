@@ -162,7 +162,7 @@ def run_stages():
         for sid in target_scenarios:
             try:
                 logger.info(f"Running scenario {sid}...")
-                results = runner.run_scenario(sid, trials=args.trials)
+                results = runner.run_scenario(sid, trials=args.trials, seed=seed)
                 import dataclasses
                 raw_results[sid] = [dataclasses.asdict(r) for r in results]
             except Exception as e:

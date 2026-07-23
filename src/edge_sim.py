@@ -23,7 +23,7 @@ class RandomWalkProvider(TelemetryProvider):
     """Generates sensor data that drifts randomly within normal limits."""
     def __init__(self):
         # Initial baseline states
-        self.state = {
+        self.default_state = {
             "temperature_c": 28.0,
             "humidity_pct": 55.0,
             "wind_speed_kmh": 6.0,
@@ -34,6 +34,7 @@ class RandomWalkProvider(TelemetryProvider):
             "light_lux": 20000.0,
             "rain_mm": 0.0
         }
+        self.state = self.default_state.copy()
         # Hard limits to clamp the drift within baseline ranges
         self.limits = {
             "temperature_c": (20.0, 35.0),
@@ -46,6 +47,9 @@ class RandomWalkProvider(TelemetryProvider):
             "light_lux": (5000.0, 60000.0),
             "rain_mm": (0.0, 5.0)
         }
+
+    def reset(self):
+        self.state = self.default_state.copy()
 
     def get_reading(self) -> dict:
         # Apply small random walks to each parameter
@@ -118,6 +122,9 @@ class EdgeNodeSimulator:
         self.sequence_number = 0
         self.running = False
         
+        import threading
+        self.tick_event = threading.Event()
+        
         # MQTT Client setup
         self.client = mqtt.Client(client_id=f"edge_sim_{self.zone_id}_{self.node_id}")
         self.client.on_connect = self.on_connect
@@ -143,6 +150,12 @@ class EdgeNodeSimulator:
                 logger.warning(f"Ignored unexpected message type: {message_type}")
                 return
                 
+            if "seed" in payload:
+                seed_val = payload["seed"]
+                random.seed(seed_val)
+                self.baseline_provider.reset()
+                logger.info(f"Seeded random generator with: {seed_val} and reset baseline provider state")
+                
             command = payload.get("command")
             if command == "set_mode":
                 mode = payload.get("mode", "baseline")
@@ -166,6 +179,9 @@ class EdgeNodeSimulator:
                     logger.info(f"Switched to Fault mode. Forcing {fault_sensor} = {fault_value}")
             else:
                 logger.warning(f"Unknown control command: {command}")
+            
+            # Wake up the sleep loop immediately
+            self.tick_event.set()
         except Exception as e:
             logger.error(f"Error handling control message: {e}")
 
@@ -181,6 +197,9 @@ class EdgeNodeSimulator:
         
         try:
             while self.running:
+                # Clear the event before running the tick
+                self.tick_event.clear()
+                
                 # 1. Fetch telemetry values
                 sensor_values = self.active_provider.get_reading()
                 
@@ -210,8 +229,8 @@ class EdgeNodeSimulator:
                 logger.info(f"Publishing sequence {self.sequence_number} | State Mode: {self.active_provider.__class__.__name__}")
                 self.client.publish(reading_topic, json.dumps(telemetry))
                 
-                # 4. Wait for next tick
-                time.sleep(self.tick_interval)
+                # 4. Wait for next tick, interruptible by control commands
+                self.tick_event.wait(self.tick_interval)
                 
         except KeyboardInterrupt:
             logger.info("Interrupt received, stopping...")

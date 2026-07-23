@@ -53,25 +53,44 @@ def calculate_stats(data: list) -> dict:
     upper_ci = val_mean
     
     if n > 1:
-        try:
-            import scipy.stats
-            # scipy exact interval
-            lower_ci, upper_ci = scipy.stats.t.interval(0.95, df=n-1, loc=val_mean, scale=val_std/math.sqrt(n))
-            lower_ci = float(lower_ci)
-            upper_ci = float(upper_ci)
-            ci_method = "scipy"
-        except ImportError:
-            df = n - 1
-            t_val = T_CRITICAL_95.get(df, 1.960) # Fallback to normal z-score 1.96 if df > 29
-            margin = t_val * (val_std / math.sqrt(n))
-            lower_ci = val_mean - margin
-            upper_ci = val_mean + margin
-            ci_method = "internal_t_table"
-            
+        if val_std == 0.0 or val_min == val_max:
+            lower_ci = val_mean
+            upper_ci = val_mean
+            try:
+                import scipy.stats
+                ci_method = "scipy"
+            except ImportError:
+                ci_method = "internal_t_table"
+        else:
+            try:
+                import scipy.stats
+                # scipy exact interval
+                l_ci, u_ci = scipy.stats.t.interval(0.95, df=n-1, loc=val_mean, scale=val_std/math.sqrt(n))
+                if math.isnan(l_ci) or math.isnan(u_ci):
+                    lower_ci = val_mean
+                    upper_ci = val_mean
+                else:
+                    lower_ci = float(l_ci)
+                    upper_ci = float(u_ci)
+                ci_method = "scipy"
+            except ImportError:
+                df = n - 1
+                t_val = T_CRITICAL_95.get(df, 1.960) # Fallback to normal z-score 1.96 if df > 29
+                margin = t_val * (val_std / math.sqrt(n))
+                lower_ci = val_mean - margin
+                upper_ci = val_mean + margin
+                ci_method = "internal_t_table"
+
+    if math.isnan(lower_ci) or math.isnan(upper_ci):
+        lower_ci = val_mean
+        upper_ci = val_mean
+
     return {
         "sample_count": n,
         "min": round(val_min, 4),
+        "minimum": round(val_min, 4),
         "max": round(val_max, 4),
+        "maximum": round(val_max, 4),
         "mean": round(val_mean, 4),
         "median": round(val_median, 4),
         "std_dev": round(val_std, 4),
@@ -194,6 +213,55 @@ def calculate_concurrent_zone_integrity(results: list) -> dict:
         "message_loss_pct": 0.0
     }
 
+def calculate_false_positive_rate_trials(results: list) -> tuple[list, list]:
+    if not results:
+        return [], []
+    fp_counts = []
+    clamped_ratios = []
+    for res in results:
+        events = res.get("events", [])
+        states = [e.get("state") for e in events if "state" in e.get("_topic", "")]
+        fp_trial = 1.0 if any(s in ["ORANGE", "RED"] for s in states) else 0.0
+        clamped_trial = 1.0 if any(e.get("is_state_clamped") is True for e in events) else 0.0
+        fp_counts.append(fp_trial)
+        clamped_ratios.append(clamped_trial)
+    return fp_counts, clamped_ratios
+
+def calculate_offline_continuity_trials(results: list) -> tuple[list, list]:
+    if not results:
+        return [], []
+    continuities = []
+    rates = []
+    for res in results:
+        continuity_logged = any("[Offline Continuity]" in str(l) for l in res.get("logs", []))
+        continuities.append(1.0 if continuity_logged else 0.0)
+        
+        events = res.get("events", [])
+        buffered = [e for e in events if e.get("was_buffered") is True]
+        flushed = [e for e in events if e.get("buffer_flush_timestamp") is not None]
+        total_enqueued = len(buffered)
+        flushed_count = len(flushed)
+        rates.append((flushed_count / total_enqueued) if total_enqueued > 0 else 1.0)
+    return continuities, rates
+
+def calculate_concurrent_zone_integrity_trials(results: list) -> tuple[list, list]:
+    if not results:
+        return [], []
+    cross_talks = []
+    losses = []
+    for res in results:
+        events = res.get("events", [])
+        cross_talk_count = 0
+        for e in events:
+            topic = e.get("_topic", "")
+            payload_zone = e.get("zone_id")
+            if topic and payload_zone:
+                if f"zone/{payload_zone}" not in topic:
+                    cross_talk_count += 1
+        cross_talks.append(float(cross_talk_count))
+        losses.append(0.0)
+    return cross_talks, losses
+
 def calculate_max_state(results: list) -> dict:
     if not results:
         return {"status": "INVALID", "reason": "No matching events found"}
@@ -230,12 +298,26 @@ def get_platform_metadata() -> dict:
         timezone = time.strftime("%Z")
     except Exception:
         timezone = "UTC"
+        
+    docker_version = "unknown"
+    docker_compose_version = "unknown"
+    try:
+        docker_version = subprocess.check_output(["docker", "--version"], stderr=subprocess.DEVNULL).decode().strip()
+    except Exception:
+        pass
+    try:
+        docker_compose_version = subprocess.check_output(["docker", "compose", "version"], stderr=subprocess.DEVNULL).decode().strip()
+    except Exception:
+        pass
+        
     return {
         "os": platform.system() + " " + platform.release(),
         "architecture": platform.machine(),
         "python_version": platform.python_version(),
         "timezone": timezone,
-        "hostname": socket.gethostname()
+        "hostname": socket.gethostname(),
+        "docker_version": docker_version,
+        "docker_compose_version": docker_compose_version
     }
 
 def compare(val, op, threshold) -> bool:
@@ -289,12 +371,28 @@ def evaluate_assertions(scenario_id: str, calculated_metrics: dict, assertions: 
             metric_results[metric_name] = metric_val_struct
             continue
             
+        # Clean display unit
+        display_unit = ""
+        if unit:
+            if unit in ["state", "count", "ratio", "bool", "percent"]:
+                display_unit = ""
+            elif unit == "seconds":
+                display_unit = " s"
+            else:
+                display_unit = f" {unit}"
+
         if isinstance(metric_val_struct, dict) and "mean" in metric_val_struct:
             compare_val = metric_val_struct["mean"]
-            val_str = f"Mean {compare_val}{unit}"
+            if isinstance(compare_val, float):
+                val_str = f"Mean {compare_val:.4f}{display_unit}"
+            else:
+                val_str = f"Mean {compare_val}{display_unit}"
         else:
             compare_val = metric_val_struct
-            val_str = f"{compare_val}{unit}"
+            if isinstance(compare_val, float):
+                val_str = f"{compare_val:.4f}{display_unit}"
+            else:
+                val_str = f"{compare_val}{display_unit}"
             
         try:
             passed = compare(compare_val, op, threshold)
@@ -305,9 +403,14 @@ def evaluate_assertions(scenario_id: str, calculated_metrics: dict, assertions: 
         status = "PASS" if passed else "FAIL"
         if not passed:
             overall_status = "FAIL"
-            fail_reasons.append(f"{val_str} {op} threshold {threshold}{unit} failed")
+            exp_val = threshold
+            obs_val = compare_val
+            if unit == "bool" or (isinstance(threshold, (int, float, bool)) and threshold in [0.0, 1.0, True, False] and isinstance(compare_val, (int, float, bool)) and compare_val in [0.0, 1.0, True, False]):
+                exp_val = "True" if threshold in [1.0, True] else "False"
+                obs_val = "True" if compare_val in [1.0, True] else "False"
+            fail_reasons.append(f"Assertion Failed: Expected: {exp_val}, Observed: {obs_val}")
             
-        reason = f"{val_str} {op} threshold {threshold}{unit}"
+        reason = f"{val_str} {op} threshold {threshold}{display_unit}"
         
         if isinstance(metric_val_struct, dict):
             metric_detail = metric_val_struct.copy()
@@ -414,26 +517,26 @@ def compute_metrics(raw_results: dict) -> dict:
                 "final_state": calculate_final_state(results).get("final_state")
             }
         elif sid == "S4":
-            fp_data = calculate_false_positive_rate(results)
+            fp_counts, clamped_ratios = calculate_false_positive_rate_trials(results)
             scenario_raw_metrics["S4"] = {
-                "false_positive_count": fp_data.get("false_positives"),
-                "is_clamped": fp_data.get("is_clamped_ratio")
+                "false_positive_count": calculate_stats(fp_counts),
+                "is_clamped": calculate_stats(clamped_ratios)
             }
         elif sid == "S5":
-            offline_data = calculate_offline_continuity(results)
+            continuities, rates = calculate_offline_continuity_trials(results)
             scenario_raw_metrics["S5"] = {
-                "offline_continuity": 1.0 if offline_data.get("uninterrupted_execution") == True else 0.0,
-                "flush_success_rate": offline_data.get("flush_success_rate")
+                "offline_continuity": calculate_stats(continuities),
+                "flush_success_rate": calculate_stats(rates)
             }
         elif sid == "S6":
             scenario_raw_metrics["S6"] = {
                 "lateral_propagation_time": calculate_lateral_propagation(results)
             }
         elif sid == "S7":
-            integrity_data = calculate_concurrent_zone_integrity(results)
+            cross_talks, losses = calculate_concurrent_zone_integrity_trials(results)
             scenario_raw_metrics["S7"] = {
-                "cross_talk_count": integrity_data.get("cross_talk_detected"),
-                "message_loss_pct": integrity_data.get("message_loss_pct")
+                "cross_talk_count": calculate_stats(cross_talks),
+                "message_loss_pct": calculate_stats(losses)
             }
 
     # 3. Evaluate assertions and build scenario_results schema
