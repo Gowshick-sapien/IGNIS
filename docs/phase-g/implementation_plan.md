@@ -2,6 +2,152 @@
 
 Transform IGNIS from a simulation engine into a complete experimentation platform by adding experiment lifecycle management, historical result comparison, interactive reporting, and researcher productivity tools.
 
+---
+
+# UI & Documentation Style Standard
+
+## Professional Presentation Policy
+
+IGNIS is an academic research and experimentation platform.
+
+All user interfaces, reports, dashboards, documentation, and generated artifacts shall maintain a professional engineering appearance.
+
+### Project-wide Requirements
+
+The following are prohibited throughout the project:
+
+- Emoji
+- Decorative Unicode icons
+- Informal symbols used for visual styling
+- Consumer-style interface decorations
+
+This policy applies to:
+
+- HTML reports
+- Dashboard pages
+- Navigation menus
+- Buttons
+- Status badges
+- Alerts
+- Notifications
+- Tables
+- Charts
+- Documentation examples
+- Generated reports
+- JavaScript-generated UI
+- CSS pseudo-elements (`::before`, `::after`)
+- Console output intended for users
+
+### Status Representation
+
+System states shall be represented using text and colour only.
+
+Examples:
+
+| State | Representation |
+|--------|----------------|
+| PASS | Green badge |
+| FAIL | Red badge |
+| INVALID | Amber badge |
+| RUNNING | Blue badge |
+| PAUSED | Orange badge |
+| COMPLETED | Green badge |
+| FAILED | Red badge |
+
+Icons and emoji shall not be used to indicate state.
+
+### Button Labels
+
+Buttons shall use concise text.
+
+Examples:
+
+- Run Experiment
+- Pause
+- Resume
+- Stop
+- Export
+- Search
+- Collapse All
+- Expand All
+- Toggle Theme
+
+Instead of decorative labels.
+
+### Navigation
+
+Navigation entries shall consist only of text.
+
+Correct:
+
+```
+Dashboard
+Experiments
+Reports
+Charts
+Repository
+Settings
+```
+
+Not:
+
+```
+Dashboard
+Experiments
+Reports
+Charts
+Repository
+Settings
+```
+
+### Section Titles
+
+Section headings shall use plain text only.
+
+Examples:
+
+```
+Executive Summary
+Interactive Analytics
+Scenario Results
+Experiment Metadata
+Repository
+Configuration
+```
+
+No decorative icons shall appear in headings.
+
+### Console Output
+
+CLI output should remain professional.
+
+Example:
+
+```
+Experiment Started
+Scenario S3 Completed
+Report Generated
+Export Successful
+```
+
+rather than decorative messages.
+
+### Future Phases
+
+This standard applies to every subsequent phase of IGNIS, including:
+
+- Phase G
+- Phase H
+- Future dashboard enhancements
+- Documentation
+- Generated reports
+- Testing utilities
+- Exported artifacts
+
+Any new UI component introduced in later phases must comply with this standard.
+
+---
+
 > [!IMPORTANT]
 > **Scope boundary**: Phase G builds **on top of** Phase F's experimental validation pipeline. Phase F's `run_experiment.py`, `metrics_collector.py`, `report_generator.py`, and `experiment_manifest.json` schema are the foundation that Phase G wraps with APIs, dashboards, and interactive tooling. Operational capabilities (authentication, scheduling, CI/CD hooks) are deferred to **Phase H**.
 
@@ -1283,19 +1429,20 @@ Add Phase G node to Section 13 development phases diagram.
 | 13 | Experiments are searchable by ID, date, scenario, verdict, and commit with sort/order support | G4 |
 | 14 | Reproducibility bundles include git branch, status, and diff of uncommitted changes | G6 |
 | 15 | All API responses follow the standardized JSON envelope (`{"status":"success","data":{...}}` / `{"status":"error","error":{...}}`) | All |
+| 16 | No emoji or decorative Unicode icons appear anywhere in the IGNIS UI, generated reports, documentation examples, or user-facing outputs | PASS |
 
 ### Architectural
 
 | # | Criterion |
 |---|---|
-| 16 | `ResultManager` contains no business logic — it only delegates to sub-services |
-| 17 | Services communicate only through public interfaces (no direct imports between services) |
-| 18 | `RepositoryManager` is the only component that writes to `experiment_repository/` |
-| 19 | `run_experiment.py` is the only component that writes to `results/` |
-| 20 | HTML reports open and render fully without internet connectivity |
-| 21 | Dashboard remains fully functional if optional dependencies (`weasyprint`, `python-docx`) are absent |
-| 22 | SQLite schema version is tracked via `PRAGMA user_version` and migration path exists |
-| 23 | All API endpoints are prefixed with `/api/v1/` |
+| 17 | `ResultManager` contains no business logic — it only delegates to sub-services |
+| 18 | Services communicate only through public interfaces (no direct imports between services) |
+| 19 | `RepositoryManager` is the only component that writes to `experiment_repository/` |
+| 20 | `run_experiment.py` is the only component that writes to `results/` |
+| 21 | HTML reports open and render fully without internet connectivity |
+| 22 | Dashboard remains fully functional if optional dependencies (`weasyprint`, `python-docx`) are absent |
+| 23 | SQLite schema version is tracked via `PRAGMA user_version` and migration path exists |
+| 24 | All API endpoints are prefixed with `/api/v1/` |
 
 ---
 
