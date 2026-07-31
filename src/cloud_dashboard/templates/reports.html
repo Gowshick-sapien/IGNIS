@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Historical Report Browser - IGNIS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Historical Report Browser</h1>
+        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-top: 4px;">
+            Browse and inspect generated experiment reports (Sorted Newest First).
+        </p>
+    </div>
+</div>
+
+<div class="card">
+    <table id="reports-table">
+        <thead>
+            <tr>
+                <th>Report File</th>
+                <th>Path</th>
+                <th>Format</th>
+                <th>Last Modified</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if reports and reports|length > 0 %}
+                {% for r in reports %}
+                <tr>
+                    <td style="font-weight: 600;">{{ r.filename }}</td>
+                    <td style="font-family: monospace; font-size: 0.8rem; color: var(--text-secondary);">{{ r.relative_path }}</td>
+                    <td>
+                        {% if r.format == 'html' %}
+                        <span class="status-badge badge-running">HTML</span>
+                        {% else %}
+                        <span class="status-badge badge-idle">MARKDOWN</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size: 0.85rem;">{{ r.mtime_str }}</td>
+                    <td>
+                        {% if r.format == 'html' %}
+                        <a href="/{{ r.relative_path }}" target="_blank" class="btn btn-primary" style="padding: 4px 10px; font-size: 0.75rem;">Open Interactive Report</a>
+                        {% else %}
+                        <button onclick="previewReport('{{ r.id }}')" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.75rem;">Preview Markdown</button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 20px;">
+                        No experiment reports found in results/ or experiment_repository/.
+                    </td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Markdown Preview Modal / Panel -->
+<div id="preview-card" class="card" style="display: none; margin-top: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h3 id="preview-title" style="font-size: 1rem;">Report Preview</h3>
+        <button onclick="closePreview()" class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.75rem;">Close</button>
+    </div>
+    <pre id="preview-body" style="background: #030712; color: #e5e7eb; padding: 14px; border-radius: 4px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; max-height: 400px; white-space: pre-wrap;"></pre>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function previewReport(reportId) {
+        try {
+            const resp = await fetch(`/api/v1/reports/${reportId}`);
+            const result = await resp.json();
+            if (result.status === 'success') {
+                document.getElementById('preview-title').innerText = result.data.report.filename;
+                document.getElementById('preview-body').innerText = result.data.content;
+                document.getElementById('preview-card').style.display = 'block';
+            } else {
+                alert('Error loading report preview.');
+            }
+        } catch (e) {
+            alert('Failed to fetch report content: ' + e);
+        }
+    }
+
+    function closePreview() {
+        document.getElementById('preview-card').style.display = 'none';
+    }
+</script>
+{% endblock %}

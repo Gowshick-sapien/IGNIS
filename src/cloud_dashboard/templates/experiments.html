@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}Experiment Control Center - IGNIS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Experiment Control Center</h1>
+        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-top: 4px;">
+            Subprocess execution management and live status monitoring.
+        </p>
+    </div>
+    <div id="status-badge-container">
+        <span id="current-state-badge" class="status-badge badge-idle">IDLE</span>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+    <!-- Execution Control Form -->
+    <div class="card">
+        <h2 style="font-size: 1.1rem; margin-bottom: 16px;">Execution Parameters</h2>
+        <form id="experiment-form" onsubmit="return false;">
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px;">Trials per Scenario</label>
+                <input type="number" id="input-trials" value="30" min="1" max="1000" style="width: 100%; padding: 8px; background: #1f2937; border: 1px solid #374151; color: #fff; border-radius: 4px;">
+            </div>
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px;">Base Random Seed</label>
+                <input type="number" id="input-seed" value="4321" style="width: 100%; padding: 8px; background: #1f2937; border: 1px solid #374151; color: #fff; border-radius: 4px;">
+            </div>
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px;">Target Scenarios</label>
+                <select id="input-scenarios" style="width: 100%; padding: 8px; background: #1f2937; border: 1px solid #374151; color: #fff; border-radius: 4px;">
+                    <option value="all">All Scenarios (S1 - S7)</option>
+                    <option value="failed">Previously Failed Scenarios Only</option>
+                    <option value="S1">S1 - Baseline Normal Operation</option>
+                    <option value="S2">S2 - Rapid Propagation Fire Event</option>
+                    <option value="S3">S3 - Communication Degradation & Buffer</option>
+                    <option value="S4">S4 - Sensor Fault & False Alarm Immunity</option>
+                    <option value="S5">S5 - Fog Node Outage & Failover</option>
+                    <option value="S6">S6 - Multi-Zone Cascade Propagation</option>
+                    <option value="S7">S7 - Cloud Link Disruption</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" id="input-clean" checked style="width: 16px; height: 16px;">
+                <label for="input-clean" style="font-size: 0.85rem; color: var(--text-secondary);">Clean output directory before run</label>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button id="btn-run" class="btn btn-primary" onclick="runExperiment()">Run Experiment</button>
+                <button id="btn-pause" class="btn btn-warning" onclick="pauseExperiment()" disabled>Pause</button>
+                <button id="btn-resume" class="btn btn-primary" onclick="resumeExperiment()" disabled>Resume</button>
+                <button id="btn-stop" class="btn btn-danger" onclick="stopExperiment()" disabled>Stop</button>
+                <button id="btn-restart" class="btn btn-secondary" onclick="restartExperiment()">Restart</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Active State Card -->
+    <div class="card">
+        <h2 style="font-size: 1.1rem; margin-bottom: 16px;">Execution State Details</h2>
+        <div style="font-size: 0.9rem; line-height: 1.8;">
+            <div><strong style="color: var(--text-secondary);">Experiment ID:</strong> <span id="info-exp-id" style="font-family: monospace;">-</span></div>
+            <div><strong style="color: var(--text-secondary);">State:</strong> <span id="info-state" style="font-weight: 600;">IDLE</span></div>
+            <div><strong style="color: var(--text-secondary);">Subprocess PID:</strong> <span id="info-pid" style="font-family: monospace;">-</span></div>
+            <div><strong style="color: var(--text-secondary);">Started At:</strong> <span id="info-start-time">-</span></div>
+        </div>
+        <div id="action-message" style="margin-top: 16px; padding: 10px; border-radius: 4px; background: #1f2937; display: none; font-size: 0.85rem;"></div>
+    </div>
+</div>
+
+<!-- Live Log Tail Card -->
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h2 style="font-size: 1.1rem;">Subprocess Output Log</h2>
+        <span style="font-size: 0.75rem; color: var(--text-secondary);">Auto-refreshing every 2s</span>
+    </div>
+    <pre id="log-output" style="background-color: #030712; color: #38bdf8; padding: 14px; border-radius: 4px; font-family: monospace; font-size: 0.8rem; height: 320px; overflow-y: auto; white-space: pre-wrap; border: 1px solid #1f2937;">Fetching log output...</pre>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function updateStatus() {
+        try {
+            const resp = await fetch('/api/v1/experiment/status');
+            const result = await resp.json();
+            if (result.status === 'success') {
+                const data = result.data;
+                const state = data.state || 'IDLE';
+                
+                document.getElementById('info-exp-id').innerText = data.experiment_id || '-';
+                document.getElementById('info-state').innerText = state;
+                document.getElementById('info-pid').innerText = data.pid || '-';
+                document.getElementById('info-start-time').innerText = data.start_time || '-';
+                
+                const badge = document.getElementById('current-state-badge');
+                badge.innerText = state;
+                badge.className = 'status-badge badge-' + state.toLowerCase();
+                
+                // Toggle buttons based on state
+                document.getElementById('btn-run').disabled = (state === 'RUNNING' || state === 'STARTING' || state === 'PAUSING' || state === 'PAUSED');
+                document.getElementById('btn-pause').disabled = (state !== 'RUNNING');
+                document.getElementById('btn-resume').disabled = (state !== 'PAUSED');
+                document.getElementById('btn-stop').disabled = (state !== 'RUNNING' && state !== 'PAUSED' && state !== 'PAUSING');
+            }
+        } catch (e) {
+            console.error('Error fetching status:', e);
+        }
+    }
+
+    async function updateLogs() {
+        try {
+            const resp = await fetch('/api/v1/experiment/logs?tail=100');
+            const result = await resp.json();
+            if (result.status === 'success') {
+                const logBox = document.getElementById('log-output');
+                logBox.innerText = result.data.lines.join('\n') || 'Log output is empty.';
+                logBox.scrollTop = logBox.scrollHeight;
+            }
+        } catch (e) {
+            console.error('Error fetching logs:', e);
+        }
+    }
+
+    function showMsg(msg, isErr=false) {
+        const box = document.getElementById('action-message');
+        box.style.display = 'block';
+        box.style.color = isErr ? '#f87171' : '#4ade80';
+        box.innerText = msg;
+    }
+
+    async function runExperiment() {
+        const trials = parseInt(document.getElementById('input-trials').value);
+        const seed = parseInt(document.getElementById('input-seed').value);
+        const scenarios = document.getElementById('input-scenarios').value;
+        const clean = document.getElementById('input-clean').checked;
+
+        try {
+            const resp = await fetch('/api/v1/experiment/run', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({trials, seed, scenarios, clean})
+            });
+            const result = await resp.json();
+            if (resp.ok) {
+                showMsg('Experiment started successfully.');
+            } else {
+                showMsg('Error starting experiment: ' + (result.message || result.error), true);
+            }
+            updateStatus();
+        } catch (e) {
+            showMsg('Failed to trigger run request: ' + e, true);
+        }
+    }
+
+    async function stopExperiment() {
+        try {
+            const resp = await fetch('/api/v1/experiment/stop', {method: 'POST'});
+            const result = await resp.json();
+            showMsg(resp.ok ? 'Experiment stopped.' : (result.message || 'Stop failed'), !resp.ok);
+            updateStatus();
+        } catch (e) { showMsg('Stop error: ' + e, true); }
+    }
+
+    async function pauseExperiment() {
+        try {
+            const resp = await fetch('/api/v1/experiment/pause', {method: 'POST'});
+            const result = await resp.json();
+            showMsg(resp.ok ? 'Pause signal sent.' : (result.message || 'Pause failed'), !resp.ok);
+            updateStatus();
+        } catch (e) { showMsg('Pause error: ' + e, true); }
+    }
+
+    async function resumeExperiment() {
+        try {
+            const resp = await fetch('/api/v1/experiment/resume', {method: 'POST'});
+            const result = await resp.json();
+            showMsg(resp.ok ? 'Experiment resumed.' : (result.message || 'Resume failed'), !resp.ok);
+            updateStatus();
+        } catch (e) { showMsg('Resume error: ' + e, true); }
+    }
+
+    async function restartExperiment() {
+        const trials = parseInt(document.getElementById('input-trials').value);
+        const seed = parseInt(document.getElementById('input-seed').value);
+        const scenarios = document.getElementById('input-scenarios').value;
+        const clean = document.getElementById('input-clean').checked;
+
+        try {
+            const resp = await fetch('/api/v1/experiment/restart', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({trials, seed, scenarios, clean})
+            });
+            const result = await resp.json();
+            showMsg(resp.ok ? 'Experiment restarted with new ID.' : (result.message || 'Restart failed'), !resp.ok);
+            updateStatus();
+        } catch (e) { showMsg('Restart error: ' + e, true); }
+    }
+
+    setInterval(updateStatus, 2000);
+    setInterval(updateLogs, 2000);
+    updateStatus();
+    updateLogs();
+</script>
+{% endblock %}

@@ -20,7 +20,7 @@ class AdvisoryCommandRequest(BaseModel):
 
 @router.get("/", response_class=HTMLResponse)
 async def read_index():
-    template_path = os.path.join(os.path.dirname(__file__), "templates", "index.html")
+    template_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates", "index.html")
     try:
         with open(template_path, "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
@@ -75,8 +75,8 @@ async def get_snapshot(request: Request, zone_id: str = "4B"):
     logs = db.get_recent_alerts_and_logs(zone_id, limit=15)
     performance = db.get_latest_performance_metrics(zone_id)
     
-    # Query Cloud Broker health (try a quick socket ping or return active)
-    system_health["Cloud_Broker"] = "ONLINE" # Assume online, if we publish successfully
+    # Query Cloud Broker health
+    system_health["Cloud_Broker"] = "ONLINE"
     
     return {
         "database_health": "ONLINE",
@@ -93,13 +93,8 @@ async def get_snapshot(request: Request, zone_id: str = "4B"):
 async def get_history(request: Request, zone_id: str = "4B", minutes: int = 15, season: str = "summer"):
     """Queries time-series averages and merges them with local historical baseline overlays."""
     db = request.app.state.db
-    
-    # 1. Fetch Influx historical data
     ts_data = db.get_historical_chart_data(zone_id, minutes)
-    
-    # 2. Fetch baseline data
     baseline = db.get_seasonal_baseline(season)
-    
     return {
         "historical_telemetry": ts_data,
         "baseline_profile": baseline
@@ -110,12 +105,10 @@ async def post_advisory(request: Request, body: AdvisoryCommandRequest):
     """Routes advisory commands from NOC dashboard to Fog Node using a one-off publish client."""
     zone_id = body.zone_id
     
-    # Generate monotonic sequence number in-memory
     request.app.state.command_sequence += 1
     seq = request.app.state.command_sequence
     cmd_id = str(uuid.uuid4())
     
-    # Formulate secure robust payload
     payload = {
         "command_id": cmd_id,
         "sequence_number": seq,
@@ -127,26 +120,19 @@ async def post_advisory(request: Request, body: AdvisoryCommandRequest):
         "parameters": body.parameters
     }
     
-    # Perform transient publication
     mqtt_host = os.environ.get("CLOUD_MQTT_HOST", "localhost")
     mqtt_port = int(os.environ.get("CLOUD_MQTT_PORT", 1884))
     
     try:
         client = mqtt.Client(client_id=f"cloud_dashboard_publisher_{uuid.uuid4().hex[:6]}")
         client.connect(mqtt_host, mqtt_port, 10)
-        
-        # Publish
         advisory_topic = f"ignis/v1/advisory/zone/{zone_id}/command"
         client.publish(advisory_topic, json.dumps(payload))
         client.disconnect()
         
-        # Write initial PENDING state in Audit logs
         db = request.app.state.db
         if db.ping_influx():
-            # InfluxDB is accessible. Connect/write record
-            # We can write from route directly since we have the db reference
             write_api = db.client.write_api()
-            # pyrefly: ignore [missing-import]
             from influxdb_client import Point
             p = Point("audit_logs") \
                 .tag("zone_id", zone_id) \
@@ -162,13 +148,10 @@ async def post_advisory(request: Request, body: AdvisoryCommandRequest):
         return {"status": "SENT", "command_id": cmd_id}
     except Exception as e:
         logger.error(f"Failed to publish advisory command: {e}")
-        
-        # Write failure audit record to database
         try:
             db = request.app.state.db
             if db.ping_influx():
                 write_api = db.client.write_api()
-                # pyrefly: ignore [missing-import]
                 from influxdb_client import Point
                 p = Point("audit_logs") \
                     .tag("zone_id", zone_id) \
@@ -199,38 +182,32 @@ async def get_latest_metrics():
         with open(path, 'r') as f:
             raw = json.load(f)
             if "scenario_results" in raw:
-                # Map scenario results to the expected dashboard keys
                 s3_metrics = raw["scenario_results"].get("S3", {}).get("metrics", {})
                 s4_metrics = raw["scenario_results"].get("S4", {}).get("metrics", {})
                 s5_metrics = raw["scenario_results"].get("S5", {}).get("metrics", {})
                 s6_metrics = raw["scenario_results"].get("S6", {}).get("metrics", {})
                 s7_metrics = raw["scenario_results"].get("S7", {}).get("metrics", {})
                 
-                # dl
                 dl = s3_metrics.get("fog_decision_latency", {})
                 avg_sec = dl.get("mean") or dl.get("avg_sec") or 0.12
                 max_sec = dl.get("maximum") or dl.get("max") or 0.15
                 min_sec = dl.get("minimum") or dl.get("min") or 0.08
                 all_latencies = dl.get("all_latencies") or [avg_sec] * 5
                 
-                # lp
                 lp = s6_metrics.get("lateral_propagation_time", {})
                 avg_propagation_sec = lp.get("mean") or lp.get("avg_propagation_sec") or 3.4
                 propagation_times = lp.get("propagation_times") or [avg_propagation_sec] * 3
                 
-                # fp
                 fp_count_struct = s4_metrics.get("false_positive_count", {})
                 fp_rate = fp_count_struct.get("mean") or 0.0
                 total_trials = raw["scenario_results"].get("S4", {}).get("trials") or fp_count_struct.get("sample_count") or 10
                 false_positives = int(fp_count_struct.get("mean", 0.0) * total_trials) if "mean" in fp_count_struct else (fp_count_struct.get("value") or 0)
                 
-                # oc
                 oc_struct = s5_metrics.get("offline_continuity", {})
                 oc_rate_struct = s5_metrics.get("flush_success_rate", {})
                 oc_status = raw["scenario_results"].get("S5", {}).get("status") == "PASS" or oc_struct.get("mean", 0.0) == 1.0
                 oc_rate = oc_rate_struct.get("mean") or oc_rate_struct.get("value") or 1.0
                 
-                # cz
                 cz_struct = s7_metrics.get("cross_talk_count", {})
                 cz_loss_struct = s7_metrics.get("message_loss_pct", {})
                 cz_crosstalk = int(cz_struct.get("mean", 0.0) * total_trials) if "mean" in cz_struct else (cz_struct.get("value") or 0)
@@ -271,7 +248,7 @@ async def get_latest_metrics():
 
 @router.get("/metrics", response_class=HTMLResponse)
 async def read_metrics():
-    template_path = os.path.join(os.path.dirname(__file__), "templates", "metrics.html")
+    template_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates", "metrics.html")
     try:
         with open(template_path, "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())

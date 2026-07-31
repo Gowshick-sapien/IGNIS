@@ -86,7 +86,7 @@ def run_stages():
     parser.add_argument("--trials", type=int, default=10, help="Number of trials per scenario")
     parser.add_argument("--scenarios", default="all", help="Comma-separated scenario IDs to run (default: all)")
     parser.add_argument("--output-dir", default="results", help="Directory for raw and computed results")
-    parser.add_argument("--report-dir", default="docs/phase-f", help="Directory for reports and charts")
+    parser.add_argument("--report-dir", default="results", help="Directory for reports and charts")
     parser.add_argument("--clean", action="store_true", help="Delete previous output files before execution")
     parser.add_argument("--skip-validation", action="store_true", help="Skip YAML schema validation")
     parser.add_argument("--seed", type=int, default=None, help="Random seed for deterministic replay")
@@ -213,12 +213,27 @@ def run_stages():
 
     # Stage 7: Generate Report (Best Effort)
     logger.info("Stage 7: Compiling final summary report...")
-    report_file = os.path.join(args.report_dir, "project_results_report.md")
+    report_file = os.path.join(args.output_dir, "report.md")
     try:
         generate_report(metrics, report_file)
         logger.info(f"Final project summary report compiled at {report_file}")
     except Exception as e:
         logger.error(f"Failed to compile report: {e}")
+
+    try:
+        from src.cloud_dashboard.reporting import generate_html_report
+        html_out = os.path.join(args.output_dir, "report.html")
+        raw_path = os.path.join(args.output_dir, "raw_results.json")
+        manifest_path = os.path.join(args.output_dir, "experiment_manifest.json")
+        generate_html_report(
+            metrics_path=metrics_path,
+            raw_results_path=raw_path,
+            manifest_path=manifest_path,
+            output_path=html_out
+        )
+        logger.info(f"Interactive self-contained HTML report generated at {html_out}")
+    except Exception as e:
+        logger.warning(f"Could not generate interactive HTML report: {e}")
 
     # Stage 8: Generate Manifest
     logger.info("Stage 8: Generating experiment manifest metadata...")

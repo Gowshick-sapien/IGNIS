@@ -1,65 +1,71 @@
 import os
+import time
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-# pyrefly: ignore [missing-import]
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 
-# Load configurations
 load_dotenv()
 
 from .database import CloudDashboardDB
 from .routes import router
+from .services.process_manager import ProcessManager
+from .routes.experiments import experiments_router
+from .routes.dashboard_routes import dashboard_router
 
-# Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("cloud_dashboard_app")
 
-# Lifespan manager
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 1. Instantiate read-only DB connection
+    # 1. Instantiate ProcessManager singleton
+    process_manager = ProcessManager()
+    app.state.process_manager = process_manager
+    logger.info("ProcessManager singleton registered in app.state.")
+
+    # 2. Instantiate DB connection (graceful optional fallback)
     db = CloudDashboardDB()
-    
-    # Try connecting with exponential backoff on startup
-    connected = False
-    retry_delay = 2
-    
-    while not connected:
-        try:
-            db.connect()
-            connected = True
-            logger.info("Cloud Dashboard successfully connected to InfluxDB.")
-        except Exception as e:
-            logger.warning(f"Dashboard failed to connect to InfluxDB: {e}. Retrying in {retry_delay}s...")
-            time.sleep(retry_delay)
-            retry_delay = min(retry_delay * 2, 10)
-            
-    # 2. Store references in app state
+    try:
+        db.connect()
+        logger.info("Cloud Dashboard connected to InfluxDB.")
+    except Exception as e:
+        logger.warning(f"InfluxDB not reachable during startup: {e}. Dashboard running in offline mode.")
+
     app.state.db = db
-    app.state.command_sequence = 100 # Sequence numbers start at 100
-    
-    logger.info("Central Cloud Dashboard initialized.")
+    app.state.command_sequence = 100
+
+    logger.info("IGNIS Cloud Dashboard initialized successfully.")
     yield
-    
+
     # Clean shutdown
+    if process_manager.state in ("RUNNING", "PAUSED", "PAUSING", "STARTING"):
+        try:
+            process_manager.stop_experiment()
+        except Exception:
+            pass
+
     db.close()
-    logger.info("Central Cloud Dashboard shut down clean.")
+    logger.info("IGNIS Cloud Dashboard shut down clean.")
 
-import time
 
-# Create FastAPI app
 app = FastAPI(
-    title="IGNIS Central Operations NOC Dashboard",
-    description="Regional Central Monitoring and Override Console",
-    version="1.0.0",
+    title="IGNIS Central Operations & Experimentation Dashboard",
+    description="Regional Operations NOC & Research Control Center",
+    version="2.0.0",
     lifespan=lifespan
 )
 
-# Mount charts static files
-from fastapi.staticfiles import StaticFiles
+# Mount static files if directory exists
+os.makedirs("results", exist_ok=True)
+os.makedirs("reports", exist_ok=True)
 os.makedirs("docs/phase-e/charts", exist_ok=True)
-app.mount("/charts", StaticFiles(directory="docs/phase-e/charts"), name="charts")
 
+app.mount("/results", StaticFiles(directory="results"), name="results")
+app.mount("/reports", StaticFiles(directory="reports"), name="reports")
+
+# Include Routers
+app.include_router(experiments_router)
+app.include_router(dashboard_router)
 app.include_router(router)

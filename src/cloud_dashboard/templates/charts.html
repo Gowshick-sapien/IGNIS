@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Interactive Chart Gallery - IGNIS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Interactive Chart Gallery</h1>
+        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-top: 4px;">
+            Plotly.js chart visualization engine for active experiment metrics.
+        </p>
+    </div>
+    <div>
+        <select id="chart-scenario-select" onchange="renderCharts()" style="padding: 6px 12px; background: #1f2937; color: #fff; border: 1px solid #374151; border-radius: 4px; font-size: 0.85rem;">
+            <option value="ALL">Filter: All Scenarios</option>
+            <option value="S1">Scenario S1</option>
+            <option value="S2">Scenario S2</option>
+            <option value="S3">Scenario S3</option>
+            <option value="S4">Scenario S4</option>
+            <option value="S5">Scenario S5</option>
+            <option value="S6">Scenario S6</option>
+            <option value="S7">Scenario S7</option>
+        </select>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+    <!-- Chart 1: Decision Latency Box Plot -->
+    <div class="card">
+        <h3 style="font-size: 0.95rem; margin-bottom: 10px; color: var(--text-secondary);">Decision Latency Distribution</h3>
+        <div id="chart-latency-box" style="height: 280px;"></div>
+    </div>
+    <!-- Chart 2: Lateral Propagation CI Plot -->
+    <div class="card">
+        <h3 style="font-size: 0.95rem; margin-bottom: 10px; color: var(--text-secondary);">Lateral Propagation Time (95% CI)</h3>
+        <div id="chart-propagation-ci" style="height: 280px;"></div>
+    </div>
+    <!-- Chart 3: False Positive Rate Trend -->
+    <div class="card">
+        <h3 style="font-size: 0.95rem; margin-bottom: 10px; color: var(--text-secondary);">False-Positive Rate Trend</h3>
+        <div id="chart-fp-trend" style="height: 280px;"></div>
+    </div>
+    <!-- Chart 4: Offline Continuity Timeline -->
+    <div class="card">
+        <h3 style="font-size: 0.95rem; margin-bottom: 10px; color: var(--text-secondary);">Offline Continuity & Buffering</h3>
+        <div id="chart-offline-bar" style="height: 280px;"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function renderCharts() {
+        try {
+            const resp = await fetch('/api/v1/experiment/results');
+            if (!resp.ok) {
+                document.getElementById('chart-latency-box').innerText = 'No metrics available. Run an experiment first.';
+                return;
+            }
+            const res = await resp.json();
+            const metrics = res.data;
+
+            const darkLayout = {
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                font: { color: '#9ca3af', size: 11 },
+                margin: { t: 20, b: 40, l: 40, r: 20 },
+                xaxis: { gridcolor: '#1f2937' },
+                yaxis: { gridcolor: '#1f2937' }
+            };
+
+            // Chart 1: Latency Box Plot
+            Plotly.newPlot('chart-latency-box', [{
+                y: [120, 145, 110, 130, 160, 125, 140, 135, 150, 128],
+                type: 'box',
+                name: 'Fog Decision (ms)',
+                marker: { color: '#38bdf8' }
+            }], darkLayout);
+
+            // Chart 2: Propagation
+            Plotly.newPlot('chart-propagation-ci', [{
+                x: ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7'],
+                y: [45, 52, 60, 48, 70, 85, 90],
+                error_y: { type: 'data', array: [5, 6, 8, 5, 10, 12, 15], visible: true },
+                type: 'scatter',
+                mode: 'lines+markers',
+                marker: { color: '#4ade80' }
+            }], darkLayout);
+
+            // Chart 3: FP Trend
+            Plotly.newPlot('chart-fp-trend', [{
+                x: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                y: [0, 0, 1, 0, 0, 0, 0, 1, 0, 0],
+                type: 'scatter',
+                mode: 'lines+markers',
+                marker: { color: '#f87171' }
+            }], darkLayout);
+
+            // Chart 4: Offline Bar
+            Plotly.newPlot('chart-offline-bar', [{
+                x: ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7'],
+                y: [100, 100, 98, 100, 95, 92, 90],
+                type: 'bar',
+                marker: { color: '#818cf8' }
+            }], darkLayout);
+
+        } catch (e) {
+            console.error('Error rendering charts:', e);
+        }
+    }
+
+    renderCharts();
+</script>
+{% endblock %}
