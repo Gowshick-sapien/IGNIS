@@ -98,21 +98,125 @@ def calculate_stats(data: list) -> dict:
         "ci_method": ci_method
     }
 
+# Metric classification sets
+DIRECT_METRICS = {
+    "false_positive_count",
+    "offline_continuity",
+    "flush_success_rate",
+    "cross_talk_count",
+    "message_loss_pct",
+    "is_clamped"
+}
+
+DERIVED_METRICS = {
+    "fog_decision_latency",
+    "lateral_propagation_time"
+}
+
+ASSERTION_METRICS = {
+    "max_state",
+    "final_state"
+}
+
+def compute_fog_decision_latency(events: list):
+    """Derive fog decision latency from event stream (alert timestamp -> decision timestamp)."""
+    alert_ts = None
+    for e in events:
+        if e.get("message_type") == "alert" or "alert" in str(e.get("_topic", "")):
+            ts = e.get("timestamp") or e.get("sensor_timestamp")
+            if ts:
+                alert_ts = ts
+                break
+
+    decision_ts = None
+    for e in events:
+        if e.get("message_type") == "zone_state" or "state" in str(e.get("_topic", "")):
+            state = e.get("state")
+            if state in ["YELLOW", "ORANGE", "RED"]:
+                decision_ts = e.get("decision_timestamp") or e.get("timestamp")
+                break
+
+    if not (alert_ts and decision_ts):
+        for e in events:
+            st = e.get("sensor_timestamp")
+            dt = e.get("decision_timestamp")
+            if st and dt:
+                alert_ts = st
+                decision_ts = dt
+                break
+
+    if alert_ts and decision_ts:
+        try:
+            from datetime import datetime
+            t_alert = datetime.fromisoformat(str(alert_ts).replace("Z", "+00:00")).timestamp()
+            t_dec = datetime.fromisoformat(str(decision_ts).replace("Z", "+00:00")).timestamp()
+            latency = round(t_dec - t_alert, 4)
+            if latency >= 0:
+                logger.debug(f"Derived fog_decision_latency: Alert: {alert_ts}, Decision: {decision_ts}, Latency: {latency} seconds")
+                return latency
+        except Exception as ex:
+            logger.debug(f"Error parsing timestamps for fog_decision_latency: {ex}")
+
+    return None
+
+def compute_lateral_propagation(events: list):
+    """Derive lateral propagation time from event stream (source warning -> dest warning)."""
+    source_ts = None
+    for e in events:
+        state = e.get("state")
+        topic = str(e.get("_topic", ""))
+        zone = str(e.get("zone_id", ""))
+        if state in ["RED", "ORANGE", "YELLOW"] and ("4B" in topic or zone == "4B" or "4A" in topic or zone == "4A"):
+            source_ts = e.get("timestamp") or e.get("decision_timestamp")
+            break
+
+    dest_ts = None
+    for e in events:
+        state = e.get("state")
+        topic = str(e.get("_topic", ""))
+        zone = str(e.get("zone_id", ""))
+        if state in ["YELLOW", "ORANGE", "RED"] and ("4C" in topic or zone == "4C" or "4D" in topic or zone == "4D"):
+            dest_ts = e.get("timestamp") or e.get("decision_timestamp")
+            break
+
+    if not (source_ts and dest_ts):
+        warn_events = [e for e in events if e.get("state") in ["YELLOW", "ORANGE", "RED"]]
+        if len(warn_events) >= 2:
+            first_ts = warn_events[0].get("timestamp") or warn_events[0].get("decision_timestamp")
+            last_ts = warn_events[-1].get("timestamp") or warn_events[-1].get("decision_timestamp")
+            if first_ts != last_ts:
+                source_ts = first_ts
+                dest_ts = last_ts
+
+    if source_ts and dest_ts:
+        try:
+            from datetime import datetime
+            t_src = datetime.fromisoformat(str(source_ts).replace("Z", "+00:00")).timestamp()
+            t_dst = datetime.fromisoformat(str(dest_ts).replace("Z", "+00:00")).timestamp()
+            prop = round(t_dst - t_src, 4)
+            if prop >= 0:
+                logger.debug(f"Derived lateral_propagation_time: Source: {source_ts}, Dest: {dest_ts}, Propagation: {prop} seconds")
+                return prop
+        except Exception as ex:
+            logger.debug(f"Error parsing timestamps for lateral_propagation_time: {ex}")
+
+    return None
+
+def derive_metric(events: list, metric_name: str):
+    """Derive metric value by analysing event payload streams."""
+    if metric_name == "fog_decision_latency":
+        return compute_fog_decision_latency(events)
+    elif metric_name == "lateral_propagation_time":
+        return compute_lateral_propagation(events)
+    return None
+
 def calculate_decision_latency(results: list) -> dict:
     latencies = []
     for res in results:
-        for event in res.get("events", []):
-            if "state" in event.get("_topic", "") or event.get("message_type") == "zone_state":
-                st = event.get("sensor_timestamp")
-                dt = event.get("decision_timestamp")
-                if st and dt:
-                    try:
-                        from datetime import datetime
-                        t_sensor = datetime.fromisoformat(st.replace("Z", "+00:00")).timestamp()
-                        t_dec = datetime.fromisoformat(dt.replace("Z", "+00:00")).timestamp()
-                        latencies.append(t_dec - t_sensor)
-                    except Exception:
-                        pass
+        events = res.get("events", [])
+        val = derive_metric(events, "fog_decision_latency")
+        if val is not None:
+            latencies.append(val)
     stats = calculate_stats(latencies)
     if "mean" in stats:
         stats["avg_sec"] = stats["mean"]
@@ -122,24 +226,9 @@ def calculate_lateral_propagation(results: list) -> dict:
     prop_times = []
     for res in results:
         events = res.get("events", [])
-        red_time = None
-        for e in events:
-            if "4B" in e.get("_topic", "") and e.get("state") == "RED":
-                red_time = e.get("timestamp") or e.get("decision_timestamp")
-                break
-        yellow_time = None
-        for e in events:
-            if "4C" in e.get("_topic", "") and e.get("state") == "YELLOW":
-                yellow_time = e.get("timestamp") or e.get("decision_timestamp")
-                break
-        if red_time and yellow_time:
-            try:
-                from datetime import datetime
-                t_red = datetime.fromisoformat(red_time.replace("Z", "+00:00")).timestamp()
-                t_yellow = datetime.fromisoformat(yellow_time.replace("Z", "+00:00")).timestamp()
-                prop_times.append(t_yellow - t_red)
-            except Exception:
-                pass
+        val = derive_metric(events, "lateral_propagation_time")
+        if val is not None:
+            prop_times.append(val)
     stats = calculate_stats(prop_times)
     if "mean" in stats:
         stats["avg_propagation_sec"] = stats["mean"]

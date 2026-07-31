@@ -5,15 +5,15 @@
 - **Total Scenarios Evaluated**: 7
 - **Verdict Breakdown**:
   - **Passed**: 3
-  - **Failed**: 3
-  - **Invalid**: 1
+  - **Failed**: 4
+  - **Invalid**: 0
   - **Incomplete**: 0
 - **Key Findings**:
   3 scenarios successfully satisfied all assertions.
   
-  3 scenarios failed assertion checks.
+  4 scenarios failed assertion checks.
   
-  1 scenario could not be evaluated because required events were unavailable.
+  0 scenarios could not be evaluated because required events were unavailable.
   
   Overall experiment verdict: FAIL.
 
@@ -22,9 +22,9 @@
 
 ### 2.1 Experiment Configuration
 - **Trial Count per Scenario**: 10
-- **Random Seed**: 1625122034
-- **Total Execution Duration**: 0.01 seconds
-- **Execution Date (UTC)**: 2026-07-23T14:11:37Z
+- **Random Seed**: None
+- **Total Execution Duration**: 0.00 seconds
+- **Execution Date (UTC)**: 2026-07-24T04:52:13Z
 
 ### 2.2 Simulation Configuration
 - **Zones Configured**: 3 (Zones 4A, 4B, 4C)
@@ -46,7 +46,7 @@
 - **OS**: Windows 11
 - **CPU Architecture**: AMD64
 - **Python Runtime Version**: 3.12.2
-- **Git Active Commit**: `1e1ed4d`
+- **Git Active Commit**: `c635614`
 - **System Timezone**: India Standard Time
 - **Execution Hostname**: Gowshick
 
@@ -62,10 +62,10 @@ Where degrees of freedom $df = N-1$. (CI calculation method: `internal_t_table`)
 |---|---|---|---|
 | **S1** | 10 | **PASS** | All assertions passed across 1 rules |
 | **S2** | 10 | **PASS** | All assertions passed across 1 rules |
-| **S3** | 10 | **FAIL** | Assertions failed: No matching events found; Assertion Failed: Expected: RED, Observed: GREEN |
+| **S3** | 10 | **FAIL** | Assertions failed: Assertion Failed: Expected: RED, Observed: GREEN |
 | **S4** | 10 | **FAIL** | Assertions failed: Assertion Failed: Expected: True, Observed: False |
 | **S5** | 10 | **FAIL** | Assertions failed: Assertion Failed: Expected: True, Observed: False |
-| **S6** | 10 | **INVALID** | No matching events found |
+| **S6** | 10 | **FAIL** | Assertions failed: Assertion Failed: Expected: 10.0, Observed: 16.1 |
 | **S7** | 10 | **PASS** | All assertions passed across 2 rules |
 
 ![Execution Gantt Timeline](charts/execution_timeline.png)
@@ -95,11 +95,11 @@ Where degrees of freedom $df = N-1$. (CI calculation method: `internal_t_table`)
 
 ### 4.3 Scenario S3
 - **Status**: **FAIL**
-- **Verdict Details**: Assertions failed: No matching events found; Assertion Failed: Expected: RED, Observed: GREEN
+- **Verdict Details**: Assertions failed: Assertion Failed: Expected: RED, Observed: GREEN
 
 | Metric | Value / Aggregates | Target | Operator | Status | Reason |
 |---|---|---|---|---|---|
-| fog_decision_latency | Metric unavailable | None | None | **INVALID** | No matching events found |
+| fog_decision_latency | Mean: 0.0000 s (Min: 0.0000 s, Max: 0.0000 s, Med: 0.0000 s, StdDev: 0.0000 s, CI95: [0.0, 0.0]) | 1.0 | <= | **PASS** | Mean 0.0000 s <= threshold 1.0 s |
 | final_state | Value: GREEN | RED | == | **FAIL** | GREEN == threshold RED |
 
 ![Decision Latency Distribution](charts/decision_latency_boxplot.png)
@@ -132,12 +132,12 @@ Where degrees of freedom $df = N-1$. (CI calculation method: `internal_t_table`)
 ---
 
 ### 4.6 Scenario S6
-- **Status**: **INVALID**
-- **Verdict Details**: No matching events found
+- **Status**: **FAIL**
+- **Verdict Details**: Assertions failed: Assertion Failed: Expected: 10.0, Observed: 16.1
 
 | Metric | Value / Aggregates | Target | Operator | Status | Reason |
 |---|---|---|---|---|---|
-| lateral_propagation_time | Metric unavailable | None | None | **INVALID** | No matching events found |
+| lateral_propagation_time | Mean: 16.1000 s (Min: 16.0000 s, Max: 17.0000 s, Med: 16.0000 s, StdDev: 0.3162 s, CI95: [15.8738, 16.3262]) | 10.0 | <= | **FAIL** | Mean 16.1000 s <= threshold 10.0 s |
 
 ![Lateral Propagation Time Comparison](charts/lateral_propagation_comparison.png)
 ![Lateral Propagation Interval](charts/lateral_propagation_ci.png)
@@ -161,9 +161,7 @@ Where degrees of freedom $df = N-1$. (CI calculation method: `internal_t_table`)
 
 The following scenarios successfully passed their validation checks: S1, S2, S7. These results confirm that under normal and minor risk conditions (such as S1 and S2) and isolated multi-zone events (S7), the fog nodes correctly execute local and bridged protocols.
 
-However, critical failures were observed in scenarios: S3, S4, S5. Specifically, Scenario S5 failed assertion checks for offline continuity, indicating that the buffering pipeline or recovery flush mechanisms did not function correctly. Scenario S4 failed its false-positive suppression check, indicating that transient sensor faults successfully escalated or were not clamped. These failures imply that future testing and development must focus on strengthening the robustness of state clamping and offline synchronization.
-
-The following scenarios could not be evaluated and were marked INVALID: S6. Scenario S6 was marked INVALID because of missing propagation event sequences, meaning the lateral warning pre-emption did not execute or record its operations. Addressing these measurement gaps is critical for verifying the corresponding real-time latency claims in future runs.
+However, critical failures were observed in scenarios: S3, S4, S5, S6. Specifically, Scenario S5 failed assertion checks for offline continuity, indicating that the buffering pipeline or recovery flush mechanisms did not function correctly. Scenario S4 failed its false-positive suppression check, indicating that transient sensor faults successfully escalated or were not clamped. These failures imply that future testing and development must focus on strengthening the robustness of state clamping and offline synchronization.
 
 
 ![Scenario Comparison Durations](charts/scenario_comparison_summary.png)
@@ -173,8 +171,8 @@ The following scenarios could not be evaluated and were marked INVALID: S6. Scen
 
 | Core Architecture Claim | Reference Scenario | Validation Status | Evidence / Reason |
 |---|---|---|---|
-| **Fog Decision Latency** (<1.0s target) | S3 | ❌ Validation Failed | Assertions failed: No matching events found; Assertion Failed: Expected: RED, Observed: GREEN |
-| **Lateral Warning Propagation** (<10s window) | S6 | ⚠ Not Validated | No matching events found |
+| **Fog Decision Latency** (<1.0s target) | S3 | ❌ Validation Failed | Assertions failed: Assertion Failed: Expected: RED, Observed: GREEN |
+| **Lateral Warning Propagation** (<10s window) | S6 | ❌ Validation Failed | Assertions failed: Assertion Failed: Expected: 10.0, Observed: 16.1 |
 | **False-Positive Suppression** (Local 3-Node check) | S4 | ❌ Validation Failed | Assertions failed: Assertion Failed: Expected: True, Observed: False |
 | **Offline Continuity Cache** (Local mitigation action) | S5 | ❌ Validation Failed | Assertions failed: Assertion Failed: Expected: True, Observed: False |
 | **Concurrent Outbreak Integrity** (No cross-talk) | S7 | ✅ Validated | All assertions passed |
@@ -182,7 +180,7 @@ The following scenarios could not be evaluated and were marked INVALID: S6. Scen
 
 ## 7. Discussion
 
-Decision latency assertions failed (average latency: 1.2000s), indicating the detection or coordination process exceeded the 1.0s target.
+Decision latency assertions failed (average latency: 0.0000s), indicating the detection or coordination process exceeded the 1.0s target.
 
 Offline continuity assertions failed, indicating the buffering pipeline requires further investigation.
 
