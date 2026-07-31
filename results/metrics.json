@@ -1,10 +1,10 @@
 {
   "experiment_metadata": {
-    "timestamp": "2026-07-23T14:11:37Z",
-    "git_commit": "1e1ed4d",
+    "timestamp": "2026-07-24T04:52:13Z",
+    "git_commit": "c635614",
     "trial_count": 10,
-    "random_seed": 1625122034,
-    "total_duration_sec": 0.012,
+    "random_seed": null,
+    "total_duration_sec": 0.0,
     "platform": {
       "os": "Windows 11",
       "architecture": "AMD64",
@@ -68,12 +68,28 @@
     },
     "S3": {
       "status": "FAIL",
-      "reason": "Assertions failed: No matching events found; Assertion Failed: Expected: RED, Observed: GREEN",
+      "reason": "Assertions failed: Assertion Failed: Expected: RED, Observed: GREEN",
       "trials": 10,
       "metrics": {
         "fog_decision_latency": {
-          "status": "INVALID",
-          "reason": "No matching events found"
+          "sample_count": 10,
+          "min": 0.0,
+          "minimum": 0.0,
+          "max": 0.0,
+          "maximum": 0.0,
+          "mean": 0.0,
+          "median": 0.0,
+          "std_dev": 0.0,
+          "confidence95": [
+            0.0,
+            0.0
+          ],
+          "ci_method": "scipy",
+          "avg_sec": 0.0,
+          "status": "PASS",
+          "reason": "Mean 0.0000 s <= threshold 1.0 s",
+          "threshold": 1.0,
+          "operator": "<="
         },
         "final_state": {
           "value": "GREEN",
@@ -175,13 +191,29 @@
       }
     },
     "S6": {
-      "status": "INVALID",
-      "reason": "No matching events found",
+      "status": "FAIL",
+      "reason": "Assertions failed: Assertion Failed: Expected: 10.0, Observed: 16.1",
       "trials": 10,
       "metrics": {
         "lateral_propagation_time": {
-          "status": "INVALID",
-          "reason": "No matching events found"
+          "sample_count": 10,
+          "min": 16.0,
+          "minimum": 16.0,
+          "max": 17.0,
+          "maximum": 17.0,
+          "mean": 16.1,
+          "median": 16.0,
+          "std_dev": 0.3162,
+          "confidence95": [
+            15.8738,
+            16.3262
+          ],
+          "ci_method": "scipy",
+          "avg_propagation_sec": 16.1,
+          "status": "FAIL",
+          "reason": "Mean 16.1000 s <= threshold 10.0 s",
+          "threshold": 10.0,
+          "operator": "<="
         }
       }
     },
@@ -234,8 +266,8 @@
   "summary": {
     "total_scenarios": 7,
     "passed": 3,
-    "failed": 3,
-    "invalid": 1,
+    "failed": 4,
+    "invalid": 0,
     "incomplete": 0,
     "overall_verdict": "FAIL"
   }

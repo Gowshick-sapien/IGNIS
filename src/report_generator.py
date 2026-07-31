@@ -736,6 +736,7 @@ def main():
     parser = argparse.ArgumentParser(description="IGNIS Report Generator CLI")
     parser.add_argument("--results-dir", default="results", help="Directory containing metrics.json")
     parser.add_argument("--report-dir", default="docs/phase-f", help="Directory for reports and charts")
+    parser.add_argument("--html", action="store_true", default=True, help="Generate interactive self-contained HTML report")
     
     args = parser.parse_args()
     
@@ -776,5 +777,36 @@ def main():
     generate_report(metrics, report_file)
     print(f"Consolidated metrics report compiled at {report_file}")
 
+    if args.html:
+        try:
+            from src.cloud_dashboard.reporting import generate_html_report
+            # Ensure fallback raw_results.json and manifest exist if operating on raw results
+            raw_path = os.path.join(args.results_dir, "raw_results.json")
+            if not os.path.exists(raw_path):
+                with open(raw_path, "w", encoding="utf-8") as f:
+                    json.dump(raw_results, f, indent=2)
+
+            manifest_path = os.path.join(args.results_dir, "experiment_manifest.json")
+            if not os.path.exists(manifest_path):
+                with open(manifest_path, "w", encoding="utf-8") as f:
+                    json.dump({
+                        "experiment_id": "exp-fallback",
+                        "timestamp": datetime.utcnow().isoformat() + "Z",
+                        "git_commit": "standalone",
+                        "seed": 42
+                    }, f, indent=2)
+
+            html_out = os.path.join(args.results_dir, "report.html")
+            generate_html_report(
+                metrics_path=metrics_path if os.path.exists(metrics_path) else raw_path,
+                raw_results_path=raw_path,
+                manifest_path=manifest_path,
+                output_path=html_out
+            )
+            print(f"Interactive HTML report compiled at {html_out}")
+        except Exception as e:
+            logger.error(f"HTML report generation failed: {e}")
+
 if __name__ == "__main__":
     main()
+
