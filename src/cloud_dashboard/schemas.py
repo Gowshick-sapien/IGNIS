@@ -1,6 +1,6 @@
-"""IGNIS Cloud Dashboard API Schemas (Phase G2).
+"""IGNIS Cloud Dashboard API Schemas (Phase G2 & Phase G3).
 
-Pydantic request and response models for versioned REST API endpoints.
+Pydantic request, response, and progress event models for REST and SSE streaming APIs.
 """
 
 from typing import Dict, List, Optional, Any
@@ -38,3 +38,64 @@ class ErrorResponse(BaseModel):
     error: str = Field(..., description="Error classification code")
     message: str = Field(..., description="Human readable explanation")
     details: Optional[Dict[str, Any]] = Field(default=None, description="Optional diagnostic context")
+
+
+# ============================================================================
+# Phase G3 — Structured Progress Event Schemas
+# ============================================================================
+
+class ProgressEventBase(BaseModel):
+    schema_version: str = Field(default="1.0", description="Event schema version")
+    event: str = Field(..., description="Event classification type")
+    event_id: str = Field(..., description="Unique event ID: exp-ID-seq")
+    sequence: int = Field(..., description="Monotonic sequence number starting from 1")
+    experiment_id: str = Field(..., description="Target experiment execution ID")
+    timestamp: str = Field(..., description="ISO8601 UTC timestamp")
+
+
+class ExperimentStartedPayload(ProgressEventBase):
+    config: Dict[str, Any] = Field(default_factory=dict)
+    total_scenarios: int
+    total_trials: int
+
+
+class ScenarioStartedPayload(ProgressEventBase):
+    scenario_id: str
+    scenario_index: int
+    total_scenarios: int
+
+
+class TrialProgressPayload(ProgressEventBase):
+    scenario_id: str
+    trial: int
+    total_trials: int
+    scenario_index: int
+    total_scenarios: int
+    elapsed_sec: float
+    progress_pct: float
+    eta_sec: float
+
+
+class ScenarioCompletePayload(ProgressEventBase):
+    scenario_id: str
+    status: str = Field(..., description="PASS, FAIL, or INVALID")
+    duration_sec: float
+    metrics: Dict[str, Any] = Field(default_factory=dict)
+
+
+class ExperimentCompletePayload(ProgressEventBase):
+    overall_verdict: str = Field(..., description="PASS or FAIL")
+    duration_sec: float
+    summary_stats: Dict[str, Any] = Field(default_factory=dict)
+
+
+class ExperimentFailedPayload(ProgressEventBase):
+    error_code: str
+    error_message: str
+    failed_at_scenario: Optional[str] = None
+
+
+class HeartbeatPayload(BaseModel):
+    schema_version: str = Field(default="1.0")
+    event: str = Field(default="HEARTBEAT")
+    timestamp: str

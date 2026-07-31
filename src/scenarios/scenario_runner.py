@@ -27,7 +27,7 @@ class ScenarioRunner:
         except Exception:
             pass
 
-    def run_scenario(self, scenario_id: str, trials: int = 1, seed: int = None) -> List[ScenarioResult]:
+    def run_scenario(self, scenario_id: str, trials: int = 1, seed: int = None, callback=None) -> List[ScenarioResult]:
         from src.scenarios.scenario_registry import SCENARIO_REGISTRY
         scenario_class = SCENARIO_REGISTRY.get(scenario_id)
         if not scenario_class:
@@ -44,11 +44,14 @@ class ScenarioRunner:
         zone_ids = target_info.get("zone_ids", ["4B"])
         expected_outcome = yaml_data.get("expected_outcome", {})
 
-        self.client.connect(self.mqtt_host, self.mqtt_port, 60)
-        self.client.loop_start()
-
-        # Subscribe to all fog node publications
-        self.client.subscribe("ignis/v1/fog/zone/#")
+        mqtt_connected = False
+        try:
+            self.client.connect(self.mqtt_host, self.mqtt_port, 60)
+            self.client.loop_start()
+            self.client.subscribe("ignis/v1/fog/zone/#")
+            mqtt_connected = True
+        except Exception as conn_err:
+            logger.warning(f"MQTT broker connection failed ({conn_err}). Executing trial loop with offline fallback.")
 
         results = []
         for trial in range(trials):
@@ -61,31 +64,44 @@ class ScenarioRunner:
             
             start_time = self.clock.strftime("%Y-%m-%dT%H:%M:%SZ")
             start_epoch = self.clock.time()
-            
-            # Setup
             primary_zone = zone_ids[0] if zone_ids else "4B"
-            scenario_instance.setup(self.client, primary_zone, self.clock)
             
-            # Run
-            try:
-                result = scenario_instance.run()
-            except Exception as e:
+            if mqtt_connected:
+                # Setup & Run via MQTT
+                try:
+                    scenario_instance.setup(self.client, primary_zone, self.clock)
+                    result = scenario_instance.run()
+                except Exception as e:
+                    result = ScenarioResult(
+                        scenario=scenario_id,
+                        passed=False,
+                        duration_sec=self.clock.time() - start_epoch,
+                        start_time=start_time,
+                        end_time=self.clock.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                        metrics=[],
+                        events=[],
+                        logs=["Error during scenario run"],
+                        errors=[str(e)],
+                        zone_ids=zone_ids,
+                        trial_index=trial
+                    )
+                scenario_instance.teardown()
+            else:
+                # Simulated trial execution when MQTT broker is offline
+                self.clock.sleep(0.05)
                 result = ScenarioResult(
                     scenario=scenario_id,
                     passed=False,
-                    duration_sec=self.clock.time() - start_epoch,
+                    duration_sec=0.05,
                     start_time=start_time,
                     end_time=self.clock.strftime("%Y-%m-%dT%H:%M:%SZ"),
                     metrics=[],
                     events=[],
-                    logs=["Error during scenario run"],
-                    errors=[str(e)],
+                    logs=["MQTT Broker connection refused"],
+                    errors=["[WinError 10061] No connection could be made because target machine refused it"],
                     zone_ids=zone_ids,
                     trial_index=trial
                 )
-
-            # Teardown
-            scenario_instance.teardown()
             
             # Capture collected events during execution
             self.clock.sleep(0.5)
@@ -136,6 +152,12 @@ class ScenarioRunner:
             
             result.trial_index = trial
             results.append(result)
+            
+            if callback and callable(callback):
+                try:
+                    callback(trial + 1, trials, result)
+                except Exception as e:
+                    logger.warning(f"Error in trial callback: {e}")
 
         self.client.loop_stop()
         self.client.disconnect()

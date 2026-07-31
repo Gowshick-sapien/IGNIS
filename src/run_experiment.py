@@ -48,7 +48,6 @@ def clean_outputs(output_dir: str, report_dir: str, logger):
     if os.path.exists(output_dir):
         for item in os.listdir(output_dir):
             item_path = os.path.join(output_dir, item)
-            # Retain logs directory but clear previous log files (except experiment.log itself)
             if item == "logs":
                 for log_file in os.listdir(item_path):
                     if log_file != "experiment.log":
@@ -56,6 +55,12 @@ def clean_outputs(output_dir: str, report_dir: str, logger):
                             os.remove(os.path.join(item_path, log_file))
                         except Exception:
                             pass
+            elif item == "progress_events.jsonl":
+                try:
+                    with open(item_path, "w", encoding="utf-8") as f:
+                        pass
+                except Exception:
+                    pass
             else:
                 try:
                     if os.path.isdir(item_path):
@@ -159,16 +164,56 @@ def run_stages():
     else:
         logger.info(f"Stage 3: Running scenarios {target_scenarios} for {args.trials} trials...")
         runner = ScenarioRunner(mqtt_host="localhost", mqtt_port=1883)
-        for sid in target_scenarios:
+        total_scenarios_count = len(target_scenarios)
+        
+        try:
+            from src.cloud_dashboard.services.progress_reporter import ProgressReporter
+            reporter = ProgressReporter(workspace_dir=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        except Exception:
+            reporter = None
+
+        for s_idx, sid in enumerate(target_scenarios, start=1):
+            if reporter:
+                reporter.emit_scenario_started(sid, s_idx, total_scenarios_count)
+
+            def on_trial(trial_num, total_t, res):
+                elapsed = time.time() - scenarios_start_time
+                completed_trials_so_far = (s_idx - 1) * args.trials + trial_num
+                total_trials_overall = total_scenarios_count * args.trials
+                prog_pct = (completed_trials_so_far / total_trials_overall) * 100.0
+                eta = (elapsed / (prog_pct / 100.0) - elapsed) if prog_pct > 0 else 0.0
+                
+                if reporter:
+                    reporter.emit_trial_progress(
+                        scenario_id=sid,
+                        trial=trial_num,
+                        total_trials=args.trials,
+                        scenario_index=s_idx,
+                        total_scenarios=total_scenarios_count,
+                        elapsed_sec=elapsed,
+                        progress_pct=prog_pct,
+                        eta_sec=max(0.0, eta)
+                    )
+
             try:
                 logger.info(f"Running scenario {sid}...")
-                results = runner.run_scenario(sid, trials=args.trials, seed=seed)
+                results = runner.run_scenario(sid, trials=args.trials, seed=seed, callback=on_trial)
                 import dataclasses
                 raw_results[sid] = [dataclasses.asdict(r) for r in results]
+                
+                elapsed = time.time() - scenarios_start_time
+                if reporter:
+                    reporter.emit_scenario_complete(
+                        scenario_id=sid,
+                        status="PASS" if len(results) > 0 else "INVALID",
+                        duration_sec=elapsed
+                    )
             except Exception as e:
                 logger.error(f"Failed execution of scenario {sid}: {e}")
                 raw_results[sid] = []
-                
+                if reporter:
+                    reporter.emit_scenario_complete(sid, "INVALID", 0.0, {"error": str(e)})
+
         # Write raw_results.json
         with open(raw_results_path, "w", encoding="utf-8") as f:
             json.dump(raw_results, f, indent=2)
@@ -211,34 +256,11 @@ def run_stages():
     except Exception as e:
         logger.error(f"Failed to generate charts: {e}")
 
-    # Stage 7: Generate Report (Best Effort)
-    logger.info("Stage 7: Compiling final summary report...")
-    report_file = os.path.join(args.output_dir, "report.md")
-    try:
-        generate_report(metrics, report_file)
-        logger.info(f"Final project summary report compiled at {report_file}")
-    except Exception as e:
-        logger.error(f"Failed to compile report: {e}")
-
-    try:
-        from src.cloud_dashboard.reporting import generate_html_report
-        html_out = os.path.join(args.output_dir, "report.html")
-        raw_path = os.path.join(args.output_dir, "raw_results.json")
-        manifest_path = os.path.join(args.output_dir, "experiment_manifest.json")
-        generate_html_report(
-            metrics_path=metrics_path,
-            raw_results_path=raw_path,
-            manifest_path=manifest_path,
-            output_path=html_out
-        )
-        logger.info(f"Interactive self-contained HTML report generated at {html_out}")
-    except Exception as e:
-        logger.warning(f"Could not generate interactive HTML report: {e}")
-
-    # Stage 8: Generate Manifest
-    logger.info("Stage 8: Generating experiment manifest metadata...")
+    # Stage 7: Generate Manifest
+    logger.info("Stage 7: Generating experiment manifest metadata...")
     validator = YamlValidator()
     
+    report_file = os.path.join(args.output_dir, "report.md")
     output_files = [
         os.path.join(args.output_dir, "raw_results.json"),
         os.path.join(args.output_dir, "metrics.json"),
@@ -274,6 +296,28 @@ def run_stages():
     with open(manifest_path, "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2)
     logger.info(f"Experiment manifest successfully generated at {manifest_path}")
+
+    # Stage 8: Generate Reports (Best Effort)
+    logger.info("Stage 8: Compiling final summary reports...")
+    try:
+        generate_report(metrics, report_file)
+        logger.info(f"Final project summary report compiled at {report_file}")
+    except Exception as e:
+        logger.error(f"Failed to compile report: {e}")
+
+    try:
+        from src.cloud_dashboard.reporting import generate_html_report
+        html_out = os.path.join(args.output_dir, "report.html")
+        raw_path = os.path.join(args.output_dir, "raw_results.json")
+        generate_html_report(
+            metrics_path=metrics_path,
+            raw_results_path=raw_path,
+            manifest_path=manifest_path,
+            output_path=html_out
+        )
+        logger.info(f"Interactive self-contained HTML report generated at {html_out}")
+    except Exception as e:
+        logger.warning(f"Could not generate interactive HTML report: {e}")
 
     # Stage 9: Summary Table
     logger.info("Stage 9: Pipeline completed. Summary Results:")

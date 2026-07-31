@@ -1,9 +1,9 @@
 {
-  "timestamp": "2026-07-31T08:43:20Z",
-  "git_commit": "d58a717",
-  "trial_count": 5,
+  "timestamp": "2026-07-31T10:16:55Z",
+  "git_commit": "2d3129c",
+  "trial_count": 10,
   "random_seed": 4321,
-  "execution_duration_sec": 8.2768,
+  "execution_duration_sec": 10.8596,
   "ci_method": "internal_t_table",
   "platform": {
     "os": "Windows 11",
@@ -46,7 +46,6 @@
     "D:\\projects\\IGNIS\\results\\metrics.json",
     "D:\\projects\\IGNIS\\results\\experiment_manifest.json",
     "D:\\projects\\IGNIS\\results\\logs/experiment.log",
-    "D:\\projects\\IGNIS\\results\\report.md",
     "D:\\projects\\IGNIS\\results\\charts\\*.png"
   ]
 }

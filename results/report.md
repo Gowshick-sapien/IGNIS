@@ -1,30 +1,30 @@
 # IGNIS — Consolidated Simulation Results Report
 
 ## 1. Executive Summary
-- **Overall Verdict**: **PASS**
+- **Overall Verdict**: **FAIL**
 - **Total Scenarios Evaluated**: 7
 - **Verdict Breakdown**:
   - **Passed**: 0
-  - **Failed**: 0
-  - **Invalid**: 7
+  - **Failed**: 1
+  - **Invalid**: 6
   - **Incomplete**: 0
 - **Key Findings**:
   0 scenarios successfully satisfied all assertions.
   
-  0 scenarios failed assertion checks.
+  1 scenario failed assertion checks.
   
-  7 scenarios could not be evaluated because required events were unavailable.
+  6 scenarios could not be evaluated because required events were unavailable.
   
-  Overall experiment verdict: PASS.
+  Overall experiment verdict: FAIL.
 
 
 ## 2. Experimental Setup
 
 ### 2.1 Experiment Configuration
-- **Trial Count per Scenario**: 0
+- **Trial Count per Scenario**: 10
 - **Random Seed**: 4321
-- **Total Execution Duration**: 4.07 seconds
-- **Execution Date (UTC)**: 2026-07-31T08:43:17Z
+- **Total Execution Duration**: 9.63 seconds
+- **Execution Date (UTC)**: 2026-07-31T10:16:54Z
 
 ### 2.2 Simulation Configuration
 - **Zones Configured**: 3 (Zones 4A, 4B, 4C)
@@ -46,7 +46,7 @@
 - **OS**: Windows 11
 - **CPU Architecture**: AMD64
 - **Python Runtime Version**: 3.12.2
-- **Git Active Commit**: `d58a717`
+- **Git Active Commit**: `2d3129c`
 - **System Timezone**: India Standard Time
 - **Execution Hostname**: Gowshick
 
@@ -62,7 +62,7 @@ Where degrees of freedom $df = N-1$. (CI calculation method: `internal_t_table`)
 |---|---|---|---|
 | **S1** | 0 | **INVALID** | No matching events found |
 | **S2** | 0 | **INVALID** | No matching events found |
-| **S3** | 0 | **INVALID** | No matching events found |
+| **S3** | 10 | **FAIL** | Assertions failed: No matching events found; Assertion Failed: Expected: RED, Observed: GREEN |
 | **S4** | 0 | **INVALID** | No matching events found |
 | **S5** | 0 | **INVALID** | No matching events found |
 | **S6** | 0 | **INVALID** | No matching events found |
@@ -90,10 +90,13 @@ Where degrees of freedom $df = N-1$. (CI calculation method: `internal_t_table`)
 ---
 
 ### 4.3 Scenario S3
-- **Status**: **INVALID**
-- **Verdict Details**: No matching events found
+- **Status**: **FAIL**
+- **Verdict Details**: Assertions failed: No matching events found; Assertion Failed: Expected: RED, Observed: GREEN
 
-*No numerical metrics recorded.*
+| Metric | Value / Aggregates | Target | Operator | Status | Reason |
+|---|---|---|---|---|---|
+| fog_decision_latency | Metric unavailable | None | None | **INVALID** | No matching events found |
+| final_state | Value: GREEN | RED | == | **FAIL** | GREEN == threshold RED |
 
 ![Decision Latency Distribution](charts/decision_latency_boxplot.png)
 ![Decision Latency Frequency Histogram](charts/decision_latency_histogram.png)
@@ -141,7 +144,9 @@ Where degrees of freedom $df = N-1$. (CI calculation method: `internal_t_table`)
 
 ## 5. Cross-Scenario Analysis
 
-The following scenarios could not be evaluated and were marked INVALID: S1, S2, S3, S4, S5, S6, S7. Scenario S3 was marked INVALID because it generated no matching events, indicating that the sudden ignition event did not trigger telemetry or that the logging queue failed to capture the transition. Scenario S6 was marked INVALID because of missing propagation event sequences, meaning the lateral warning pre-emption did not execute or record its operations. Addressing these measurement gaps is critical for verifying the corresponding real-time latency claims in future runs.
+However, critical failures were observed in scenarios: S3. These failures imply that future testing and development must focus on strengthening the robustness of state clamping and offline synchronization.
+
+The following scenarios could not be evaluated and were marked INVALID: S1, S2, S4, S5, S6, S7. Scenario S6 was marked INVALID because of missing propagation event sequences, meaning the lateral warning pre-emption did not execute or record its operations. Addressing these measurement gaps is critical for verifying the corresponding real-time latency claims in future runs.
 
 
 ![Scenario Comparison Durations](charts/scenario_comparison_summary.png)
@@ -151,7 +156,7 @@ The following scenarios could not be evaluated and were marked INVALID: S1, S2, 
 
 | Core Architecture Claim | Reference Scenario | Validation Status | Evidence / Reason |
 |---|---|---|---|
-| **Fog Decision Latency** (<1.0s target) | S3 | ⚠ Not Validated | No matching events found |
+| **Fog Decision Latency** (<1.0s target) | S3 | ❌ Validation Failed | Assertions failed: No matching events found; Assertion Failed: Expected: RED, Observed: GREEN |
 | **Lateral Warning Propagation** (<10s window) | S6 | ⚠ Not Validated | No matching events found |
 | **False-Positive Suppression** (Local 3-Node check) | S4 | ⚠ Not Validated | No matching events found |
 | **Offline Continuity Cache** (Local mitigation action) | S5 | ⚠ Not Validated | No matching events found |
@@ -160,7 +165,7 @@ The following scenarios could not be evaluated and were marked INVALID: S1, S2, 
 
 ## 7. Discussion
 
-Decision latency measurements could not be validated because Scenario S3 failed to generate sufficient events.
+Decision latency assertions failed (average latency: 1.2000s), indicating the detection or coordination process exceeded the 1.0s target.
 
 Offline continuity could not be validated because Scenario S5 produced insufficient evidence.
 
@@ -175,4 +180,8 @@ Concurrent multi-zone integrity could not be validated due to insufficient event
 
 
 ## 9. Conclusion
-The orchestration, reporting, and analytics pipeline successfully completed. All core architecture claims are fully validated by empirical data. The system is validated for staging and pilot testing in physical testbeds.
+The orchestration, reporting and analytics pipeline successfully completed.
+
+However, multiple experimental scenarios failed or produced insufficient evidence.
+
+Additional implementation work is required before the architecture can be considered fully validated.

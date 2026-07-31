@@ -1,10 +1,11 @@
-"""IGNIS Process Lifecycle Manager (Phase G2).
+"""IGNIS Process Lifecycle Manager (Phase G2 & G3).
 
-Subprocess lifecycle state machine managing run_experiment.py execution, logging, PID tracking, and Windows cooperative pause/resume capabilities.
+Subprocess lifecycle state machine managing run_experiment.py execution, logging, PID tracking, and progress event emission.
 """
 
 import os
 import sys
+import json
 import time
 import uuid
 import shutil
@@ -14,6 +15,9 @@ import subprocess
 from enum import Enum
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple, Any
+
+from .progress_reporter import ProgressReporter
+from .live_monitor import LiveMonitor
 
 logger = logging.getLogger("process_manager")
 
@@ -57,6 +61,9 @@ class ProcessManager:
         self.logs_dir = os.path.join(self.results_dir, "logs")
         self.log_file_path = os.path.join(self.logs_dir, "experiment.log")
         
+        self.reporter = ProgressReporter(workspace_dir=self.workspace_dir)
+        self.live_monitor = LiveMonitor(workspace_dir=self.workspace_dir)
+        
         self._state = ExperimentState.IDLE
         self._process: Optional[subprocess.Popen] = None
         self._experiment_id: Optional[str] = None
@@ -84,10 +91,71 @@ class ProcessManager:
                     if poll_res == 0:
                         self._state = ExperimentState.COMPLETED
                         logger.info(f"Subprocess for {self._experiment_id} completed successfully (exit 0).")
+                        evt = self.reporter.emit_experiment_complete(overall_verdict="PASS", duration_sec=0.0)
+                        self.live_monitor.broadcast_event(evt)
                     else:
                         self._state = ExperimentState.FAILED
                         logger.error(f"Subprocess for {self._experiment_id} failed with exit code {poll_res}.")
+                        evt = self.reporter.emit_experiment_failed(error_code="ProcessExitNonZero", error_message=f"Process exited with code {poll_res}")
+                        self.live_monitor.broadcast_event(evt)
                 self._process = None
+
+    def _start_progress_tailer(self) -> None:
+        """Launches background thread to tail results/progress_events.jsonl during subprocess execution."""
+        jsonl_file = os.path.join(self.results_dir, "progress_events.jsonl")
+        
+        def _tail_worker():
+            logger.info("Progress events tailer worker started.")
+            read_pos = 0
+            while True:
+                with self._lock:
+                    is_active = self._state in (ExperimentState.RUNNING, ExperimentState.STARTING, ExperimentState.PAUSING, ExperimentState.PAUSED)
+                
+                if os.path.exists(jsonl_file):
+                    try:
+                        cur_size = os.path.getsize(jsonl_file)
+                        if cur_size < read_pos:
+                            read_pos = 0
+
+                        with open(jsonl_file, "r", encoding="utf-8", errors="ignore") as f:
+                            f.seek(read_pos)
+                            lines = f.readlines()
+                            read_pos = f.tell()
+                            for line in lines:
+                                line = line.strip()
+                                if line:
+                                    try:
+                                        data = json.loads(line)
+                                        self.live_monitor.broadcast_event(data)
+                                    except Exception:
+                                        pass
+                    except Exception as e:
+                        logger.debug(f"Tailer read error: {e}")
+
+                if not is_active:
+                    # Final flush read before exiting worker
+                    if os.path.exists(jsonl_file):
+                        try:
+                            with open(jsonl_file, "r", encoding="utf-8") as f:
+                                f.seek(read_pos)
+                                lines = f.readlines()
+                                for line in lines:
+                                    line = line.strip()
+                                    if line:
+                                        try:
+                                            data = json.loads(line)
+                                            self.live_monitor.broadcast_event(data)
+                                        except Exception:
+                                            pass
+                        except Exception:
+                            pass
+                    break
+                
+                time.sleep(0.1)  # Poll every 100ms
+            logger.info("Progress events tailer worker finished.")
+
+        tail_thread = threading.Thread(target=_tail_worker, daemon=True)
+        tail_thread.start()
 
     def _generate_experiment_id(self) -> str:
         now_str = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -120,15 +188,24 @@ class ProcessManager:
             # Ensure logs directory exists
             os.makedirs(self.logs_dir, exist_ok=True)
 
+            # Emit EXPERIMENT_STARTED event
+            tot_scen = 7 if scenarios == "all" else len([s for s in scenarios.split(",") if s.strip()])
+            evt = self.reporter.emit_experiment_started(
+                experiment_id=self._experiment_id,
+                config=self._config,
+                total_scenarios=tot_scen,
+                total_trials=trials
+            )
+            self.live_monitor.broadcast_event(evt)
+
             # Build command string
             cmd = [
                 sys.executable,
                 os.path.join(self.workspace_dir, "run_phase_a.py") if os.path.exists(os.path.join(self.workspace_dir, "run_phase_a.py")) else os.path.join(self.workspace_dir, "src", "run_experiment.py"),
             ]
             
-            # Note: run_experiment flags
             if os.path.exists(os.path.join(self.workspace_dir, "src", "run_experiment.py")):
-                cmd = [sys.executable, os.path.join(self.workspace_dir, "src", "run_experiment.py")]
+                cmd = [sys.executable, "-u", os.path.join(self.workspace_dir, "src", "run_experiment.py")]
                 cmd.extend(["--trials", str(trials)])
                 cmd.extend(["--seed", str(seed)])
                 cmd.extend(["--output-dir", self.results_dir])
@@ -141,7 +218,6 @@ class ProcessManager:
             logger.info(f"Launching subprocess: {' '.join(cmd)}")
             
             try:
-                # Open log file for stdout and stderr redirection
                 log_fd = open(self.log_file_path, "w", encoding="utf-8")
                 log_fd.write(f"=== Experiment Started: {self._experiment_id} at {self._start_time} ===\n")
                 log_fd.write(f"Command: {' '.join(cmd)}\n\n")
@@ -158,6 +234,9 @@ class ProcessManager:
                 self._state = ExperimentState.RUNNING
                 logger.info(f"Experiment {self._experiment_id} launched with PID {self._pid}.")
                 
+                # Start progress event tailer thread to stream child process events to SSE
+                self._start_progress_tailer()
+
                 return {
                     "experiment_id": self._experiment_id,
                     "state": self._state.value,
@@ -167,6 +246,8 @@ class ProcessManager:
             except Exception as e:
                 self._state = ExperimentState.FAILED
                 logger.error(f"Failed to launch experiment subprocess: {e}")
+                evt = self.reporter.emit_experiment_failed(error_code="SubprocessLaunchFailed", error_message=str(e))
+                self.live_monitor.broadcast_event(evt)
                 raise RuntimeError(f"Failed to launch experiment subprocess: {e}")
 
     def stop_experiment(self) -> Dict[str, Any]:
@@ -177,7 +258,6 @@ class ProcessManager:
             
             self._state = ExperimentState.STOPPING
             
-            # Remove pause flag if it exists
             if os.path.exists(self.pause_flag_file):
                 try:
                     os.remove(self.pause_flag_file)
@@ -187,7 +267,6 @@ class ProcessManager:
             if self._process is not None:
                 try:
                     self._process.terminate()
-                    # Wait up to 3 seconds for graceful shutdown
                     try:
                         self._process.wait(timeout=3)
                     except subprocess.TimeoutExpired:
@@ -198,6 +277,8 @@ class ProcessManager:
             
             self._state = ExperimentState.COMPLETED
             self._process = None
+            evt = self.reporter.emit_experiment_complete(overall_verdict="STOPPED", duration_sec=0.0)
+            self.live_monitor.broadcast_event(evt)
             
             return {
                 "experiment_id": self._experiment_id,
@@ -211,7 +292,6 @@ class ProcessManager:
                 raise InvalidStateTransition(f"Cannot pause experiment: Current state is {self._state.value}")
             
             self._state = ExperimentState.PAUSING
-            # Cooperative pause file creation
             try:
                 with open(self.pause_flag_file, "w") as f:
                     f.write(f"PAUSE {self._experiment_id} {datetime.now(timezone.utc).isoformat()}")
@@ -247,11 +327,9 @@ class ProcessManager:
             }
 
     def restart_experiment(self, trials: int = 30, seed: int = 4321, clean: bool = True, scenarios: str = "all") -> Dict[str, Any]:
-        """Stop any active experiment run, clear state, and spawn a brand new experiment run."""
         with self._lock:
             self._update_process_status_locked()
             if self._state in (ExperimentState.RUNNING, ExperimentState.PAUSED, ExperimentState.PAUSING, ExperimentState.STARTING):
-                # Issue stop internally
                 if self._process is not None:
                     try:
                         self._process.terminate()
@@ -262,7 +340,6 @@ class ProcessManager:
 
             self._state = ExperimentState.IDLE
         
-        # Start new experiment with new ID
         return self.start_experiment(trials=trials, seed=seed, clean=clean, scenarios=scenarios)
 
     def clean_results(self) -> Dict[str, Any]:
@@ -271,7 +348,6 @@ class ProcessManager:
             if self._state in (ExperimentState.RUNNING, ExperimentState.PAUSED, ExperimentState.PAUSING, ExperimentState.STARTING):
                 raise InvalidStateTransition(f"Cannot clean results while experiment is in state {self._state.value}")
             
-            # Clean results folder except logs if locked
             if os.path.exists(self.results_dir):
                 for item in os.listdir(self.results_dir):
                     item_path = os.path.join(self.results_dir, item)
@@ -300,11 +376,9 @@ class ProcessManager:
             os.makedirs(self.results_dir, exist_ok=True)
 
             if os.path.isfile(abs_source):
-                # Copy single json file to results/raw_results.json
                 dest = os.path.join(self.results_dir, "raw_results.json")
                 shutil.copy2(abs_source, dest)
             elif os.path.isdir(abs_source):
-                # Copy directory files into results_dir
                 for item in os.listdir(abs_source):
                     s_item = os.path.join(abs_source, item)
                     d_item = os.path.join(self.results_dir, item)

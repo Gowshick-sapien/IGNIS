@@ -1,3 +1,284 @@
 {
-  "S3": []
+  "S3": [
+    {
+      "scenario": "S3",
+      "passed": false,
+      "duration_sec": 0.05,
+      "start_time": "2026-07-31T10:16:49Z",
+      "end_time": "2026-07-31T10:16:49Z",
+      "metrics": [
+        {
+          "name": "is_clamped",
+          "value": 0.0,
+          "unit": "bool",
+          "passed": true,
+          "threshold": 0.0,
+          "details": "Expected clamped=False, got clamped=False"
+        }
+      ],
+      "events": [],
+      "logs": [
+        "MQTT Broker connection refused"
+      ],
+      "errors": [
+        "[WinError 10061] No connection could be made because target machine refused it"
+      ],
+      "zone_ids": [
+        "4B"
+      ],
+      "trial_index": 0
+    },
+    {
+      "scenario": "S3",
+      "passed": false,
+      "duration_sec": 0.05,
+      "start_time": "2026-07-31T10:16:49Z",
+      "end_time": "2026-07-31T10:16:49Z",
+      "metrics": [
+        {
+          "name": "is_clamped",
+          "value": 0.0,
+          "unit": "bool",
+          "passed": true,
+          "threshold": 0.0,
+          "details": "Expected clamped=False, got clamped=False"
+        }
+      ],
+      "events": [],
+      "logs": [
+        "MQTT Broker connection refused"
+      ],
+      "errors": [
+        "[WinError 10061] No connection could be made because target machine refused it"
+      ],
+      "zone_ids": [
+        "4B"
+      ],
+      "trial_index": 1
+    },
+    {
+      "scenario": "S3",
+      "passed": false,
+      "duration_sec": 0.05,
+      "start_time": "2026-07-31T10:16:50Z",
+      "end_time": "2026-07-31T10:16:50Z",
+      "metrics": [
+        {
+          "name": "is_clamped",
+          "value": 0.0,
+          "unit": "bool",
+          "passed": true,
+          "threshold": 0.0,
+          "details": "Expected clamped=False, got clamped=False"
+        }
+      ],
+      "events": [],
+      "logs": [
+        "MQTT Broker connection refused"
+      ],
+      "errors": [
+        "[WinError 10061] No connection could be made because target machine refused it"
+      ],
+      "zone_ids": [
+        "4B"
+      ],
+      "trial_index": 2
+    },
+    {
+      "scenario": "S3",
+      "passed": false,
+      "duration_sec": 0.05,
+      "start_time": "2026-07-31T10:16:50Z",
+      "end_time": "2026-07-31T10:16:50Z",
+      "metrics": [
+        {
+          "name": "is_clamped",
+          "value": 0.0,
+          "unit": "bool",
+          "passed": true,
+          "threshold": 0.0,
+          "details": "Expected clamped=False, got clamped=False"
+        }
+      ],
+      "events": [],
+      "logs": [
+        "MQTT Broker connection refused"
+      ],
+      "errors": [
+        "[WinError 10061] No connection could be made because target machine refused it"
+      ],
+      "zone_ids": [
+        "4B"
+      ],
+      "trial_index": 3
+    },
+    {
+      "scenario": "S3",
+      "passed": false,
+      "duration_sec": 0.05,
+      "start_time": "2026-07-31T10:16:51Z",
+      "end_time": "2026-07-31T10:16:51Z",
+      "metrics": [
+        {
+          "name": "is_clamped",
+          "value": 0.0,
+          "unit": "bool",
+          "passed": true,
+          "threshold": 0.0,
+          "details": "Expected clamped=False, got clamped=False"
+        }
+      ],
+      "events": [],
+      "logs": [
+        "MQTT Broker connection refused"
+      ],
+      "errors": [
+        "[WinError 10061] No connection could be made because target machine refused it"
+      ],
+      "zone_ids": [
+        "4B"
+      ],
+      "trial_index": 4
+    },
+    {
+      "scenario": "S3",
+      "passed": false,
+      "duration_sec": 0.05,
+      "start_time": "2026-07-31T10:16:52Z",
+      "end_time": "2026-07-31T10:16:52Z",
+      "metrics": [
+        {
+          "name": "is_clamped",
+          "value": 0.0,
+          "unit": "bool",
+          "passed": true,
+          "threshold": 0.0,
+          "details": "Expected clamped=False, got clamped=False"
+        }
+      ],
+      "events": [],
+      "logs": [
+        "MQTT Broker connection refused"
+      ],
+      "errors": [
+        "[WinError 10061] No connection could be made because target machine refused it"
+      ],
+      "zone_ids": [
+        "4B"
+      ],
+      "trial_index": 5
+    },
+    {
+      "scenario": "S3",
+      "passed": false,
+      "duration_sec": 0.05,
+      "start_time": "2026-07-31T10:16:52Z",
+      "end_time": "2026-07-31T10:16:52Z",
+      "metrics": [
+        {
+          "name": "is_clamped",
+          "value": 0.0,
+          "unit": "bool",
+          "passed": true,
+          "threshold": 0.0,
+          "details": "Expected clamped=False, got clamped=False"
+        }
+      ],
+      "events": [],
+      "logs": [
+        "MQTT Broker connection refused"
+      ],
+      "errors": [
+        "[WinError 10061] No connection could be made because target machine refused it"
+      ],
+      "zone_ids": [
+        "4B"
+      ],
+      "trial_index": 6
+    },
+    {
+      "scenario": "S3",
+      "passed": false,
+      "duration_sec": 0.05,
+      "start_time": "2026-07-31T10:16:53Z",
+      "end_time": "2026-07-31T10:16:53Z",
+      "metrics": [
+        {
+          "name": "is_clamped",
+          "value": 0.0,
+          "unit": "bool",
+          "passed": true,
+          "threshold": 0.0,
+          "details": "Expected clamped=False, got clamped=False"
+        }
+      ],
+      "events": [],
+      "logs": [
+        "MQTT Broker connection refused"
+      ],
+      "errors": [
+        "[WinError 10061] No connection could be made because target machine refused it"
+      ],
+      "zone_ids": [
+        "4B"
+      ],
+      "trial_index": 7
+    },
+    {
+      "scenario": "S3",
+      "passed": false,
+      "duration_sec": 0.05,
+      "start_time": "2026-07-31T10:16:53Z",
+      "end_time": "2026-07-31T10:16:53Z",
+      "metrics": [
+        {
+          "name": "is_clamped",
+          "value": 0.0,
+          "unit": "bool",
+          "passed": true,
+          "threshold": 0.0,
+          "details": "Expected clamped=False, got clamped=False"
+        }
+      ],
+      "events": [],
+      "logs": [
+        "MQTT Broker connection refused"
+      ],
+      "errors": [
+        "[WinError 10061] No connection could be made because target machine refused it"
+      ],
+      "zone_ids": [
+        "4B"
+      ],
+      "trial_index": 8
+    },
+    {
+      "scenario": "S3",
+      "passed": false,
+      "duration_sec": 0.05,
+      "start_time": "2026-07-31T10:16:54Z",
+      "end_time": "2026-07-31T10:16:54Z",
+      "metrics": [
+        {
+          "name": "is_clamped",
+          "value": 0.0,
+          "unit": "bool",
+          "passed": true,
+          "threshold": 0.0,
+          "details": "Expected clamped=False, got clamped=False"
+        }
+      ],
+      "events": [],
+      "logs": [
+        "MQTT Broker connection refused"
+      ],
+      "errors": [
+        "[WinError 10061] No connection could be made because target machine refused it"
+      ],
+      "zone_ids": [
+        "4B"
+      ],
+      "trial_index": 9
+    }
+  ]
 }

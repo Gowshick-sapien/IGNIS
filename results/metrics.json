@@ -1,10 +1,10 @@
 {
   "experiment_metadata": {
-    "timestamp": "2026-07-31T08:43:17Z",
-    "git_commit": "d58a717",
-    "trial_count": 0,
+    "timestamp": "2026-07-31T10:16:54Z",
+    "git_commit": "2d3129c",
+    "trial_count": 10,
     "random_seed": 4321,
-    "total_duration_sec": 4.0725,
+    "total_duration_sec": 9.6261,
     "platform": {
       "os": "Windows 11",
       "architecture": "AMD64",
@@ -51,10 +51,22 @@
       "metrics": {}
     },
     "S3": {
-      "status": "INVALID",
-      "reason": "No matching events found",
-      "trials": 0,
-      "metrics": {}
+      "status": "FAIL",
+      "reason": "Assertions failed: No matching events found; Assertion Failed: Expected: RED, Observed: GREEN",
+      "trials": 10,
+      "metrics": {
+        "fog_decision_latency": {
+          "status": "INVALID",
+          "reason": "No matching events found"
+        },
+        "final_state": {
+          "value": "GREEN",
+          "status": "FAIL",
+          "reason": "GREEN == threshold RED",
+          "threshold": "RED",
+          "operator": "=="
+        }
+      }
     },
     "S4": {
       "status": "INVALID",
@@ -84,9 +96,9 @@
   "summary": {
     "total_scenarios": 7,
     "passed": 0,
-    "failed": 0,
-    "invalid": 7,
+    "failed": 1,
+    "invalid": 6,
     "incomplete": 0,
-    "overall_verdict": "PASS"
+    "overall_verdict": "FAIL"
   }
 }

@@ -1,14 +1,15 @@
-"""IGNIS Experiment Execution & Lifecycle API Routes (Phase G2).
+"""IGNIS Experiment Execution & Lifecycle API Routes (Phase G2 & Phase G3).
 
-Versioned REST HTTP API endpoints (/api/v1/experiment/*) for experiment control.
+Versioned REST HTTP API endpoints (/api/v1/experiment/*) for experiment control and SSE live streaming.
 """
 
 import os
 import json
 import logging
+import asyncio
 from typing import Any, Dict
 from fastapi import APIRouter, Request, HTTPException, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 
 from ..schemas import (
     ExperimentRunRequest,
@@ -18,6 +19,7 @@ from ..schemas import (
     ErrorResponse,
 )
 from ..services.process_manager import ProcessManager, InvalidStateTransition
+from ..services.live_monitor import LiveMonitor
 
 logger = logging.getLogger("experiment_routes")
 
@@ -32,10 +34,64 @@ def _error_response(status_code: int, error_code: str, message: str, details: Di
 def _get_process_manager(request: Request) -> ProcessManager:
     pm: ProcessManager = getattr(request.app.state, "process_manager", None)
     if pm is None:
-        # Fallback singleton instantiation
         pm = ProcessManager()
         request.app.state.process_manager = pm
     return pm
+
+
+@experiments_router.get("/stream")
+async def stream_experiment_progress(request: Request):
+    """Server-Sent Events (SSE) live progress stream endpoint."""
+    pm = _get_process_manager(request)
+    live_monitor = pm.live_monitor
+    
+    # 1. Register client queue (bounded maxsize=5000)
+    client_queue = live_monitor.register_client(maxsize=5000)
+    
+    # 2. Replay active experiment events to catch up late joiners
+    status_info = pm.get_status()
+    active_exp_id = status_info.get("experiment_id")
+    live_monitor.replay_active_experiment(client_queue, active_exp_id)
+    
+    async def sse_event_generator():
+        try:
+            # Yield initial comment frame immediately to verify stream connection instantly
+            yield ": connected\n\n"
+            
+            while True:
+                # Check client disconnect
+                if await request.is_disconnected():
+                    break
+                
+                try:
+                    # Wait for next progress or heartbeat event with timeout
+                    event_data = await asyncio.wait_for(client_queue.get(), timeout=2.0)
+                    evt_type = event_data.get("event", "message")
+                    data_str = json.dumps(event_data)
+                    
+                    yield f"event: {evt_type}\ndata: {data_str}\n\n"
+                    
+                    # Graceful stream closure on experiment completion or failure
+                    if evt_type in ("EXPERIMENT_COMPLETE", "EXPERIMENT_FAILED"):
+                        logger.info(f"Stream received terminal event '{evt_type}'. Closing SSE stream cleanly.")
+                        break
+                except asyncio.TimeoutError:
+                    # Yield SSE comment frame to verify client connectivity
+                    yield ": ping\n\n"
+        except asyncio.CancelledError:
+            logger.info("SSE client stream cancelled.")
+        finally:
+            live_monitor.unregister_client(client_queue)
+
+    return StreamingResponse(
+        sse_event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"
+        }
+    )
 
 
 @experiments_router.post("/run", response_model=Dict[str, Any])
