@@ -249,20 +249,34 @@
         }
 
         select, input, button {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background-color: #0f172a !important;
+            border: 1px solid #334155 !important;
             border-radius: 8px;
-            color: var(--text-primary);
-            padding: 10px 12px;
+            color: #f8fafc !important;
+            padding: 8px 14px;
             font-family: inherit;
             font-size: 13px;
+            font-weight: 500;
             outline: none;
             transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
         select:focus, input:focus {
-            border-color: var(--accent-color);
-            background: rgba(255, 255, 255, 0.06);
+            border-color: #38bdf8 !important;
+            background-color: #1e293b !important;
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25) !important;
+        }
+
+        select option {
+            background-color: #0f172a !important;
+            color: #f8fafc !important;
+            padding: 10px 14px;
+        }
+
+        select option:hover, select option:focus, select option:checked {
+            background-color: #1e293b !important;
+            color: #38bdf8 !important;
         }
 
         button.btn-primary {
@@ -480,26 +494,26 @@
                 </div>
             </div>
             
-            <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 16px;">
                 <div class="form-group" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <label for="zone-select" style="margin: 0;">Monitor Zone:</label>
-                    <select id="zone-select" style="padding: 6px 12px;" onchange="changeZone()">
+                    <label for="zone-select" style="margin: 0; font-weight: 600; color: #94a3b8; font-size: 12px;">Monitor Zone:</label>
+                    <select id="zone-select" style="padding: 8px 14px; background-color: #0f172a !important; color: #f8fafc !important; border: 1px solid #334155 !important; font-weight: 600; cursor: pointer;" onchange="changeZone()">
                         <option value="4A">Zone 4A (North)</option>
                         <option value="4B" selected>Zone 4B (Core)</option>
                         <option value="4C">Zone 4C (South)</option>
                     </select>
                 </div>
                 <div class="form-group" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <label for="season-select" style="margin: 0;">Baseline Season:</label>
-                    <select id="season-select" style="padding: 6px 12px;">
+                    <label for="season-select" style="margin: 0; font-weight: 600; color: #94a3b8; font-size: 12px;">Baseline Season:</label>
+                    <select id="season-select" style="padding: 8px 14px; background-color: #0f172a !important; color: #f8fafc !important; border: 1px solid #334155 !important; font-weight: 600; cursor: pointer;">
                         <option value="summer" selected>Summer Profile</option>
                         <option value="winter">Winter Profile</option>
                         <option value="monsoon">Monsoon Profile</option>
                     </select>
                 </div>
                 <div class="form-group" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <label for="time-select" style="margin: 0;">Time Range:</label>
-                    <select id="time-select" style="padding: 6px 12px;">
+                    <label for="time-select" style="margin: 0; font-weight: 600; color: #94a3b8; font-size: 12px;">Time Range:</label>
+                    <select id="time-select" style="padding: 8px 14px; background-color: #0f172a !important; color: #f8fafc !important; border: 1px solid #334155 !important; font-weight: 600; cursor: pointer;">
                         <option value="15" selected>Last 15 Minutes</option>
                         <option value="60">Last 60 Minutes</option>
                     </select>
@@ -508,7 +522,7 @@
         </header>
 
         <!-- Global Research Navigation Bar -->
-        <nav style="display: flex; gap: 10px; background: rgba(18, 22, 35, 0.85); padding: 12px 18px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08); margin-bottom: 20px; align-items: center; justify-content: space-between; backdrop-filter: blur(10px);">
+        <nav style="display: flex; gap: 10px; background: rgba(15, 23, 42, 0.9); padding: 12px 18px; border-radius: 12px; border: 1px solid rgba(56, 189, 248, 0.2); margin-bottom: 20px; align-items: center; justify-content: space-between; backdrop-filter: blur(12px); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
             <div style="font-weight: 600; font-size: 0.85rem; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px;">
                 <span>Research Control Suite</span>
             </div>

@@ -72,9 +72,38 @@
         .card {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 6px;
+            border-radius: 8px;
             padding: 20px;
             margin-bottom: 20px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        select, input[type="text"], input[type="number"], textarea {
+            background-color: #0f172a !important;
+            color: #f8fafc !important;
+            border: 1px solid #334155 !important;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-family: inherit;
+            font-size: 0.875rem;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        select:focus, input:focus, textarea:focus {
+            border-color: #38bdf8 !important;
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25) !important;
+        }
+
+        select option {
+            background-color: #0f172a !important;
+            color: #f8fafc !important;
+            padding: 8px 12px;
+        }
+
+        select option:hover, select option:focus, select option:checked {
+            background-color: #1e293b !important;
+            color: #38bdf8 !important;
         }
 
         .btn {
