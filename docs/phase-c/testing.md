@@ -10,7 +10,7 @@ Phase C adds centralized logging (InfluxDB v2), an independent ingestor worker, 
 - **Unit Testing Prerequisites**: Python 3.10+. Libraries `paho-mqtt`, `influxdb-client`, and `python-dotenv` are mocked, allowing tests to run locally on the host python interpreter.
 - **Integration Testing Prerequisites**:
   - Docker Desktop (with Docker Compose v2).
-  - Web browser access to both the local dashboard (`http://localhost:8000`) and the NOC central dashboard (`http://localhost:9000`).
+  - Web browser access to the unified IGNIS Cloud Dashboard (`http://localhost:8000` or `http://localhost:9000`).
 - **Test Path**: Run all host commands from the root directory.
 
 ---

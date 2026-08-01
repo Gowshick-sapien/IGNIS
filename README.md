@@ -13,10 +13,17 @@ Conventional wildfire monitoring primarily relies on satellite observations and 
 
 IGNIS proposes a hierarchical architecture where **local Fog Nodes** perform real-time environmental analysis, execute safe autonomous pre-suppression actions, and coordinate with higher-level control centers.
 
-This repository currently implements:
+This repository implements **IGNIS Version 1**:
 
 - ✅ Phase A – Core Decision Pipeline
-- ✅ Phase B – Distributed Containerized Architecture
+- ✅ Phase B – Distributed Containerized Architecture & MQTT
+- ✅ Phase C – Cloud Integration & InfluxDB Telemetry Persistence
+- ✅ Phase D – Multi-Zone & Peer-to-Peer Lateral Coordination
+- ✅ Phase E – Fault & Chaos Resilience Testing
+- ✅ Phase F – Scenario Library (S1–S7) & Metric Derivation Engine
+- ✅ Phase G – Unified Web Dashboard Framework, Repository Archive, Regression Detector & Reproducibility Exporter
+
+> 📖 **Master Specification:** For the complete detailed technical stack, architectural breakdown, scenario benchmarks, and full capabilities reference, see [docs/ignis_v1_capabilities_and_tech_stack.md](file:///d:/projects/IGNIS/docs/ignis_v1_capabilities_and_tech_stack.md).
 
 ---
 
@@ -76,6 +83,7 @@ This repository currently implements:
 | Phase D | ✅ | Multi-zone & lateral coordination |
 | Phase E | ✅ | Fault & chaos resilience testing |
 | Phase F | ✅ | Scenario library & consolidated reporting |
+| Phase G | ✅ | Unified web dashboard framework, experiment repository, regression engine & reproducibility publishing |
 
 ---
 
@@ -553,11 +561,29 @@ docker compose up --build
 
 ---
 
-## Open Dashboard
+## Accessing the IGNIS Central Operations & Research Dashboard
 
-```
-http://localhost:8000
-```
+The unified **IGNIS Cloud Dashboard** serves both real-time regional NOC operations and research experiment management across 9 dedicated web views:
+
+* **Local Dev Server:** `http://localhost:8000` (when running `uvicorn src.cloud_dashboard.app:app --reload`)
+* **Docker Environment:** `http://localhost:9000` (when running `docker compose up`)
+* **Interactive OpenAPI / Swagger Docs:** `http://localhost:8000/docs`
+
+### Dashboard Pages Summary
+
+| Page Name | URL Route | Primary Role & Core Purpose |
+| :--- | :--- | :--- |
+| **Regional Operations NOC** | `/` | Real-time zone monitoring, InfluxDB health, lateral event timeline, MQTT advisory command overrides. |
+| **Experiment Control Center** | `/experiments` | Interactive simulation execution control, parameter tuning, SSE progress streaming, live console log viewer. |
+| **Historical Report Browser** | `/reports` | Discovers and renders generated HTML and Markdown research reports (sorted Newest First). |
+| **Historical Repository** | `/repository` | Read-only multi-field search, verdict/scenario filters, sorting, pagination, and experiment metadata inspection drawer. |
+| **Side-by-Side Comparison** | `/comparison` | Side-by-side metric diffs, verdict deltas, confidence interval overlap, and automated regression detection. |
+| **Interactive Chart Gallery** | `/charts` | Visual gallery of performance distributions, decision latency curves, lateral timelines, and false positive rates. |
+| **Real-Time Benchmarks** | `/metrics` | Executive KPI dashboard summarizing research validation targets (latency <150ms, propagation <5s, continuity 100%). |
+| **Scenario Browser** | `/scenarios` | Read-only catalog of YAML scenario specifications (S1–S7) with assertions and raw spec viewer. |
+| **Settings & Export Hub** | `/settings` | Platform configuration, export format exporter (MD, HTML, CSV, JSON, ZIP, PDF, DOCX), and reproducibility bundle builder. |
+
+For detailed documentation on all pages, visual components, REST API endpoints, and architectural principles, see [docs/dashboard_guide.md](file:///d:/projects/IGNIS/docs/dashboard_guide.md).
 
 ---
 
