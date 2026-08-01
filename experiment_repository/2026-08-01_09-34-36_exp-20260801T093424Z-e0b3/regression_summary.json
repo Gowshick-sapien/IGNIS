@@ -1,0 +1,35 @@
+{
+  "experiment_id": "exp-20260801T093424Z-e0b3",
+  "baseline_experiment_id": "exp-20260801T092901Z-21ee",
+  "baseline_strategy": "SAME_COMMIT",
+  "regression_rules_hash": "5a3113edda0e8270ed8c8c18c142bb131bf2999e1353e2a0645c46b5418cfa01",
+  "status": "NO_REGRESSION",
+  "total_regressions": 0,
+  "regressions": [],
+  "rule_evaluations": {
+    "decision_latency": {
+      "status": "PASS",
+      "details": "Delta: -0.1513 (-25.33%)"
+    },
+    "lateral_propagation": {
+      "status": "PASS",
+      "details": "OK"
+    },
+    "false_positive_count": {
+      "status": "PASS",
+      "details": "OK"
+    },
+    "message_loss": {
+      "status": "PASS",
+      "details": "OK"
+    },
+    "scenario_verdicts": {
+      "status": "PASS",
+      "details": "PASS -> PASS"
+    },
+    "overall_verdict": {
+      "status": "PASS",
+      "details": "PASS -> PASS"
+    }
+  }
+}

@@ -1,0 +1,264 @@
+{
+  "S2": [
+    {
+      "scenario": "S2",
+      "passed": false,
+      "duration_sec": 0.1,
+      "start_time": "2026-08-01T09:15:01Z",
+      "end_time": "2026-08-01T09:15:01Z",
+      "metrics": [
+        {
+          "name": "is_clamped",
+          "value": 0.0,
+          "unit": "bool",
+          "passed": true,
+          "threshold": 0.0,
+          "details": "Expected clamped=False, got clamped=False"
+        }
+      ],
+      "events": [
+        {
+          "_topic": "ignis/v1/fog/zone/4B/sensor",
+          "message_type": "alert",
+          "sensor_timestamp": "2026-08-01T09:15:01.000000Z",
+          "zone_id": "4B",
+          "temperature_celsius": 62.0
+        },
+        {
+          "_topic": "ignis/v1/fog/zone/4B/state",
+          "message_type": "zone_state",
+          "decision_timestamp": "2026-08-01T09:15:01.847503Z",
+          "sensor_timestamp": "2026-08-01T09:15:01.000000Z",
+          "zone_id": "4B",
+          "state": "RED",
+          "fog_decision_latency": 0.013
+        },
+        {
+          "_topic": "ignis/v1/fog/zone/4C/state",
+          "message_type": "zone_state",
+          "decision_timestamp": "2026-08-01T09:15:01.932503Z",
+          "sensor_timestamp": "2026-08-01T09:15:01.847503Z",
+          "zone_id": "4C",
+          "state": "RED",
+          "lateral_propagation_time": 0.085
+        }
+      ],
+      "logs": [
+        "MQTT Broker offline - Ran simulated trial."
+      ],
+      "errors": [],
+      "zone_ids": [
+        "4B"
+      ],
+      "trial_index": 0
+    },
+    {
+      "scenario": "S2",
+      "passed": false,
+      "duration_sec": 0.1,
+      "start_time": "2026-08-01T09:15:01Z",
+      "end_time": "2026-08-01T09:15:01Z",
+      "metrics": [
+        {
+          "name": "is_clamped",
+          "value": 0.0,
+          "unit": "bool",
+          "passed": true,
+          "threshold": 0.0,
+          "details": "Expected clamped=False, got clamped=False"
+        }
+      ],
+      "events": [
+        {
+          "_topic": "ignis/v1/fog/zone/4B/sensor",
+          "message_type": "alert",
+          "sensor_timestamp": "2026-08-01T09:15:01.000000Z",
+          "zone_id": "4B",
+          "temperature_celsius": 62.0
+        },
+        {
+          "_topic": "ignis/v1/fog/zone/4B/state",
+          "message_type": "zone_state",
+          "decision_timestamp": "2026-08-01T09:15:02.001867Z",
+          "sensor_timestamp": "2026-08-01T09:15:01.000000Z",
+          "zone_id": "4B",
+          "state": "RED",
+          "fog_decision_latency": 0.014
+        },
+        {
+          "_topic": "ignis/v1/fog/zone/4C/state",
+          "message_type": "zone_state",
+          "decision_timestamp": "2026-08-01T09:15:02.086867Z",
+          "sensor_timestamp": "2026-08-01T09:15:02.001867Z",
+          "zone_id": "4C",
+          "state": "RED",
+          "lateral_propagation_time": 0.085
+        }
+      ],
+      "logs": [
+        "MQTT Broker offline - Ran simulated trial."
+      ],
+      "errors": [],
+      "zone_ids": [
+        "4B"
+      ],
+      "trial_index": 1
+    },
+    {
+      "scenario": "S2",
+      "passed": false,
+      "duration_sec": 0.1,
+      "start_time": "2026-08-01T09:15:02Z",
+      "end_time": "2026-08-01T09:15:02Z",
+      "metrics": [
+        {
+          "name": "is_clamped",
+          "value": 0.0,
+          "unit": "bool",
+          "passed": true,
+          "threshold": 0.0,
+          "details": "Expected clamped=False, got clamped=False"
+        }
+      ],
+      "events": [
+        {
+          "_topic": "ignis/v1/fog/zone/4B/sensor",
+          "message_type": "alert",
+          "sensor_timestamp": "2026-08-01T09:15:02.000000Z",
+          "zone_id": "4B",
+          "temperature_celsius": 62.0
+        },
+        {
+          "_topic": "ignis/v1/fog/zone/4B/state",
+          "message_type": "zone_state",
+          "decision_timestamp": "2026-08-01T09:15:02.154596Z",
+          "sensor_timestamp": "2026-08-01T09:15:02.000000Z",
+          "zone_id": "4B",
+          "state": "RED",
+          "fog_decision_latency": 0.014
+        },
+        {
+          "_topic": "ignis/v1/fog/zone/4C/state",
+          "message_type": "zone_state",
+          "decision_timestamp": "2026-08-01T09:15:02.239596Z",
+          "sensor_timestamp": "2026-08-01T09:15:02.154596Z",
+          "zone_id": "4C",
+          "state": "RED",
+          "lateral_propagation_time": 0.085
+        }
+      ],
+      "logs": [
+        "MQTT Broker offline - Ran simulated trial."
+      ],
+      "errors": [],
+      "zone_ids": [
+        "4B"
+      ],
+      "trial_index": 2
+    },
+    {
+      "scenario": "S2",
+      "passed": false,
+      "duration_sec": 0.1,
+      "start_time": "2026-08-01T09:15:02Z",
+      "end_time": "2026-08-01T09:15:02Z",
+      "metrics": [
+        {
+          "name": "is_clamped",
+          "value": 0.0,
+          "unit": "bool",
+          "passed": true,
+          "threshold": 0.0,
+          "details": "Expected clamped=False, got clamped=False"
+        }
+      ],
+      "events": [
+        {
+          "_topic": "ignis/v1/fog/zone/4B/sensor",
+          "message_type": "alert",
+          "sensor_timestamp": "2026-08-01T09:15:02.000000Z",
+          "zone_id": "4B",
+          "temperature_celsius": 62.0
+        },
+        {
+          "_topic": "ignis/v1/fog/zone/4B/state",
+          "message_type": "zone_state",
+          "decision_timestamp": "2026-08-01T09:15:02.308750Z",
+          "sensor_timestamp": "2026-08-01T09:15:02.000000Z",
+          "zone_id": "4B",
+          "state": "RED",
+          "fog_decision_latency": 0.016
+        },
+        {
+          "_topic": "ignis/v1/fog/zone/4C/state",
+          "message_type": "zone_state",
+          "decision_timestamp": "2026-08-01T09:15:02.393750Z",
+          "sensor_timestamp": "2026-08-01T09:15:02.308750Z",
+          "zone_id": "4C",
+          "state": "RED",
+          "lateral_propagation_time": 0.085
+        }
+      ],
+      "logs": [
+        "MQTT Broker offline - Ran simulated trial."
+      ],
+      "errors": [],
+      "zone_ids": [
+        "4B"
+      ],
+      "trial_index": 3
+    },
+    {
+      "scenario": "S2",
+      "passed": false,
+      "duration_sec": 0.1,
+      "start_time": "2026-08-01T09:15:02Z",
+      "end_time": "2026-08-01T09:15:02Z",
+      "metrics": [
+        {
+          "name": "is_clamped",
+          "value": 0.0,
+          "unit": "bool",
+          "passed": true,
+          "threshold": 0.0,
+          "details": "Expected clamped=False, got clamped=False"
+        }
+      ],
+      "events": [
+        {
+          "_topic": "ignis/v1/fog/zone/4B/sensor",
+          "message_type": "alert",
+          "sensor_timestamp": "2026-08-01T09:15:02.000000Z",
+          "zone_id": "4B",
+          "temperature_celsius": 62.0
+        },
+        {
+          "_topic": "ignis/v1/fog/zone/4B/state",
+          "message_type": "zone_state",
+          "decision_timestamp": "2026-08-01T09:15:02.457062Z",
+          "sensor_timestamp": "2026-08-01T09:15:02.000000Z",
+          "zone_id": "4B",
+          "state": "RED",
+          "fog_decision_latency": 0.012
+        },
+        {
+          "_topic": "ignis/v1/fog/zone/4C/state",
+          "message_type": "zone_state",
+          "decision_timestamp": "2026-08-01T09:15:02.542062Z",
+          "sensor_timestamp": "2026-08-01T09:15:02.457062Z",
+          "zone_id": "4C",
+          "state": "RED",
+          "lateral_propagation_time": 0.085
+        }
+      ],
+      "logs": [
+        "MQTT Broker offline - Ran simulated trial."
+      ],
+      "errors": [],
+      "zone_ids": [
+        "4B"
+      ],
+      "trial_index": 4
+    }
+  ]
+}

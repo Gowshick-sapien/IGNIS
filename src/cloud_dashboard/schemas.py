@@ -167,3 +167,91 @@ class RepositoryExperimentDetail(BaseModel):
     has_md_report: bool = False
     charts: List[str] = Field(default_factory=list)
 
+
+# ============================================================================
+# Phase G5 — Analytics & Comparison Schemas
+# ============================================================================
+
+from enum import Enum
+
+class ComparisonIndicator(str, Enum):
+    IMPROVED = "IMPROVED"
+    REGRESSED = "REGRESSED"
+    UNCHANGED = "UNCHANGED"
+    NOT_COMPARABLE = "NOT_COMPARABLE"
+
+
+class MetricDiff(BaseModel):
+    mean_a: Optional[float] = None
+    mean_b: Optional[float] = None
+    ci_a: Optional[List[float]] = None
+    ci_b: Optional[List[float]] = None
+    ci_overlap: Optional[bool] = None
+    significant_difference: Optional[bool] = None
+    delta: Optional[float] = None
+    pct_change: Optional[float] = None
+    indicator: ComparisonIndicator = ComparisonIndicator.UNCHANGED
+    details: Optional[str] = None
+
+
+class VerdictDelta(BaseModel):
+    overall_a: str
+    overall_b: str
+    changed: bool
+    scenarios: Dict[str, Dict[str, str]] = Field(default_factory=dict)
+
+
+class EnvironmentDiff(BaseModel):
+    os_match: bool
+    python_match: bool
+    git_commit_a: str
+    git_commit_b: str
+    same_commit: bool
+
+
+class ComparisonResponseData(BaseModel):
+    experiment_a: str
+    experiment_b: str
+    verdict_delta: VerdictDelta
+    metrics_diff: Dict[str, Dict[str, MetricDiff]] = Field(default_factory=dict)
+    environment_diff: EnvironmentDiff
+
+
+class ComparisonResponse(BaseModel):
+    status: str = "success"
+    data: ComparisonResponseData
+
+
+# ============================================================================
+# Phase G6 — Export & Publication Schemas
+# ============================================================================
+
+class ExportOptionalFormatStatus(BaseModel):
+    available: bool
+    reason: Optional[str] = None
+
+
+class ExportFormatCapabilityResponseData(BaseModel):
+    available: List[str]
+    optional_status: Dict[str, ExportOptionalFormatStatus]
+
+
+class ExportFormatCapabilityResponse(BaseModel):
+    status: str = "success"
+    data: ExportFormatCapabilityResponseData
+
+
+class ReproducibilityBundleResponseData(BaseModel):
+    experiment_id: str
+    bundle_path: str
+    file_size_bytes: int
+    sha256_hash: str
+    manifest: Dict[str, Any] = Field(default_factory=dict)
+
+
+class ReproducibilityBundleResponse(BaseModel):
+    status: str = "success"
+    data: ReproducibilityBundleResponseData
+
+
+

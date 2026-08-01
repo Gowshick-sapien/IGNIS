@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Settings & Export Preferences - IGNIS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Settings & Export Preferences</h1>
+        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-top: 4px;">
+            Export capabilities matrix, optional dependency health, and research publication tooling.
+        </p>
+    </div>
+</div>
+
+<!-- Export Capability Status Matrix -->
+<div class="card" style="margin-bottom: 20px;">
+    <h2 style="font-size: 1.1rem; margin-bottom: 14px;">Export Format Capabilities & Dependency Matrix</h2>
+    <div style="overflow-x: auto;">
+        <table class="data-table" style="width: 100%;">
+            <thead>
+                <tr>
+                    <th>Format</th>
+                    <th>Extension</th>
+                    <th>Capability Status</th>
+                    <th>Details & Dependencies</th>
+                </tr>
+            </thead>
+            <tbody id="tbl-capabilities-body">
+                <tr>
+                    <td>Markdown Report</td>
+                    <td><code>.md</code></td>
+                    <td><span class="status-badge badge-completed" style="background:#064e3b; color:#34d399; border:1px solid #059669;">AVAILABLE</span></td>
+                    <td>Standard Library (Copy & Report Generator)</td>
+                </tr>
+                <tr>
+                    <td>Interactive HTML Report</td>
+                    <td><code>.html</code></td>
+                    <td><span class="status-badge badge-completed" style="background:#064e3b; color:#34d399; border:1px solid #059669;">AVAILABLE</span></td>
+                    <td>Self-contained offline HTML engine with embedded Plotly.js</td>
+                </tr>
+                <tr>
+                    <td>Tabular CSV Export</td>
+                    <td><code>.csv</code></td>
+                    <td><span class="status-badge badge-completed" style="background:#064e3b; color:#34d399; border:1px solid #059669;">AVAILABLE</span></td>
+                    <td>Standard CSV writer (Summary + Per-Metric Rows)</td>
+                </tr>
+                <tr>
+                    <td>Structured JSON Export</td>
+                    <td><code>.json</code></td>
+                    <td><span class="status-badge badge-completed" style="background:#064e3b; color:#34d399; border:1px solid #059669;">AVAILABLE</span></td>
+                    <td>Combined Metrics + Manifest + Regression json payload</td>
+                </tr>
+                <tr>
+                    <td>Complete ZIP Archive</td>
+                    <td><code>.zip</code></td>
+                    <td><span class="status-badge badge-completed" style="background:#064e3b; color:#34d399; border:1px solid #059669;">AVAILABLE</span></td>
+                    <td>Standard ZipFile archive bundling raw data, charts, and logs</td>
+                </tr>
+                <tr id="row-pdf-status">
+                    <td>PDF Document</td>
+                    <td><code>.pdf</code></td>
+                    <td><span class="status-badge badge-idle">CHECKING...</span></td>
+                    <td id="pdf-reason-cell">Checking weasyprint library installation status...</td>
+                </tr>
+                <tr id="row-docx-status">
+                    <td>Word Document</td>
+                    <td><code>.docx</code></td>
+                    <td><span class="status-badge badge-idle">CHECKING...</span></td>
+                    <td id="docx-reason-cell">Checking python-docx library installation status...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- One-Click Export & Publication Toolbar -->
+<div class="card" style="margin-bottom: 20px;">
+    <h2 style="font-size: 1.1rem; margin-bottom: 14px;">Quick Artifact Export & Publication Toolbar</h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div>
+            <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 6px;">Select Archived Experiment</label>
+            <select id="export-exp-select" style="width: 100%; padding: 8px; background: #1f2937; border: 1px solid #374151; color: #fff; border-radius: 4px; font-family: monospace;">
+                <option value="">Loading archived runs...</option>
+            </select>
+        </div>
+        <div>
+            <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 6px;">Select Export Format</label>
+            <select id="export-format-select" style="width: 100%; padding: 8px; background: #1f2937; border: 1px solid #374151; color: #fff; border-radius: 4px;">
+                <option value="zip">ZIP Archive (.zip)</option>
+                <option value="html">Interactive HTML (.html)</option>
+                <option value="md">Markdown (.md)</option>
+                <option value="csv">Tabular CSV (.csv)</option>
+                <option value="json">JSON (.json)</option>
+                <option value="pdf">PDF Document (.pdf)</option>
+                <option value="docx">Word Document (.docx)</option>
+            </select>
+        </div>
+    </div>
+    <div style="margin-top: 16px; display: flex; gap: 12px; flex-wrap: wrap;">
+        <button type="button" class="btn btn-primary" onclick="downloadSelectedExport()">Download Artifact</button>
+        <button type="button" class="btn btn-warning" onclick="downloadReproducibilityBundle()">Generate Reproducibility Bundle ZIP</button>
+    </div>
+    <div id="export-status-message" style="margin-top: 12px; font-size: 0.85rem; display: none;"></div>
+</div>
+
+<!-- Default Execution Parameters & Preferences -->
+<div class="card">
+    <h2 style="font-size: 1.1rem; margin-bottom: 14px;">Experiment Platform Defaults</h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+        <div>
+            <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px;">Default Trials per Scenario</label>
+            <input type="number" value="30" readonly style="width: 100%; padding: 8px; background: #111827; border: 1px solid #374151; color: #9ca3af; border-radius: 4px;">
+        </div>
+        <div>
+            <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px;">Default Base Random Seed</label>
+            <input type="number" value="4321" readonly style="width: 100%; padding: 8px; background: #111827; border: 1px solid #374151; color: #9ca3af; border-radius: 4px;">
+        </div>
+        <div>
+            <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px;">Database Retention Policy</label>
+            <input type="text" value="Unlimited (Immutable Archival)" readonly style="width: 100%; padding: 8px; background: #111827; border: 1px solid #374151; color: #9ca3af; border-radius: 4px;">
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function loadCapabilities() {
+        try {
+            const resp = await fetch('/api/v1/experiment/export/formats');
+            const result = await resp.json();
+            if (result.status === 'success') {
+                const optStatus = result.data.optional_status;
+                
+                // PDF Status
+                const pdfRow = document.getElementById('row-pdf-status');
+                const pdfCell = document.getElementById('pdf-reason-cell');
+                if (optStatus.pdf && optStatus.pdf.available) {
+                    pdfRow.cells[2].innerHTML = '<span class="status-badge badge-completed" style="background:#064e3b; color:#34d399; border:1px solid #059669;">AVAILABLE</span>';
+                    pdfCell.innerText = 'WeasyPrint library installed and ready for HTML-to-PDF rendering.';
+                } else {
+                    pdfRow.cells[2].innerHTML = '<span class="status-badge badge-failed" style="background:#374151; color:#9ca3af; border:1px solid #4b5563;">UNAVAILABLE</span>';
+                    pdfCell.innerText = optStatus.pdf.reason || 'Requires weasyprint package (pip install weasyprint)';
+                }
+
+                // DOCX Status
+                const docxRow = document.getElementById('row-docx-status');
+                const docxCell = document.getElementById('docx-reason-cell');
+                if (optStatus.docx && optStatus.docx.available) {
+                    docxRow.cells[2].innerHTML = '<span class="status-badge badge-completed" style="background:#064e3b; color:#34d399; border:1px solid #059669;">AVAILABLE</span>';
+                    docxCell.innerText = 'python-docx library installed and ready for Word rendering.';
+                } else {
+                    docxRow.cells[2].innerHTML = '<span class="status-badge badge-failed" style="background:#374151; color:#9ca3af; border:1px solid #4b5563;">UNAVAILABLE</span>';
+                    docxCell.innerText = optStatus.docx.reason || 'Requires python-docx package (pip install python-docx)';
+                }
+            }
+        } catch (e) {
+            console.error('Error loading export format capabilities:', e);
+        }
+    }
+
+    async function loadArchivedExperiments() {
+        try {
+            const resp = await fetch('/api/v1/repository?page_size=100');
+            const result = await resp.json();
+            if (result.status === 'success') {
+                const exps = result.data.experiments || [];
+                const select = document.getElementById('export-exp-select');
+                select.innerHTML = '';
+                
+                if (exps.length === 0) {
+                    select.innerHTML = '<option value="">No archived runs available</option>';
+                    return;
+                }
+                
+                exps.forEach((e) => {
+                    const ts = e.timestamp ? e.timestamp.substring(0, 19).replace('T', ' ') : '';
+                    const opt = document.createElement('option');
+                    opt.value = e.experiment_id;
+                    opt.innerText = `${e.experiment_id} (${e.overall_verdict || 'UNKNOWN'}) - ${ts}`;
+                    select.appendChild(opt);
+                });
+            }
+        } catch (e) {
+            console.error('Error loading repository runs:', e);
+        }
+    }
+
+    function downloadSelectedExport() {
+        const expId = document.getElementById('export-exp-select').value;
+        const fmt = document.getElementById('export-format-select').value;
+        if (!expId) {
+            alert('Please select an archived experiment first.');
+            return;
+        }
+        window.location.href = `/api/v1/experiment/export/${encodeURIComponent(expId)}?format=${encodeURIComponent(fmt)}`;
+    }
+
+    function downloadReproducibilityBundle() {
+        const expId = document.getElementById('export-exp-select').value;
+        if (!expId) {
+            alert('Please select an archived experiment first.');
+            return;
+        }
+        window.location.href = `/api/v1/experiment/${encodeURIComponent(expId)}/download-bundle`;
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCapabilities();
+            loadArchivedExperiments();
+        });
+    } else {
+        loadCapabilities();
+        loadArchivedExperiments();
+    }
+</script>
+{% endblock %}

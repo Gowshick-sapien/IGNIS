@@ -635,12 +635,12 @@ Where degrees of freedom $df = N-1$. (CI calculation method: `{metadata.get("ci_
         reason = res.get("reason", "No results calculated.")
         
         status_map = {
-            "PASS": "✅ Validated",
-            "FAIL": "❌ Validation Failed",
-            "INVALID": "⚠ Not Validated",
-            "INCOMPLETE": "⚪ Not Executed"
+            "PASS": "[PASS] Validated",
+            "FAIL": "[FAIL] Validation Failed",
+            "INVALID": "[INVALID] Not Validated",
+            "INCOMPLETE": "[INCOMPLETE] Not Executed"
         }
-        val_status = status_map.get(status, "⚪ Not Executed")
+        val_status = status_map.get(status, "[INCOMPLETE] Not Executed")
         evidence = "All assertions passed" if status == "PASS" else reason
         return val_status, evidence
 

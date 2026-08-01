@@ -12,9 +12,17 @@ from .database import CloudDashboardDB
 from .routes import router
 from .services.process_manager import ProcessManager
 from .services.repository_manager import RepositoryManager
+from .services.comparison_service import ComparisonService
+from .services.regression_detector import RegressionDetector
+from .services.report_service import ReportService
+from .services.export_service import ExportService
+from .services.bundle_service import BundleService
+from .services.result_manager import ResultManager
 from .routes.experiments import experiments_router
 from .routes.dashboard_routes import dashboard_router
 from .routes.repository import repository_router
+from .routes.comparison import comparison_router
+from .routes.export_routes import export_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("cloud_dashboard_app")
@@ -32,7 +40,36 @@ async def lifespan(app: FastAPI):
     app.state.repository_manager = repo_manager
     logger.info("RepositoryManager singleton registered in app.state.")
 
-    # 3. Instantiate DB connection (graceful optional fallback)
+    # 3. Fail-fast validation of config/regression_rules.yaml (Phase G5)
+    regression_detector = RegressionDetector(repository_manager=repo_manager)
+    try:
+        regression_detector.validate_config()
+        logger.info("RegressionDetector config validated successfully.")
+    except Exception as rule_err:
+        logger.error(f"Fail-fast configuration error in regression_rules.yaml: {rule_err}")
+        raise rule_err
+
+    app.state.regression_detector = regression_detector
+    comparison_service = ComparisonService(repository_manager=repo_manager)
+    app.state.comparison_service = comparison_service
+    report_service = ReportService()
+    app.state.report_service = report_service
+    export_service = ExportService(repository_manager=repo_manager)
+    app.state.export_service = export_service
+    bundle_service = BundleService(repository_manager=repo_manager)
+    app.state.bundle_service = bundle_service
+
+    result_manager = ResultManager(
+        report_service=report_service,
+        comparison_service=comparison_service,
+        regression_detector=regression_detector,
+        export_service=export_service,
+        bundle_service=bundle_service
+    )
+    app.state.result_manager = result_manager
+    logger.info("Phase G6 Export and Publication services (ResultManager, ExportService, BundleService) registered in app.state.")
+
+    # 4. Instantiate DB connection (graceful optional fallback)
     db = CloudDashboardDB()
     try:
         db.connect()
@@ -78,4 +115,6 @@ app.mount("/experiment_repository", StaticFiles(directory="experiment_repository
 app.include_router(experiments_router)
 app.include_router(dashboard_router)
 app.include_router(repository_router)
+app.include_router(comparison_router)
+app.include_router(export_router)
 app.include_router(router)

@@ -314,19 +314,30 @@ class RepositoryManager:
             exp_rows = cursor.fetchall()
 
             results = []
+            exp_map = {}
+            exp_ids = []
             for row in exp_rows:
                 exp_dict = dict(row)
                 exp_id = exp_dict["experiment_id"]
-
-                # Fetch scenario summaries
-                cursor.execute("""
-                    SELECT scenario_id, verdict, duration_sec, trial_count, latency_mean, latency_ci_low, latency_ci_high
-                    FROM experiment_scenarios WHERE experiment_id = ? ORDER BY scenario_id ASC;
-                """, (exp_id,))
-                scen_rows = cursor.fetchall()
-                exp_dict["scenarios_summary"] = [dict(s) for s in scen_rows]
-
+                exp_dict["scenarios_summary"] = []
                 results.append(exp_dict)
+                exp_map[exp_id] = exp_dict
+                exp_ids.append(exp_id)
+
+            if exp_ids:
+                placeholders = ",".join("?" for _ in exp_ids)
+                scen_sql = f"""
+                    SELECT experiment_id, scenario_id, verdict, duration_sec, trial_count, latency_mean, latency_ci_low, latency_ci_high
+                    FROM experiment_scenarios
+                    WHERE experiment_id IN ({placeholders})
+                    ORDER BY scenario_id ASC;
+                """
+                cursor.execute(scen_sql, exp_ids)
+                for srow in cursor.fetchall():
+                    sdict = dict(srow)
+                    eid = sdict.pop("experiment_id")
+                    if eid in exp_map:
+                        exp_map[eid]["scenarios_summary"].append(sdict)
 
             return results, total_count
         finally:

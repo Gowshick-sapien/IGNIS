@@ -1,0 +1,65 @@
+{
+  "experiment_metadata": {
+    "timestamp": "2026-08-01T09:15:02Z",
+    "git_commit": "6f35d8e",
+    "trial_count": 5,
+    "random_seed": 4321,
+    "total_duration_sec": 0.9905,
+    "platform": {
+      "os": "Windows 11",
+      "architecture": "AMD64",
+      "python_version": "3.12.2",
+      "timezone": "India Standard Time",
+      "hostname": "Gowshick",
+      "docker_version": "Docker version 29.6.1, build 8900f1d",
+      "docker_compose_version": "Docker Compose version v5.2.0"
+    },
+    "scenario_versions": {
+      "S1": "1.0",
+      "S2": "1.0",
+      "S3": "1.0",
+      "S4": "1.0",
+      "S5": "1.0",
+      "S6": "1.0",
+      "S7": "1.0"
+    },
+    "scenario_checksums": {
+      "S1": "4a3f292bc5f81fa064abfada76c3ad454fbe3d540f0615355a46c243e482bb6a",
+      "S2": "9f826d74ce1ae826fa9902aaa0c751f04f8edbcb734c5fdd09e17d7c0e22c91d",
+      "S3": "9f2704b7ff6899ce0f8ee34a85ca775c6c625ba0d1e5d1d5bd6e2d996265bf27",
+      "S4": "1d013fa6da5dfb5ae0a7c911f736444f67bb61147f0c1ded2d91f8b261d88a33",
+      "S5": "4eaddb8c28d3a3587d3c20641f65bf3d4281b53e4cf6e54bd1034baec736a701",
+      "S6": "4d856d49d9f260a6046e3462a0e6ace726ecd1f7822375a544135f18121fd87b",
+      "S7": "e709785255f052d7fa96f709eb5b5ef0ac141fd2821316329a0ebb19266e9c35"
+    },
+    "container_images": {
+      "fog-node": "python:3.11-slim",
+      "edge-sim": "python:3.11-slim"
+    },
+    "experiment_id": "exp-20260801T091500Z-f945"
+  },
+  "scenario_results": {
+    "S2": {
+      "status": "FAIL",
+      "reason": "Assertions failed: Assertion Failed: Expected: YELLOW, Observed: RED",
+      "trials": 5,
+      "metrics": {
+        "max_state": {
+          "value": "RED",
+          "status": "FAIL",
+          "reason": "RED <= threshold YELLOW",
+          "threshold": "YELLOW",
+          "operator": "<="
+        }
+      }
+    }
+  },
+  "summary": {
+    "total_scenarios": 1,
+    "passed": 0,
+    "failed": 1,
+    "invalid": 0,
+    "incomplete": 0,
+    "overall_verdict": "FAIL"
+  }
+}

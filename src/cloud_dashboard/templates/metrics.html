@@ -315,7 +315,7 @@
         <!-- Header -->
         <header>
             <div class="logo-section">
-                <div class="logo-icon">🔥</div>
+                <div class="logo-icon">I</div>
                 <div class="logo-title-group">
                     <h1>IGNIS</h1>
                     <p>Fault & Chaos Resilience Operations Center</p>
@@ -527,7 +527,7 @@
 
         async function pollChaosStatus() {
             try {
-                const response = await fetch('http://localhost:9001/api/chaos/status');
+                const response = await fetch('http://localhost:9001/api/chaos/status', { signal: AbortSignal.timeout(500) });
                 if (!response.ok) throw new Error();
                 const status = await response.json();
                 

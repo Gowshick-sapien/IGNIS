@@ -507,6 +507,23 @@
             </div>
         </header>
 
+        <!-- Global Research Navigation Bar -->
+        <nav style="display: flex; gap: 10px; background: rgba(18, 22, 35, 0.85); padding: 12px 18px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08); margin-bottom: 20px; align-items: center; justify-content: space-between; backdrop-filter: blur(10px);">
+            <div style="font-weight: 600; font-size: 0.85rem; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px;">
+                <span>Research Control Suite</span>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <a href="/" style="padding: 6px 14px; background: #2563eb; color: #fff; text-decoration: none; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">NOC Dashboard</a>
+                <a href="/experiments" style="padding: 6px 14px; background: rgba(255,255,255,0.06); color: #e2e8f0; text-decoration: none; border-radius: 4px; font-size: 0.85rem; font-weight: 500; border: 1px solid rgba(255,255,255,0.1);">Experiments</a>
+                <a href="/reports" style="padding: 6px 14px; background: rgba(255,255,255,0.06); color: #e2e8f0; text-decoration: none; border-radius: 4px; font-size: 0.85rem; font-weight: 500; border: 1px solid rgba(255,255,255,0.1);">Reports</a>
+                <a href="/repository" style="padding: 6px 14px; background: rgba(255,255,255,0.06); color: #e2e8f0; text-decoration: none; border-radius: 4px; font-size: 0.85rem; font-weight: 500; border: 1px solid rgba(255,255,255,0.1);">Repository</a>
+                <a href="/comparison" style="padding: 6px 14px; background: rgba(255,255,255,0.06); color: #e2e8f0; text-decoration: none; border-radius: 4px; font-size: 0.85rem; font-weight: 500; border: 1px solid rgba(255,255,255,0.1);">Comparison</a>
+                <a href="/charts" style="padding: 6px 14px; background: rgba(255,255,255,0.06); color: #e2e8f0; text-decoration: none; border-radius: 4px; font-size: 0.85rem; font-weight: 500; border: 1px solid rgba(255,255,255,0.1);">Charts</a>
+                <a href="/scenarios" style="padding: 6px 14px; background: rgba(255,255,255,0.06); color: #e2e8f0; text-decoration: none; border-radius: 4px; font-size: 0.85rem; font-weight: 500; border: 1px solid rgba(255,255,255,0.1);">Scenarios</a>
+                <a href="/settings" style="padding: 6px 14px; background: rgba(255,255,255,0.06); color: #e2e8f0; text-decoration: none; border-radius: 4px; font-size: 0.85rem; font-weight: 500; border: 1px solid rgba(255,255,255,0.1);">Settings</a>
+            </div>
+        </nav>
+
         <!-- Zone Overview Bar -->
         <div id="zones-bar" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
             <!-- Zone cards generated dynamically -->
@@ -546,7 +563,7 @@
                         <div id="zone-state" class="zone-state-badge" style="color: var(--color-green);">GREEN</div>
                         <span class="zone-whi-label">Max Wildfire Hazard Index (WHI)</span>
                         <div id="zone-whi" class="zone-whi-value">0.000</div>
-                        <span id="zone-override-badge" style="font-size: 10px; color: var(--text-secondary); margin-top: 4px; display: none; font-weight: 600;">⚠️ CENTRAL OVERRIDE ACTIVE</span>
+                        <span id="zone-override-badge" style="font-size: 10px; color: var(--text-secondary); margin-top: 4px; display: none; font-weight: 600;">CENTRAL OVERRIDE ACTIVE</span>
                         <div id="zone-lateral-banner" style="font-size: 10px; color: var(--color-yellow); border: 1px solid var(--color-yellow); border-radius: 6px; padding: 4px 8px; margin-top: 8px; font-weight: 600; display: none; background: rgba(245, 158, 11, 0.05);"></div>
                     </div>
                 </div>
@@ -804,7 +821,7 @@
                 const lateralBanner = document.getElementById("zone-lateral-banner");
                 if (data.zone_state.preemptive_escalation) {
                     const sources = data.zone_state.lateral_warning_sources.map(s => s.zone_id).join(", ");
-                    lateralBanner.textContent = `⚠️ Pre-emptive Escalation: Warning from Zone ${sources}`;
+                    lateralBanner.textContent = `Pre-emptive Escalation: Warning from Zone ${sources}`;
                     lateralBanner.style.display = "block";
                 } else {
                     lateralBanner.style.display = "none";
@@ -858,8 +875,8 @@
                 bar.innerHTML = zones.map(z => {
                     const isSelected = z.zone_id === selectedZone ? 'style="border-color: var(--accent-color); box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);"' : '';
                     const stateClass = z.state.toLowerCase();
-                    const lateralWarning = z.preemptive_escalation 
-                        ? `<span class="status-badge badge-failed" style="margin-top: 4px; display: inline-block;">⚠️ WARNING WIND FROM ${z.lateral_warning_sources.map(s => s.zone_id).join(', ')}</span>`
+                    const lateralWarning = (z.preemptive_escalation && z.lateral_warning_sources && z.lateral_warning_sources.length > 0)
+                        ? `<span class="status-badge badge-failed" style="margin-top: 4px; display: inline-block;">WARNING WIND FROM ${z.lateral_warning_sources.map(s => s.zone_id).join(', ')}</span>`
                         : '';
                     
                     return `

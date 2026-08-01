@@ -1,0 +1,17 @@
+# IGNIS EXPORT METADATA
+# System,IGNIS Research Engine
+# Phase,Phase G6 — Export & Publication
+# Experiment ID,exp-20260801T093626Z-cff1
+# Overall Verdict,PASS
+# Execution Duration (sec),5.497
+# Git Commit,6f35d8e
+# Exported At,2026-08-01T12:43:52.444862+00:00
+
+SCENARIO SUMMARY TABLE
+Scenario ID,Verdict,Duration (sec),Trial Count,Fog Decision Latency Mean (sec),95% CI Low,95% CI High
+S3,PASS,0.0,10,0.5335,0.348,0.7191
+
+DETAILED METRIC ROWS
+Scenario ID,Metric Name,Mean Value,95% CI Low,95% CI High,Passed
+S3,fog_decision_latency,0.5335,0.348,0.7191,
+S3,final_state,,,,

@@ -107,11 +107,16 @@ class ProcessManager:
                     def _async_archive():
                         try:
                             from .repository_manager import RepositoryManager
+                            from .regression_detector import RegressionDetector
                             repo_mgr = RepositoryManager(workspace_dir=ws_dir_to_archive)
                             archived_path = repo_mgr.archive_experiment(exp_id_to_archive, source_results_dir=results_dir_to_archive)
                             logger.info(f"Experiment {exp_id_to_archive} archived to repository: {archived_path}")
+
+                            detector = RegressionDetector(workspace_dir=ws_dir_to_archive, repository_manager=repo_mgr)
+                            reg_summary = detector.detect_regressions(exp_id_to_archive, source_results_dir=results_dir_to_archive)
+                            logger.info(f"Automatic regression detection completed for {exp_id_to_archive}: {reg_summary.get('status')}")
                         except Exception as archive_err:
-                            logger.error(f"Failed to auto-archive experiment {exp_id_to_archive}: {archive_err}")
+                            logger.error(f"Failed to auto-archive/detect regressions for experiment {exp_id_to_archive}: {archive_err}")
 
                     threading.Thread(target=_async_archive, daemon=True).start()
 
@@ -168,7 +173,7 @@ class ProcessManager:
                             pass
                     break
                 
-                time.sleep(0.1)  # Poll every 100ms
+                time.sleep(0.02)  # High-responsiveness 20ms poll interval
             logger.info("Progress events tailer worker finished.")
 
         tail_thread = threading.Thread(target=_tail_worker, daemon=True)

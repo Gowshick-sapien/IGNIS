@@ -1,0 +1,50 @@
+{
+  "experiment_id": "exp-20260801T091612Z-1a9c",
+  "baseline_experiment_id": "exp-20260801T091603Z-b2b5",
+  "baseline_strategy": "SAME_COMMIT",
+  "regression_rules_hash": "5a3113edda0e8270ed8c8c18c142bb131bf2999e1353e2a0645c46b5418cfa01",
+  "status": "REGRESSION_DETECTED",
+  "total_regressions": 2,
+  "regressions": [
+    {
+      "rule": "scenario_verdicts",
+      "type": "verdict_transition",
+      "baseline_value": "PASS",
+      "current_value": "FAIL",
+      "message": "Overall verdict regressed from PASS to FAIL"
+    },
+    {
+      "rule": "overall_verdict",
+      "type": "verdict_transition",
+      "baseline_value": "PASS",
+      "current_value": "FAIL",
+      "message": "Overall verdict regressed from PASS to FAIL"
+    }
+  ],
+  "rule_evaluations": {
+    "decision_latency": {
+      "status": "PASS",
+      "details": "OK"
+    },
+    "lateral_propagation": {
+      "status": "PASS",
+      "details": "OK"
+    },
+    "false_positive_count": {
+      "status": "PASS",
+      "details": "OK"
+    },
+    "message_loss": {
+      "status": "PASS",
+      "details": "OK"
+    },
+    "scenario_verdicts": {
+      "status": "REGRESSED",
+      "details": "Overall verdict regressed from PASS to FAIL"
+    },
+    "overall_verdict": {
+      "status": "REGRESSED",
+      "details": "Overall verdict regressed from PASS to FAIL"
+    }
+  }
+}
