@@ -428,11 +428,11 @@ Major expansion from Phase E's single-section report to a comprehensive experime
    Table mapping Section 12 claims to experimental evidence:
    | Architecture Claim       | Scenario | Result         |
    |--------------------------|----------|----------------|
-   | Fog decision latency     | S3       | ✅ Validated   |
-   | Lateral propagation      | S6       | ✅ Validated   |
-   | False-positive suppression| S4      | ✅ Validated   |
-   | Offline continuity       | S5       | ✅ Validated   |
-   | Concurrent integrity     | S7       | ✅ Validated   |
+   | Fog decision latency     | S3       | [PASS] Validated   |
+   | Lateral propagation      | S6       | [PASS] Validated   |
+   | False-positive suppression| S4      | [PASS] Validated   |
+   | Offline continuity       | S5       | [PASS] Validated   |
+   | Concurrent integrity     | S7       | [PASS] Validated   |
 
 ## 7. Discussion
    Interpretation of results against architecture claims,
@@ -469,7 +469,7 @@ Major expansion from Phase E's single-section report to a comprehensive experime
 
 | Change | Detail |
 |--------|--------|
-| **Phase status table** | Update Phases C, D, E, F to `✅` |
+| **Phase status table** | Update Phases C, D, E, F to `[PASS]` |
 | **Phase F section** | Add a new `# Phase F` section describing the scenario library, experiment orchestrator, and reporting pipeline |
 | **Project structure** | Update the tree to include `src/run_experiment.py`, `src/scenarios/yaml_validator.py`, `docs/phase-f/` |
 | **Running instructions** | Add `python -m src.run_experiment --trials 10` to the execution guide |
@@ -657,4 +657,4 @@ diff results/run_a/experiment_manifest.json results/run_b/experiment_manifest.js
 - Verify `results/logs/experiment.log` contains pipeline stage timings and any warnings
 - Verify no fallback/hardcoded data appears anywhere in metrics output
 - Verify report generates successfully even if one chart fails (best-effort)
-- Verify README Phase table shows all phases as ✅
+- Verify README Phase table shows all phases as [PASS]

@@ -15,8 +15,8 @@ IGNIS proposes a hierarchical architecture where **local Fog Nodes** perform rea
 
 This repository currently implements:
 
-- ✅ Phase A – Core Decision Pipeline
-- ✅ Phase B – Distributed Containerized Architecture
+- [PASS] Phase A – Core Decision Pipeline
+- [PASS] Phase B – Distributed Containerized Architecture
 
 ---
 
@@ -70,8 +70,8 @@ This repository currently implements:
 
 | Phase | Status | Description |
 |---------|:------:|------------|
-| Phase A | ✅ | Core wildfire decision pipeline |
-| Phase B | ✅ | MQTT communication & Docker architecture |
+| Phase A | [PASS] | Core wildfire decision pipeline |
+| Phase B | [PASS] | MQTT communication & Docker architecture |
 | Phase C | ⏳ | Cloud integration |
 | Phase D | ⏳ | Multi-zone coordination |
 | Phase E | ⏳ | Hardware integration |

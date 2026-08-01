@@ -42,3 +42,9 @@ tests/temp_experiment_reports/
 # System files
 .DS_Store
 Thumbs.db
+
+# Temporary scratch & scan scripts
+emojis_found.txt
+run_scan.py
+clean_emojis.py
+clean_brain_artifacts.py

@@ -26,7 +26,7 @@ graph TD
 ## 1. Project README Update (`README.md`)
 
 The repository root [README.md](file:///d:/projects/IGNIS/README.md) has been modified to integrate details for all completed development stages:
-- **Phase Status Table**: Marked Phases C, D, E, and F as complete (`✅`) in the summary table.
+- **Phase Status Table**: Marked Phases C, D, E, and F as complete (`[PASS]`) in the summary table.
 - **Completed Phases Sections**: Added descriptive headings and summaries for:
   - *Phase C*: Cloud integration layer (Timeseries DB, central broker, Grafana).
   - *Phase D*: Multi-zone & lateral coordination.

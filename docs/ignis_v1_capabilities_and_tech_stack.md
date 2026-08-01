@@ -160,11 +160,11 @@ graph TB
 
 | Benchmark Target | Metric Description | Target Threshold | Achieved Performance | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **Fog Decision Latency** | Time delta from initial sensor threshold breach to fog action trigger. | **< 150 ms** | **~80 ms – 120 ms** | ✅ PASS |
-| **Lateral Peer Propagation** | Time delta for adjacent fog nodes to receive and acknowledge peer warning. | **< 5.0 s** | **~3.2 s – 3.6 s** | ✅ PASS |
-| **False Positive Rate** | Rate of invalid `CRITICAL` state transitions under noisy sensor data (S4). | **0.0%** | **0.0%** (10/10 trials) | ✅ PASS |
-| **Offline Continuity** | Percentage of enqueued messages successfully flushed after WAN recovery (S5). | **100.0%** | **100.0%** (4/4 flushed) | ✅ PASS |
-| **Multi-Zone Crosstalk** | Number of cross-talk messages detected between isolated zones (S7). | **0 messages** | **0 messages** | ✅ PASS |
+| **Fog Decision Latency** | Time delta from initial sensor threshold breach to fog action trigger. | **< 150 ms** | **~80 ms – 120 ms** | [PASS] |
+| **Lateral Peer Propagation** | Time delta for adjacent fog nodes to receive and acknowledge peer warning. | **< 5.0 s** | **~3.2 s – 3.6 s** | [PASS] |
+| **False Positive Rate** | Rate of invalid `CRITICAL` state transitions under noisy sensor data (S4). | **0.0%** | **0.0%** (10/10 trials) | [PASS] |
+| **Offline Continuity** | Percentage of enqueued messages successfully flushed after WAN recovery (S5). | **100.0%** | **100.0%** (4/4 flushed) | [PASS] |
+| **Multi-Zone Crosstalk** | Number of cross-talk messages detected between isolated zones (S7). | **0 messages** | **0 messages** | [PASS] |
 
 ---
 
@@ -172,15 +172,15 @@ graph TB
 
 The **IGNIS Central Operations & Research Control Center Dashboard** consolidates all system capabilities into 9 dedicated web views accessible via a unified navigation sidebar:
 
-1. 🌐 **Regional Operations NOC (`/`):** Real-time multi-zone monitoring, InfluxDB status, lateral event timeline, edge sensor readings table, operator advisory MQTT control panel.
-2. 🧪 **Experiment Control Center (`/experiments`):** Scenario runner form, trial/seed configuration, process controls, SSE live progress bar, real-time log viewer.
-3. 📄 **Historical Report Browser (`/reports`):** Auto-discovered catalog of HTML & Markdown research reports, sorted Newest First with in-browser previews.
-4. 🗃️ **Historical Experiment Repository (`/repository`):** Search, filter by verdict/scenario/commit/date, sort, paginate, and view detail inspection drawers.
-5. ⚖️ **Side-by-Side Comparison (`/comparison`):** Baseline vs target comparison, executive verdict delta banner, metric diff table with CI overlaps, regression status.
-6. 📊 **Interactive Chart Gallery (`/charts`):** Interactive Plotly.js visualization of decision latency distributions, lateral propagation speeds, and continuity curves.
-7. 📈 **Real-Time Benchmarks (`/metrics`):** KPI summary cards, scenario assertion pass/fail matrix, and raw JSON data viewer.
-8. 📑 **Scenario Definition Browser (`/scenarios`):** Read-only catalog of YAML scenario configs (S1–S7), assertion checklists, and raw YAML viewer.
-9. ⚙️ **Settings & Export Hub (`/settings`):** DB configuration, export capabilities matrix, format exporter (MD/HTML/CSV/JSON/ZIP/PDF/DOCX), and reproducibility bundle generator.
+1. [NOC] **Regional Operations NOC (`/`):** Real-time multi-zone monitoring, InfluxDB status, lateral event timeline, edge sensor readings table, operator advisory MQTT control panel.
+2. [Testing] **Experiment Control Center (`/experiments`):** Scenario runner form, trial/seed configuration, process controls, SSE live progress bar, real-time log viewer.
+3. [Reports] **Historical Report Browser (`/reports`):** Auto-discovered catalog of HTML & Markdown research reports, sorted Newest First with in-browser previews.
+4. [Repository] **Historical Experiment Repository (`/repository`):** Search, filter by verdict/scenario/commit/date, sort, paginate, and view detail inspection drawers.
+5. [Comparison] **Side-by-Side Comparison (`/comparison`):** Baseline vs target comparison, executive verdict delta banner, metric diff table with CI overlaps, regression status.
+6. [Charts] **Interactive Chart Gallery (`/charts`):** Interactive Plotly.js visualization of decision latency distributions, lateral propagation speeds, and continuity curves.
+7. [Metrics] **Real-Time Benchmarks (`/metrics`):** KPI summary cards, scenario assertion pass/fail matrix, and raw JSON data viewer.
+8. [Scenarios] **Scenario Definition Browser (`/scenarios`):** Read-only catalog of YAML scenario configs (S1–S7), assertion checklists, and raw YAML viewer.
+9. [Settings] **Settings & Export Hub (`/settings`):** DB configuration, export capabilities matrix, format exporter (MD/HTML/CSV/JSON/ZIP/PDF/DOCX), and reproducibility bundle generator.
 
 For full page-by-page instructions, see [docs/dashboard_guide.md](file:///d:/projects/IGNIS/docs/dashboard_guide.md).
 

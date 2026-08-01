@@ -230,15 +230,15 @@ Evaluates which independent sensors exceed their individual confirmation thresho
 Example:
 
 ```
-Temperature ✓
+Temperature 
 
-Humidity ✓
+Humidity 
 
-Gas ✓
+Gas 
 
-Wind ✗
+Wind 
 
-Thermal ✓
+Thermal 
 
 Confirmation Count = 4
 ```

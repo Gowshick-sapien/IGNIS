@@ -176,26 +176,26 @@ Defined Error Codes:
 
 | # | Acceptance Criterion | Status |
 |---|---|---|
-| 1 | `ProcessManager` is initialized as a single singleton instance on FastAPI application startup | 🔲 PENDING |
-| 2 | `POST /api/v1/experiment/run` successfully launches `run_experiment.py` as a child process | 🔲 PENDING |
-| 3 | State transitions correctly follow `IDLE` → `STARTING` → `RUNNING` → `COMPLETED` / `FAILED` | 🔲 PENDING |
-| 4 | Attempting to launch an experiment while state is `RUNNING` returns HTTP `409 Conflict` with `ExperimentAlreadyRunning` error payload | 🔲 PENDING |
-| 5 | Invalid state transitions return HTTP `409 Conflict` with `InvalidStateTransition` error payload | 🔲 PENDING |
-| 6 | Cooperative pause writes `.pause_flag` file and transitions state to `PAUSING` → `PAUSED` | 🔲 PENDING |
-| 7 | Resume removes `.pause_flag` file and restores state to `RUNNING` | 🔲 PENDING |
-| 8 | Stop terminates child process PID and transitions state to `STOPPING` → `COMPLETED` / `FAILED` | 🔲 PENDING |
-| 9 | Restart terminates existing run (if active), generates a **new Experiment ID**, and spawns a new process | 🔲 PENDING |
-| 10 | Selective scenario payload (`scenarios: "S3"` or `"S4,S5"`) executes only specified scenarios | 🔲 PENDING |
-| 11 | `POST /api/v1/experiment/load` imports raw result files into active results without spawning processes | 🔲 PENDING |
-| 12 | `GET /api/v1/experiment/logs` reads tail lines safely using UTF-8 decoding without line-buffering truncation | 🔲 PENDING |
-| 13 | All 4xx/5xx API responses conform strictly to the `ErrorResponse` Pydantic schema | 🔲 PENDING |
-| 14 | Web interface pages (`/experiments`, `/reports`, `/charts`, `/scenarios`) extend `base.html` Jinja2 template | 🔲 PENDING |
-| 15 | `navbar.html` is rendered consistently across all pages via Jinja2 template inheritance | 🔲 PENDING |
-| 16 | Reports browser (`/reports`) displays generated experiment reports sorted **Newest First** | 🔲 PENDING |
-| 17 | Scenario browser (`/scenarios`) renders YAML files as **Read-Only** cards without file mutation | 🔲 PENDING |
-| 18 | Dashboard UI complies strictly with professional engineering standard (zero emoji, zero gaming icons) | 🔲 PENDING |
-| 19 | Existing CLI experiment execution (`python src/run_experiment.py`) remains fully operational and backward compatible | 🔲 PENDING |
-| 20 | Complete automated test suite passes cleanly via Pytest | 🔲 PENDING |
+| 1 | `ProcessManager` is initialized as a single singleton instance on FastAPI application startup |  PENDING |
+| 2 | `POST /api/v1/experiment/run` successfully launches `run_experiment.py` as a child process |  PENDING |
+| 3 | State transitions correctly follow `IDLE` → `STARTING` → `RUNNING` → `COMPLETED` / `FAILED` |  PENDING |
+| 4 | Attempting to launch an experiment while state is `RUNNING` returns HTTP `409 Conflict` with `ExperimentAlreadyRunning` error payload |  PENDING |
+| 5 | Invalid state transitions return HTTP `409 Conflict` with `InvalidStateTransition` error payload |  PENDING |
+| 6 | Cooperative pause writes `.pause_flag` file and transitions state to `PAUSING` → `PAUSED` |  PENDING |
+| 7 | Resume removes `.pause_flag` file and restores state to `RUNNING` |  PENDING |
+| 8 | Stop terminates child process PID and transitions state to `STOPPING` → `COMPLETED` / `FAILED` |  PENDING |
+| 9 | Restart terminates existing run (if active), generates a **new Experiment ID**, and spawns a new process |  PENDING |
+| 10 | Selective scenario payload (`scenarios: "S3"` or `"S4,S5"`) executes only specified scenarios |  PENDING |
+| 11 | `POST /api/v1/experiment/load` imports raw result files into active results without spawning processes |  PENDING |
+| 12 | `GET /api/v1/experiment/logs` reads tail lines safely using UTF-8 decoding without line-buffering truncation |  PENDING |
+| 13 | All 4xx/5xx API responses conform strictly to the `ErrorResponse` Pydantic schema |  PENDING |
+| 14 | Web interface pages (`/experiments`, `/reports`, `/charts`, `/scenarios`) extend `base.html` Jinja2 template |  PENDING |
+| 15 | `navbar.html` is rendered consistently across all pages via Jinja2 template inheritance |  PENDING |
+| 16 | Reports browser (`/reports`) displays generated experiment reports sorted **Newest First** |  PENDING |
+| 17 | Scenario browser (`/scenarios`) renders YAML files as **Read-Only** cards without file mutation |  PENDING |
+| 18 | Dashboard UI complies strictly with professional engineering standard (zero emoji, zero gaming icons) |  PENDING |
+| 19 | Existing CLI experiment execution (`python src/run_experiment.py`) remains fully operational and backward compatible |  PENDING |
+| 20 | Complete automated test suite passes cleanly via Pytest |  PENDING |
 
 ---
 

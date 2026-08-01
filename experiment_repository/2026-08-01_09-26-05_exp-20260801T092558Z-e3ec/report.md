@@ -148,11 +148,11 @@ However, critical failures were observed in scenarios: S4. Scenario S4 failed it
 
 | Core Architecture Claim | Reference Scenario | Validation Status | Evidence / Reason |
 |---|---|---|---|
-| **Fog Decision Latency** (<1.0s target) | S3 | ⚪ Not Executed | No results calculated. |
-| **Lateral Warning Propagation** (<10s window) | S6 | ⚪ Not Executed | No results calculated. |
-| **False-Positive Suppression** (Local 3-Node check) | S4 | ❌ Validation Failed | Assertions failed: Assertion Failed: Expected: True, Observed: False |
-| **Offline Continuity Cache** (Local mitigation action) | S5 | ⚪ Not Executed | No results calculated. |
-| **Concurrent Outbreak Integrity** (No cross-talk) | S7 | ⚪ Not Executed | No results calculated. |
+| **Fog Decision Latency** (<1.0s target) | S3 |  Not Executed | No results calculated. |
+| **Lateral Warning Propagation** (<10s window) | S6 |  Not Executed | No results calculated. |
+| **False-Positive Suppression** (Local 3-Node check) | S4 | [FAIL] Validation Failed | Assertions failed: Assertion Failed: Expected: True, Observed: False |
+| **Offline Continuity Cache** (Local mitigation action) | S5 |  Not Executed | No results calculated. |
+| **Concurrent Outbreak Integrity** (No cross-talk) | S7 |  Not Executed | No results calculated. |
 
 
 ## 7. Discussion

@@ -15,15 +15,15 @@ IGNIS proposes a hierarchical architecture where **local Fog Nodes** perform rea
 
 This repository implements **IGNIS Version 1**:
 
-- ✅ Phase A – Core Decision Pipeline
-- ✅ Phase B – Distributed Containerized Architecture & MQTT
-- ✅ Phase C – Cloud Integration & InfluxDB Telemetry Persistence
-- ✅ Phase D – Multi-Zone & Peer-to-Peer Lateral Coordination
-- ✅ Phase E – Fault & Chaos Resilience Testing
-- ✅ Phase F – Scenario Library (S1–S7) & Metric Derivation Engine
-- ✅ Phase G – Unified Web Dashboard Framework, Repository Archive, Regression Detector & Reproducibility Exporter
+- [PASS] Phase A – Core Decision Pipeline
+- [PASS] Phase B – Distributed Containerized Architecture & MQTT
+- [PASS] Phase C – Cloud Integration & InfluxDB Telemetry Persistence
+- [PASS] Phase D – Multi-Zone & Peer-to-Peer Lateral Coordination
+- [PASS] Phase E – Fault & Chaos Resilience Testing
+- [PASS] Phase F – Scenario Library (S1–S7) & Metric Derivation Engine
+- [PASS] Phase G – Unified Web Dashboard Framework, Repository Archive, Regression Detector & Reproducibility Exporter
 
-> 📖 **Master Specification:** For the complete detailed technical stack, architectural breakdown, scenario benchmarks, and full capabilities reference, see [docs/ignis_v1_capabilities_and_tech_stack.md](file:///d:/projects/IGNIS/docs/ignis_v1_capabilities_and_tech_stack.md).
+> [Master Specification] For the complete detailed technical stack, architectural breakdown, scenario benchmarks, and full capabilities reference, see [docs/ignis_v1_capabilities_and_tech_stack.md](file:///d:/projects/IGNIS/docs/ignis_v1_capabilities_and_tech_stack.md).
 
 ---
 
@@ -77,13 +77,13 @@ This repository implements **IGNIS Version 1**:
 
 | Phase | Status | Description |
 |---------|:------:|------------|
-| Phase A | ✅ | Core wildfire decision pipeline |
-| Phase B | ✅ | MQTT communication & Docker architecture |
-| Phase C | ✅ | Cloud integration layer |
-| Phase D | ✅ | Multi-zone & lateral coordination |
-| Phase E | ✅ | Fault & chaos resilience testing |
-| Phase F | ✅ | Scenario library & consolidated reporting |
-| Phase G | ✅ | Unified web dashboard framework, experiment repository, regression engine & reproducibility publishing |
+| Phase A | [PASS] | Core wildfire decision pipeline |
+| Phase B | [PASS] | MQTT communication & Docker architecture |
+| Phase C | [PASS] | Cloud integration layer |
+| Phase D | [PASS] | Multi-zone & lateral coordination |
+| Phase E | [PASS] | Fault & chaos resilience testing |
+| Phase F | [PASS] | Scenario library & consolidated reporting |
+| Phase G | [PASS] | Unified web dashboard framework, experiment repository, regression engine & reproducibility publishing |
 
 ---
 
@@ -610,6 +610,8 @@ or inside Docker
 ```bash
 docker compose run --rm fog-node python -m unittest discover tests
 ```
+
+> [Master Testing Plan] For the complete consolidated test strategy, verification tables, benchmark scenarios (S1–S7), REST API testing, and step-by-step acceptance procedures, see [docs/v1_consolidated_testing_plan.md](file:///d:/projects/IGNIS/docs/v1_consolidated_testing_plan.md).
 
 ---
 

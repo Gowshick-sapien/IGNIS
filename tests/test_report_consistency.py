@@ -54,9 +54,9 @@ class TestReportConsistency(unittest.TestCase):
         self.assertIn("7 scenarios successfully satisfied all assertions.", content)
         self.assertIn("0 scenarios failed assertion checks.", content)
         self.assertIn("0 scenarios could not be evaluated", content)
-        self.assertIn("✅ Validated", content)
-        self.assertNotIn("❌ Validation Failed", content)
-        self.assertNotIn("⚠ Not Validated", content)
+        self.assertIn("[PASS] Validated", content)
+        self.assertNotIn("[FAIL] Validation Failed", content)
+        self.assertNotIn(" Not Validated", content)
         self.assertIn("All core architecture claims are fully validated by empirical data", content)
 
     def test_all_fail_execution(self):
@@ -98,8 +98,8 @@ class TestReportConsistency(unittest.TestCase):
             
         self.assertIn("Overall Verdict**: **FAIL**", content)
         self.assertIn("7 scenarios failed assertion checks.", content)
-        self.assertIn("❌ Validation Failed", content)
-        self.assertNotIn("✅ Validated", content)
+        self.assertIn("[FAIL] Validation Failed", content)
+        self.assertNotIn("[PASS] Validated", content)
         self.assertIn("Additional implementation work is required before the architecture can be considered fully validated", content)
 
     def test_mixed_execution(self):
@@ -143,9 +143,9 @@ class TestReportConsistency(unittest.TestCase):
         self.assertIn("4 scenarios successfully satisfied all assertions.", content)
         self.assertIn("2 scenarios failed assertion checks.", content)
         self.assertIn("1 scenario could not be evaluated", content)
-        self.assertIn("✅ Validated", content)
-        self.assertIn("❌ Validation Failed", content)
-        self.assertIn("⚠ Not Validated", content)
+        self.assertIn("[PASS] Validated", content)
+        self.assertIn("[FAIL] Validation Failed", content)
+        self.assertIn(" Not Validated", content)
 
     def test_all_invalid_execution(self):
         # Test 4: All INVALID scenarios (specifically metric unavailable display)
@@ -186,7 +186,7 @@ class TestReportConsistency(unittest.TestCase):
             
         self.assertIn("Overall Verdict**: **INVALID**", content)
         self.assertIn("Metric unavailable", content)
-        self.assertIn("⚠ Not Validated", content)
+        self.assertIn(" Not Validated", content)
 
     def test_deterministic_replay(self):
         # Test 5: Two mocked executions using the same seed producing identical outcomes, metrics, report contents

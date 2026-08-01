@@ -1040,7 +1040,7 @@ Given two experiment IDs, produces a structured comparison:
 
 | Comparison Axis | Implementation |
 |---|---|
-| Verdicts | Per-scenario PASS/FAIL diff with change indicators (✅→❌, ❌→✅, unchanged) |
+| Verdicts | Per-scenario PASS/FAIL diff with change indicators ([PASS]→[FAIL], [FAIL]→[PASS], unchanged) |
 | Metrics | Mean, median, CI side-by-side with delta and % change |
 | Charts | Overlaid Plotly.js charts with Experiment A vs. Experiment B series |
 | Latency | Decision latency and lateral propagation comparison with statistical significance |
@@ -1052,7 +1052,7 @@ Given two experiment IDs, produces a structured comparison:
 Regression highlighting (automatic color-coded indicators):
 - 🟢 **Improved**: Metric moved in favorable direction
 - 🟡 **Unchanged**: Within configured threshold
-- 🔴 **Regressed**: Metric moved in unfavorable direction or verdict changed PASS→FAIL
+-  **Regressed**: Metric moved in unfavorable direction or verdict changed PASS→FAIL
 
 #### [NEW] `src/cloud_dashboard/routes/comparison.py` — Comparison API Routes (v1)
 
@@ -1076,10 +1076,10 @@ Output: **Regression Summary**
 ┌─────────────────────────────────────────────────────────┐
 │              REGRESSION SUMMARY                         │
 ├─────────────────────────────────────────────────────────┤
-│ Decision latency increased 18%    (0.11s → 0.13s)   🔴 │
-│ False positives increased         (0 → 2)            🔴 │
+│ Decision latency increased 18%    (0.11s → 0.13s)    │
+│ False positives increased         (0 → 2)             │
 │ Message loss unchanged            (0% → 0%)          🟢 │
-│ Scenario S3 changed               PASS → FAIL        🔴 │
+│ Scenario S3 changed               PASS → FAIL         │
 │ Lateral propagation improved 5%   (3.4s → 3.2s)     🟢 │
 └─────────────────────────────────────────────────────────┘
 ```

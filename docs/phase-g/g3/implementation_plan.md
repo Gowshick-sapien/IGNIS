@@ -133,22 +133,22 @@ Moving average smoothing (alpha = 0.2) is applied to prevent jumpy ETA displays.
 
 | # | Acceptance Criterion | Status |
 |---|---|---|
-| 1 | `ProgressReporter` emits structured JSON events containing `schema_version`, `event_id`, and `sequence` to `asyncio.Queue` with < 50ms latency | 🔲 PENDING |
-| 2 | Progress events are simultaneously persisted to `results/progress_events.jsonl` | 🔲 PENDING |
-| 3 | `GET /api/v1/experiment/stream` returns HTTP `200` with `Content-Type: text/event-stream` | 🔲 PENDING |
-| 4 | `LiveMonitor` uses bounded client queues (`maxsize=5000`) and handles multi-client fan-out without memory leaks | 🔲 PENDING |
-| 5 | `LiveMonitor` sends explicit `event: HEARTBEAT` messages every 15 seconds to keep browser connections alive | 🔲 PENDING |
-| 6 | Late-joining clients receive catch-up replay from `progress_events.jsonl` filtered strictly by active `experiment_id` | 🔲 PENDING |
-| 7 | `run_experiment.py` emits `EXPERIMENT_STARTED`, `SCENARIO_STARTED`, `TRIAL_PROGRESS`, `SCENARIO_COMPLETE`, `EXPERIMENT_COMPLETE` | 🔲 PENDING |
-| 8 | Progress percentage calculation correctly accounts for scenario index and trial index | 🔲 PENDING |
-| 9 | ETA calculation uses exponential moving average smoothing for steady display | 🔲 PENDING |
-| 10 | `experiments.html` renders dynamic live progress bar (`0%` to `100%`) using `EventSource` | 🔲 PENDING |
-| 11 | `experiments.html` displays live trial counter (`Trial X / Y`) and estimated ETA | 🔲 PENDING |
-| 12 | Browser UI gracefully falls back to HTTP status polling if SSE connection drops while experiment is active | 🔲 PENDING |
-| 13 | Streaming handler uses `try ... finally: live_monitor.unregister_client()` to guarantee zero queue leakage on client disconnect | 🔲 PENDING |
-| 14 | All progress event structures conform strictly to Pydantic models in `schemas.py` | 🔲 PENDING |
-| 15 | UI maintains professional engineering appearance (zero emoji, text-and-colour badges only) | 🔲 PENDING |
-| 16 | After `EXPERIMENT_COMPLETE` or `EXPERIMENT_FAILED`, the `EventSource` connection is gracefully closed by the server/client and transitions to a polling-disabled idle state | 🔲 PENDING |
+| 1 | `ProgressReporter` emits structured JSON events containing `schema_version`, `event_id`, and `sequence` to `asyncio.Queue` with < 50ms latency |  PENDING |
+| 2 | Progress events are simultaneously persisted to `results/progress_events.jsonl` |  PENDING |
+| 3 | `GET /api/v1/experiment/stream` returns HTTP `200` with `Content-Type: text/event-stream` |  PENDING |
+| 4 | `LiveMonitor` uses bounded client queues (`maxsize=5000`) and handles multi-client fan-out without memory leaks |  PENDING |
+| 5 | `LiveMonitor` sends explicit `event: HEARTBEAT` messages every 15 seconds to keep browser connections alive |  PENDING |
+| 6 | Late-joining clients receive catch-up replay from `progress_events.jsonl` filtered strictly by active `experiment_id` |  PENDING |
+| 7 | `run_experiment.py` emits `EXPERIMENT_STARTED`, `SCENARIO_STARTED`, `TRIAL_PROGRESS`, `SCENARIO_COMPLETE`, `EXPERIMENT_COMPLETE` |  PENDING |
+| 8 | Progress percentage calculation correctly accounts for scenario index and trial index |  PENDING |
+| 9 | ETA calculation uses exponential moving average smoothing for steady display |  PENDING |
+| 10 | `experiments.html` renders dynamic live progress bar (`0%` to `100%`) using `EventSource` |  PENDING |
+| 11 | `experiments.html` displays live trial counter (`Trial X / Y`) and estimated ETA |  PENDING |
+| 12 | Browser UI gracefully falls back to HTTP status polling if SSE connection drops while experiment is active |  PENDING |
+| 13 | Streaming handler uses `try ... finally: live_monitor.unregister_client()` to guarantee zero queue leakage on client disconnect |  PENDING |
+| 14 | All progress event structures conform strictly to Pydantic models in `schemas.py` |  PENDING |
+| 15 | UI maintains professional engineering appearance (zero emoji, text-and-colour badges only) |  PENDING |
+| 16 | After `EXPERIMENT_COMPLETE` or `EXPERIMENT_FAILED`, the `EventSource` connection is gracefully closed by the server/client and transitions to a polling-disabled idle state |  PENDING |
 
 ---
 

@@ -102,7 +102,7 @@ Compiles the results dynamically into `project_results_report.md` following stan
 3. **Scenario Execution**: Summary result tables and execution gantt timeline.
 4. **Experimental Results**: Dedicated sections for scenarios S1-S7 containing raw tables (marked with "Metric unavailable" for empty/invalid runs) and relevant charts.
 5. **Cross-Scenario Analysis**: Dynamic narrative summarizing passes, fails, and invalid runs.
-6. **Architecture Validation Summary**: Generates a validation table mapping actual outcomes (`✅ Validated`, `❌ Validation Failed`, or `⚠ Not Validated`) to claims based on empirical evidence.
+6. **Architecture Validation Summary**: Generates a validation table mapping actual outcomes (`[PASS] Validated`, `[FAIL] Validation Failed`, or ` Not Validated`) to claims based on empirical evidence.
 7. **Discussion**: Analysis of decision latency, offline continuity, and concurrent integrity dynamically.
 8. **Limitations**: Gaps relating to synthetic datasets and simulated RF environments.
 9. **Conclusion**: Compliance verdict and recommendations derived entirely from actual verdicts.

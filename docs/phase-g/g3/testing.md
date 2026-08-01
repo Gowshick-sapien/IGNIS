@@ -160,18 +160,18 @@ data: {"schema_version":"1.0","event":"TRIAL_PROGRESS","event_id":"exp-20260731T
 
 | # | Manual Verification Step | Target Component | Status |
 |---|---|---|---|
-| 1 | FastAPI server initializes `LiveMonitor` singleton and starts heartbeat loop | Dashboard App | ✅ PASS |
-| 2 | `/experiments` opens `EventSource` connection to `/api/v1/experiment/stream` | Control Center | ✅ PASS |
-| 3 | Clicking **Run Experiment** animates live progress bar from `0%` to `100%` | Progress Bar | ✅ PASS |
-| 4 | Live Trial Counter (`Trial X / Y`) updates dynamically per completed trial | Real-time Counter | ✅ PASS |
-| 5 | Estimated ETA displays calculated seconds remaining | ETA Engine | ✅ PASS |
-| 6 | Opening a second tab replays active experiment events from `progress_events.jsonl` | Catch-up Replay | ✅ PASS |
-| 7 | Server broadcasts 15s `event: HEARTBEAT` frames over open SSE connections | Keep-Alive | ✅ PASS |
-| 8 | Closing a browser tab triggers `finally: unregister_client()` cleanup | Disconnect Safety | ✅ PASS |
-| 9 | Bounded queues (`maxsize=5000`) prevent memory growth on stalled clients | Memory Safety | ✅ PASS |
-| 10 | `EXPERIMENT_COMPLETE` event triggers graceful `EventSource.close()` in browser | Stream Closure | ✅ PASS |
-| 11 | Polling fallback activates if SSE stream drops during active run | Fallback Handler | ✅ PASS |
-| 12 | Event payloads include `schema_version: "1.0"`, `event_id`, and `sequence` | Schema Spec | ✅ PASS |
-| 13 | CLI `curl -N` command streams raw SSE event blocks correctly | CLI API | ✅ PASS |
-| 14 | UI presentation adheres strictly to professional engineering standard (no emoji) | Aesthetic Standard | ✅ PASS |
-| 15 | Complete automated test suite passes cleanly via Pytest | Test Suite | ✅ PASS |
+| 1 | FastAPI server initializes `LiveMonitor` singleton and starts heartbeat loop | Dashboard App | [PASS] |
+| 2 | `/experiments` opens `EventSource` connection to `/api/v1/experiment/stream` | Control Center | [PASS] |
+| 3 | Clicking **Run Experiment** animates live progress bar from `0%` to `100%` | Progress Bar | [PASS] |
+| 4 | Live Trial Counter (`Trial X / Y`) updates dynamically per completed trial | Real-time Counter | [PASS] |
+| 5 | Estimated ETA displays calculated seconds remaining | ETA Engine | [PASS] |
+| 6 | Opening a second tab replays active experiment events from `progress_events.jsonl` | Catch-up Replay | [PASS] |
+| 7 | Server broadcasts 15s `event: HEARTBEAT` frames over open SSE connections | Keep-Alive | [PASS] |
+| 8 | Closing a browser tab triggers `finally: unregister_client()` cleanup | Disconnect Safety | [PASS] |
+| 9 | Bounded queues (`maxsize=5000`) prevent memory growth on stalled clients | Memory Safety | [PASS] |
+| 10 | `EXPERIMENT_COMPLETE` event triggers graceful `EventSource.close()` in browser | Stream Closure | [PASS] |
+| 11 | Polling fallback activates if SSE stream drops during active run | Fallback Handler | [PASS] |
+| 12 | Event payloads include `schema_version: "1.0"`, `event_id`, and `sequence` | Schema Spec | [PASS] |
+| 13 | CLI `curl -N` command streams raw SSE event blocks correctly | CLI API | [PASS] |
+| 14 | UI presentation adheres strictly to professional engineering standard (no emoji) | Aesthetic Standard | [PASS] |
+| 15 | Complete automated test suite passes cleanly via Pytest | Test Suite | [PASS] |

@@ -156,11 +156,11 @@ The following scenarios could not be evaluated and were marked INVALID: S1, S2, 
 
 | Core Architecture Claim | Reference Scenario | Validation Status | Evidence / Reason |
 |---|---|---|---|
-| **Fog Decision Latency** (<1.0s target) | S3 | ❌ Validation Failed | Assertions failed: No matching events found; Assertion Failed: Expected: RED, Observed: GREEN |
-| **Lateral Warning Propagation** (<10s window) | S6 | ⚠ Not Validated | No matching events found |
-| **False-Positive Suppression** (Local 3-Node check) | S4 | ⚠ Not Validated | No matching events found |
-| **Offline Continuity Cache** (Local mitigation action) | S5 | ⚠ Not Validated | No matching events found |
-| **Concurrent Outbreak Integrity** (No cross-talk) | S7 | ⚠ Not Validated | No matching events found |
+| **Fog Decision Latency** (<1.0s target) | S3 | [FAIL] Validation Failed | Assertions failed: No matching events found; Assertion Failed: Expected: RED, Observed: GREEN |
+| **Lateral Warning Propagation** (<10s window) | S6 |  Not Validated | No matching events found |
+| **False-Positive Suppression** (Local 3-Node check) | S4 |  Not Validated | No matching events found |
+| **Offline Continuity Cache** (Local mitigation action) | S5 |  Not Validated | No matching events found |
+| **Concurrent Outbreak Integrity** (No cross-talk) | S7 |  Not Validated | No matching events found |
 
 
 ## 7. Discussion

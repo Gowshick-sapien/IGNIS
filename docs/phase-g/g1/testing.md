@@ -174,29 +174,29 @@ Scroll to the **Interactive Analytics** section (`#charts`).
 
 | # | Verification Criterion | Status |
 |---|---|---|
-| 1 | `results/report.html` is generated automatically alongside Markdown report | ✅ PASS |
-| 2 | Report opens successfully without internet connectivity | ✅ PASS |
-| 3 | CSS, JS, and Plotly.js are embedded into generated HTML | ✅ PASS |
-| 4 | All 10 interactive Plotly charts render correctly | ✅ PASS |
-| 5 | Sidebar navigation and TOC function correctly | ✅ PASS |
-| 6 | Full-text search locates headings, tables, and metrics | ✅ PASS |
-| 7 | Keyboard shortcuts (`Ctrl+F`, `/`, `Esc`, `Enter`, `Shift+Enter`) work | ✅ PASS |
-| 8 | Expand All / Collapse All controls operate on all scenario sections | ✅ PASS |
-| 9 | Light/Dark mode preference persists across sessions | ✅ PASS |
-| 10 | Existing Markdown report generation remains backward compatible | ✅ PASS |
-| 11 | Generated report contains no external CDN references | ✅ PASS |
-| 12 | Report renders correctly from a local `file://` URL | ✅ PASS |
-| 13 | Browser network tab shows zero requests | ✅ PASS |
-| 14 | Browser console reports zero JavaScript errors | ✅ PASS |
-| 15 | All Plotly charts render using embedded Plotly.js | ✅ PASS |
-| 16 | Report contains no emoji or decorative icons | ✅ PASS |
-| 17 | Report maintains a professional academic appearance | ✅ PASS |
-| 18 | Statistical metrics display Mean, Median, Standard Deviation, Confidence Interval, Sample Count, and Status | ✅ PASS |
-| 19 | Assertion metrics display Observed Value, Expected Threshold, Comparison Operator, Status, and Reason | ✅ PASS |
-| 20 | Invalid metrics display Status and Reason only | ✅ PASS |
-| 21 | No metric incorrectly displays `N/A` for unsupported statistical fields | ✅ PASS |
-| 22 | Metric renderer automatically selects the correct layout based on the JSON schema | ✅ PASS |
-| 23 | Every metric displays its validation reason | ✅ PASS |
-| 24 | Each metric is rendered as an independent card for improved readability | ✅ PASS |
-| 25 | Floating-point values are consistently formatted to three decimal places | ✅ PASS |
-| 26 | No emoji or decorative icons appear in metric rendering | ✅ PASS |
+| 1 | `results/report.html` is generated automatically alongside Markdown report | [PASS] |
+| 2 | Report opens successfully without internet connectivity | [PASS] |
+| 3 | CSS, JS, and Plotly.js are embedded into generated HTML | [PASS] |
+| 4 | All 10 interactive Plotly charts render correctly | [PASS] |
+| 5 | Sidebar navigation and TOC function correctly | [PASS] |
+| 6 | Full-text search locates headings, tables, and metrics | [PASS] |
+| 7 | Keyboard shortcuts (`Ctrl+F`, `/`, `Esc`, `Enter`, `Shift+Enter`) work | [PASS] |
+| 8 | Expand All / Collapse All controls operate on all scenario sections | [PASS] |
+| 9 | Light/Dark mode preference persists across sessions | [PASS] |
+| 10 | Existing Markdown report generation remains backward compatible | [PASS] |
+| 11 | Generated report contains no external CDN references | [PASS] |
+| 12 | Report renders correctly from a local `file://` URL | [PASS] |
+| 13 | Browser network tab shows zero requests | [PASS] |
+| 14 | Browser console reports zero JavaScript errors | [PASS] |
+| 15 | All Plotly charts render using embedded Plotly.js | [PASS] |
+| 16 | Report contains no emoji or decorative icons | [PASS] |
+| 17 | Report maintains a professional academic appearance | [PASS] |
+| 18 | Statistical metrics display Mean, Median, Standard Deviation, Confidence Interval, Sample Count, and Status | [PASS] |
+| 19 | Assertion metrics display Observed Value, Expected Threshold, Comparison Operator, Status, and Reason | [PASS] |
+| 20 | Invalid metrics display Status and Reason only | [PASS] |
+| 21 | No metric incorrectly displays `N/A` for unsupported statistical fields | [PASS] |
+| 22 | Metric renderer automatically selects the correct layout based on the JSON schema | [PASS] |
+| 23 | Every metric displays its validation reason | [PASS] |
+| 24 | Each metric is rendered as an independent card for improved readability | [PASS] |
+| 25 | Floating-point values are consistently formatted to three decimal places | [PASS] |
+| 26 | No emoji or decorative icons appear in metric rendering | [PASS] |

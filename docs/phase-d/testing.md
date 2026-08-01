@@ -76,7 +76,7 @@ Perform this manual execution to confirm that fog nodes cooperatively publish, r
 4. **Verify Pre-emptive Escalation in Zone 4C**:
    - Select **Zone 4C** in the focus selector or observe the top cards overview.
    - Because Zone 4C lies directly downwind of Zone 4B (relative bearing 180°), and the wind is aligned (180.0°), **Zone 4C should automatically elevate to YELLOW**.
-   - Confirm that a warning flag is displayed: `⚠️ Pre-emptive Escalation: Warning from Zone 4B`.
+   - Confirm that a warning flag is displayed: `[WARNING] Pre-emptive Escalation: Warning from Zone 4B`.
    - Verify that Zone 4C's own edge simulator nodes continue to report GREEN telemetry.
 5. **Verify Lateral Timeline Logs**:
    - Check the **Fog-to-Fog Lateral Timeline** ticker panel on the Central NOC Dashboard.

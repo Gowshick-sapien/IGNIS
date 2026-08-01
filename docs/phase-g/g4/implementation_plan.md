@@ -185,22 +185,22 @@ All endpoints in `routes/repository.py` are strictly **READ ONLY**.
 
 | # | Acceptance Criterion | Status |
 |---|---|---|
-| 1 | `RepositoryManager` is created as sole writer for `experiment_repository/` | 🔲 PENDING |
-| 2 | `experiment_repository/metadata.db` is auto-created with SQLite `PRAGMA user_version = 1` | 🔲 PENDING |
-| 3 | `RepositoryMigrations` executes DDL schema migrations sequentially | 🔲 PENDING |
-| 4 | Archival uses temporary staging directory (`.tmp_*`) and atomic rename to prevent partial copies | 🔲 PENDING |
-| 5 | `RepositoryManager` executes explicit SQLite `BEGIN TRANSACTION` / `COMMIT` / `ROLLBACK` blocks | 🔲 PENDING |
-| 6 | Database records include `archive_schema_version = "1.0"`, `archived_at` timestamp, and `manifest_sha256` integrity hash | 🔲 PENDING |
-| 7 | Finishing an experiment automatically copies `results/` artifacts to `experiment_repository/{timestamp}_{exp_id}/` | 🔲 PENDING |
-| 8 | Archived experiments strictly enforce immutability (never modified or overwritten) | 🔲 PENDING |
-| 9 | REST API endpoints (`/api/v1/repository/*`) are strictly READ ONLY | 🔲 PENDING |
-| 10 | `GET /api/v1/repository` lists archived runs sorted Newest First by default | 🔲 PENDING |
-| 11 | `GET /api/v1/repository` supports filtering by `verdict`, `scenario`, `commit`, `from_date`, `to_date` | 🔲 PENDING |
-| 12 | `GET /api/v1/repository` supports sorting by `timestamp`, `verdict`, `duration`, `trials` (asc/desc) and pagination | 🔲 PENDING |
-| 13 | `GET /api/v1/repository/{experiment_id}` returns full details, metrics, manifest hash, and report links | 🔲 PENDING |
-| 14 | `/repository` route renders Jinja2 `repository.html` template inheriting `base.html` & `navbar.html` | 🔲 PENDING |
-| 15 | UI adheres strictly to professional standards (zero emoji, text-and-colour badges only) | 🔲 PENDING |
-| 16 | Complete automated test suite passes cleanly via Pytest | 🔲 PENDING |
+| 1 | `RepositoryManager` is created as sole writer for `experiment_repository/` |  PENDING |
+| 2 | `experiment_repository/metadata.db` is auto-created with SQLite `PRAGMA user_version = 1` |  PENDING |
+| 3 | `RepositoryMigrations` executes DDL schema migrations sequentially |  PENDING |
+| 4 | Archival uses temporary staging directory (`.tmp_*`) and atomic rename to prevent partial copies |  PENDING |
+| 5 | `RepositoryManager` executes explicit SQLite `BEGIN TRANSACTION` / `COMMIT` / `ROLLBACK` blocks |  PENDING |
+| 6 | Database records include `archive_schema_version = "1.0"`, `archived_at` timestamp, and `manifest_sha256` integrity hash |  PENDING |
+| 7 | Finishing an experiment automatically copies `results/` artifacts to `experiment_repository/{timestamp}_{exp_id}/` |  PENDING |
+| 8 | Archived experiments strictly enforce immutability (never modified or overwritten) |  PENDING |
+| 9 | REST API endpoints (`/api/v1/repository/*`) are strictly READ ONLY |  PENDING |
+| 10 | `GET /api/v1/repository` lists archived runs sorted Newest First by default |  PENDING |
+| 11 | `GET /api/v1/repository` supports filtering by `verdict`, `scenario`, `commit`, `from_date`, `to_date` |  PENDING |
+| 12 | `GET /api/v1/repository` supports sorting by `timestamp`, `verdict`, `duration`, `trials` (asc/desc) and pagination |  PENDING |
+| 13 | `GET /api/v1/repository/{experiment_id}` returns full details, metrics, manifest hash, and report links |  PENDING |
+| 14 | `/repository` route renders Jinja2 `repository.html` template inheriting `base.html` & `navbar.html` |  PENDING |
+| 15 | UI adheres strictly to professional standards (zero emoji, text-and-colour badges only) |  PENDING |
+| 16 | Complete automated test suite passes cleanly via Pytest |  PENDING |
 
 ---
 

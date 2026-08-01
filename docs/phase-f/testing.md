@@ -148,7 +148,7 @@ Inspect the generated directory structures to confirm correctness:
    - Open `execution_timeline.png` and confirm Gantt horizontal blocks render cleanly.
 5. Open [project_results_report.md](file:///d:/projects/IGNIS/docs/phase-f/project_results_report.md) in a markdown reader:
    - Confirm all 9 dissertation sections compile.
-   - Verify that the Section 6 Architecture Validation Table contains checkmark symbols (`✅`) indicating validated status.
+   - Verify that the Section 6 Architecture Validation Table contains checkmark symbols (`[PASS]`) indicating validated status.
    - Ensure all image tags link correctly to `charts/`.
 
 ---

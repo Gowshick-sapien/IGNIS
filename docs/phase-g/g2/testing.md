@@ -236,18 +236,18 @@ Invoke-RestMethod -Uri "http://localhost:9000/api/v1/reports/list" -Method GET
 
 | # | Manual Verification Step | Target Component | Status |
 |---|---|---|---|
-| 1 | FastAPI server launches cleanly with `ProcessManager` lifespan registration | Dashboard App | ✅ PASS |
-| 2 | `/experiments` renders control form, state badge (`IDLE`), and action buttons | Control Center | ✅ PASS |
-| 3 | Clicking **Run Experiment** launches subprocess and streams live logs | Subprocess Manager | ✅ PASS |
-| 4 | State badge transitions dynamically (`IDLE` → `STARTING` → `RUNNING`) | FSM Engine | ✅ PASS |
-| 5 | Clicking **Pause** creates `.pause_flag` file and transitions state to `PAUSED` | Cooperative Pause | ✅ PASS |
-| 6 | Clicking **Resume** removes `.pause_flag` file and restores state to `RUNNING` | Cooperative Resume | ✅ PASS |
-| 7 | Clicking **Stop** terminates child process PID and sets state to `COMPLETED`/`FAILED` | Process Termination | ✅ PASS |
-| 8 | Clicking **Restart** terminates active run and generates a **new Experiment ID** | Restart Semantics | ✅ PASS |
-| 9 | Concurrent execution request returns HTTP 409 `ExperimentAlreadyRunning` error JSON | Error Contract | ✅ PASS |
-| 10 | `/reports` page lists discovered reports sorted **Newest First** | Report Browser | ✅ PASS |
-| 11 | Clicking **Open Interactive Report** loads HTML report in new tab | Report Browser | ✅ PASS |
-| 12 | Clicking **Preview Markdown** opens inline text preview panel | Report Browser | ✅ PASS |
-| 13 | `/charts` page renders Plotly.js charts with scenario filter select | Chart Gallery | ✅ PASS |
-| 14 | `/scenarios` page renders YAML scenario cards (S1–S7) with read-only badge | Scenario Browser | ✅ PASS |
-| 15 | `navbar.html` is rendered consistently across all pages via `base.html` inheritance | Navigation | ✅ PASS |
+| 1 | FastAPI server launches cleanly with `ProcessManager` lifespan registration | Dashboard App | [PASS] |
+| 2 | `/experiments` renders control form, state badge (`IDLE`), and action buttons | Control Center | [PASS] |
+| 3 | Clicking **Run Experiment** launches subprocess and streams live logs | Subprocess Manager | [PASS] |
+| 4 | State badge transitions dynamically (`IDLE` → `STARTING` → `RUNNING`) | FSM Engine | [PASS] |
+| 5 | Clicking **Pause** creates `.pause_flag` file and transitions state to `PAUSED` | Cooperative Pause | [PASS] |
+| 6 | Clicking **Resume** removes `.pause_flag` file and restores state to `RUNNING` | Cooperative Resume | [PASS] |
+| 7 | Clicking **Stop** terminates child process PID and sets state to `COMPLETED`/`FAILED` | Process Termination | [PASS] |
+| 8 | Clicking **Restart** terminates active run and generates a **new Experiment ID** | Restart Semantics | [PASS] |
+| 9 | Concurrent execution request returns HTTP 409 `ExperimentAlreadyRunning` error JSON | Error Contract | [PASS] |
+| 10 | `/reports` page lists discovered reports sorted **Newest First** | Report Browser | [PASS] |
+| 11 | Clicking **Open Interactive Report** loads HTML report in new tab | Report Browser | [PASS] |
+| 12 | Clicking **Preview Markdown** opens inline text preview panel | Report Browser | [PASS] |
+| 13 | `/charts` page renders Plotly.js charts with scenario filter select | Chart Gallery | [PASS] |
+| 14 | `/scenarios` page renders YAML scenario cards (S1–S7) with read-only badge | Scenario Browser | [PASS] |
+| 15 | `navbar.html` is rendered consistently across all pages via `base.html` inheritance | Navigation | [PASS] |
