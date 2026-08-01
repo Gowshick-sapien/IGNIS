@@ -161,3 +161,14 @@ class ProgressReporter:
         })
         self._emit(meta)
         return meta
+
+    def emit_stage_progress(self, stage_num: int, stage_name: str, progress_pct: float, message: str = "") -> Dict[str, Any]:
+        meta = self._next_event_meta("STAGE_PROGRESS")
+        meta.update({
+            "stage_num": stage_num,
+            "stage_name": stage_name,
+            "progress_pct": round(progress_pct, 1),
+            "message": message
+        })
+        self._emit(meta)
+        return meta

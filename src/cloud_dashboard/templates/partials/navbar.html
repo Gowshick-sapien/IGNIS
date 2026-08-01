@@ -13,7 +13,10 @@
             <a href="/experiments" class="nav-link {% if active_page == 'experiments' %}active{% endif %}">Experiments</a>
         </li>
         <li class="nav-item">
-            <a href="/reports" class="nav-link {% if active_page == 'reports' %}active{% endif %}">Reports</a>
+            <a href="/reports" class="nav-link {% if active_page == 'reports' or active_tab == 'reports' %}active{% endif %}">Reports</a>
+        </li>
+        <li class="nav-item">
+            <a href="/repository" class="nav-link {% if active_page == 'repository' or active_tab == 'repository' %}active{% endif %}">Repository</a>
         </li>
         <li class="nav-item">
             <a href="/charts" class="nav-link {% if active_page == 'charts' %}active{% endif %}">Charts</a>

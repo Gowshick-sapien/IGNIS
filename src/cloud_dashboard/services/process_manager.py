@@ -98,6 +98,23 @@ class ProcessManager:
                         logger.error(f"Subprocess for {self._experiment_id} failed with exit code {poll_res}.")
                         evt = self.reporter.emit_experiment_failed(error_code="ProcessExitNonZero", error_message=f"Process exited with code {poll_res}")
                         self.live_monitor.broadcast_event(evt)
+
+                    # Trigger automatic experiment archival in background thread (Phase G4)
+                    exp_id_to_archive = self._experiment_id
+                    results_dir_to_archive = self.results_dir
+                    ws_dir_to_archive = self.workspace_dir
+
+                    def _async_archive():
+                        try:
+                            from .repository_manager import RepositoryManager
+                            repo_mgr = RepositoryManager(workspace_dir=ws_dir_to_archive)
+                            archived_path = repo_mgr.archive_experiment(exp_id_to_archive, source_results_dir=results_dir_to_archive)
+                            logger.info(f"Experiment {exp_id_to_archive} archived to repository: {archived_path}")
+                        except Exception as archive_err:
+                            logger.error(f"Failed to auto-archive experiment {exp_id_to_archive}: {archive_err}")
+
+                    threading.Thread(target=_async_archive, daemon=True).start()
+
                 self._process = None
 
     def _start_progress_tailer(self) -> None:
@@ -223,11 +240,13 @@ class ProcessManager:
                 log_fd.write(f"Command: {' '.join(cmd)}\n\n")
                 log_fd.flush()
                 
+                proc_env = dict(os.environ, IGNIS_EXPERIMENT_ID=self._experiment_id or "")
                 self._process = subprocess.Popen(
                     cmd,
                     cwd=self.workspace_dir,
                     stdout=log_fd,
                     stderr=subprocess.STDOUT,
+                    env=proc_env,
                     creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == "win32" else 0
                 )
                 self._pid = self._process.pid

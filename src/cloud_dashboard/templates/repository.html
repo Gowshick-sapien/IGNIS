@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}Historical Experiment Repository - IGNIS{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <div>
+        <h1 class="page-title" style="font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin: 0;">Historical Experiment Repository</h1>
+        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-top: 4px;">
+            Browse, search, and inspect immutable archived experiment runs (Sorted Newest First).
+        </p>
+    </div>
+    <div>
+        <span id="repo-count-badge" style="font-size: 0.8rem; background: #1e293b; color: #38bdf8; padding: 6px 12px; border-radius: 4px; border: 1px solid #334155;">Total Archived: 0</span>
+    </div>
+</div>
+
+<!-- Search & Filter Controls Toolbar -->
+<div class="card" style="margin-bottom: 24px; padding: 18px; background: #111827; border: 1px solid #1f2937;">
+    <form id="filter-form" onsubmit="applyFilters(event);" style="display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end;">
+        <div style="flex: 1; min-width: 150px;">
+            <label style="display: block; font-size: 0.75rem; color: #9ca3af; margin-bottom: 4px; font-weight: 600;">Verdict</label>
+            <select id="filter-verdict" style="width: 100%; padding: 8px; background: #1f2937; border: 1px solid #374151; color: #fff; border-radius: 4px; font-size: 0.85rem;">
+                <option value="">All Verdicts</option>
+                <option value="PASS">PASS</option>
+                <option value="FAIL">FAIL</option>
+                <option value="INVALID">INVALID</option>
+            </select>
+        </div>
+
+        <div style="flex: 1; min-width: 150px;">
+            <label style="display: block; font-size: 0.75rem; color: #9ca3af; margin-bottom: 4px; font-weight: 600;">Scenario</label>
+            <select id="filter-scenario" style="width: 100%; padding: 8px; background: #1f2937; border: 1px solid #374151; color: #fff; border-radius: 4px; font-size: 0.85rem;">
+                <option value="">All Scenarios</option>
+                <option value="S1">S1 - Baseline Normal</option>
+                <option value="S2">S2 - Rapid Propagation Fire</option>
+                <option value="S3">S3 - Comm Degradation</option>
+                <option value="S4">S4 - Sensor Fault Immunity</option>
+                <option value="S5">S5 - Fog Node Outage</option>
+                <option value="S6">S6 - Multi-Zone Cascade</option>
+                <option value="S7">S7 - Cloud Link Disruption</option>
+            </select>
+        </div>
+
+        <div style="flex: 1; min-width: 160px;">
+            <label style="display: block; font-size: 0.75rem; color: #9ca3af; margin-bottom: 4px; font-weight: 600;">Git Commit Hash</label>
+            <input type="text" id="filter-commit" placeholder="Commit prefix..." style="width: 100%; padding: 8px; background: #1f2937; border: 1px solid #374151; color: #fff; border-radius: 4px; font-size: 0.85rem;">
+        </div>
+
+        <div style="flex: 1; min-width: 140px;">
+            <label style="display: block; font-size: 0.75rem; color: #9ca3af; margin-bottom: 4px; font-weight: 600;">Sort By</label>
+            <select id="filter-sort" style="width: 100%; padding: 8px; background: #1f2937; border: 1px solid #374151; color: #fff; border-radius: 4px; font-size: 0.85rem;">
+                <option value="timestamp">Timestamp (Newest First)</option>
+                <option value="duration">Execution Duration</option>
+                <option value="trials">Trial Count</option>
+                <option value="verdict">Overall Verdict</option>
+            </select>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+            <button type="submit" class="btn btn-primary" style="padding: 8px 16px; font-size: 0.85rem;">Apply Filters</button>
+            <button type="button" class="btn btn-secondary" onclick="resetFilters();" style="padding: 8px 16px; font-size: 0.85rem;">Reset</button>
+        </div>
+    </form>
+</div>
+
+<!-- Experiments List Timeline Container -->
+<div id="repository-list-container">
+    <div style="text-align: center; padding: 40px; color: #9ca3af;">Loading repository index...</div>
+</div>
+
+<!-- Pagination Controls -->
+<div id="pagination-controls" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding: 12px 0;">
+    <button type="button" id="btn-prev-page" class="btn btn-secondary" onclick="changePage(-1);" disabled>Previous</button>
+    <span id="page-indicator" style="font-size: 0.85rem; color: #9ca3af;">Page 1 of 1</span>
+    <button type="button" id="btn-next-page" class="btn btn-secondary" onclick="changePage(1);" disabled>Next</button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentPage = 1;
+    let totalPages = 1;
+
+    async function loadRepository(page = 1) {
+        currentPage = page;
+        const container = document.getElementById('repository-list-container');
+        container.innerHTML = '<div style="text-align: center; padding: 40px; color: #9ca3af;">Loading repository index...</div>';
+
+        const verdict = document.getElementById('filter-verdict').value;
+        const scenario = document.getElementById('filter-scenario').value;
+        const commit = document.getElementById('filter-commit').value.trim();
+        const sort = document.getElementById('filter-sort').value;
+
+        const params = new URLSearchParams({
+            page: currentPage,
+            page_size: 10,
+            sort: sort,
+            order: 'desc'
+        });
+
+        if (verdict) params.append('verdict', verdict);
+        if (scenario) params.append('scenario', scenario);
+        if (commit) params.append('commit', commit);
+
+        try {
+            const resp = await fetch(`/api/v1/repository?${params.toString()}`);
+            const result = await resp.json();
+
+            if (result.status === 'success') {
+                const data = result.data;
+                totalPages = data.total_pages;
+                document.getElementById('repo-count-badge').innerText = `Total Archived: ${data.total}`;
+                document.getElementById('page-indicator').innerText = `Page ${data.page} of ${data.total_pages}`;
+                
+                document.getElementById('btn-prev-page').disabled = (data.page <= 1);
+                document.getElementById('btn-next-page').disabled = (data.page >= data.total_pages);
+
+                renderExperimentCards(data.experiments);
+            } else {
+                container.innerHTML = `<div style="padding: 20px; color: #f87171;">Error loading repository: ${result.message || 'Unknown error'}</div>`;
+            }
+        } catch (e) {
+            container.innerHTML = `<div style="padding: 20px; color: #f87171;">Failed to connect to repository API: ${e}</div>`;
+        }
+    }
+
+    function renderExperimentCards(experiments) {
+        const container = document.getElementById('repository-list-container');
+        if (!experiments || experiments.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 40px; color: #9ca3af; background: #111827; border-radius: 6px; border: 1px solid #1f2937;">No archived experiment runs match the selected criteria.</div>';
+            return;
+        }
+
+        let html = '';
+        experiments.forEach((exp, idx) => {
+            const verdictClass = exp.overall_verdict === 'PASS' ? 'badge-completed' : (exp.overall_verdict === 'FAIL' ? 'badge-failed' : 'badge-idle');
+            const shaShort = exp.manifest_sha256 ? exp.manifest_sha256.substring(0, 10) : 'unknown';
+
+            let scenariosTableRows = '';
+            if (exp.scenarios_summary && exp.scenarios_summary.length > 0) {
+                exp.scenarios_summary.forEach(s => {
+                    const sBadge = s.verdict === 'PASS' ? '#34d399' : (s.verdict === 'FAIL' ? '#f87171' : '#fbbf24');
+                    const latStr = s.latency_mean !== null && s.latency_mean !== undefined ? `${s.latency_mean.toFixed(2)} ms` : '-';
+                    scenariosTableRows += `
+                        <tr style="border-bottom: 1px solid #1f2937;">
+                            <td style="padding: 6px 12px; font-weight: 600; color: #f3f4f6;">${s.scenario_id}</td>
+                            <td style="padding: 6px 12px; color: ${sBadge}; font-weight: 600;">${s.verdict}</td>
+                            <td style="padding: 6px 12px; color: #9ca3af;">${s.trial_count}</td>
+                            <td style="padding: 6px 12px; color: #9ca3af;">${latStr}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                scenariosTableRows = '<tr><td colspan="4" style="padding: 10px; color: #6b7280;">No scenario summary records available.</td></tr>';
+            }
+
+            html += `
+                <div class="card" style="margin-bottom: 16px; background: #111827; border: 1px solid #1f2937; border-radius: 6px; padding: 18px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <strong style="font-family: monospace; font-size: 1.05rem; color: #38bdf8;">${exp.experiment_id}</strong>
+                                <span class="status-badge ${verdictClass}">${exp.overall_verdict}</span>
+                            </div>
+                            <div style="font-size: 0.8rem; color: #9ca3af; margin-top: 6px; display: flex; gap: 16px;">
+                                <span><strong>Executed:</strong> ${exp.timestamp}</span>
+                                <span><strong>Archived:</strong> ${exp.archived_at}</span>
+                                <span><strong>Commit:</strong> <code style="color: #cbd5e1;">${exp.git_commit}</code></span>
+                                <span><strong>Duration:</strong> ${exp.execution_duration_sec}s</span>
+                                <span><strong>Trials:</strong> ${exp.trial_count}</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <a href="/api/v1/repository/${exp.experiment_id}/report.html" target="_blank" class="btn btn-primary" style="font-size: 0.75rem; padding: 5px 10px;">View Report</a>
+                            <button type="button" class="btn btn-secondary" onclick="toggleDetails('details-${exp.experiment_id}')" style="font-size: 0.75rem; padding: 5px 10px;">Details</button>
+                        </div>
+                    </div>
+
+                    <!-- Expandable Scenario Details -->
+                    <div id="details-${exp.experiment_id}" style="display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid #1f2937;">
+                        <h4 style="font-size: 0.85rem; color: #9ca3af; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Executed Scenarios Summary</h4>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; background: #030712; border-radius: 4px; overflow: hidden; border: 1px solid #1f2937;">
+                            <thead>
+                                <tr style="background: #1f2937; color: #9ca3af; text-align: left;">
+                                    <th style="padding: 6px 12px;">Scenario</th>
+                                    <th style="padding: 6px 12px;">Verdict</th>
+                                    <th style="padding: 6px 12px;">Trials</th>
+                                    <th style="padding: 6px 12px;">Mean Latency</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${scenariosTableRows}
+                            </tbody>
+                        </table>
+                        <div style="margin-top: 10px; font-size: 0.75rem; color: #6b7280; font-family: monospace;">
+                            <span>Manifest SHA-256: ${exp.manifest_sha256}</span> | 
+                            <span>Archive Version: ${exp.archive_schema_version}</span> | 
+                            <span>Folder: ${exp.directory}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+    }
+
+    function toggleDetails(id) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        }
+    }
+
+    function applyFilters(e) {
+        if (e) e.preventDefault();
+        loadRepository(1);
+    }
+
+    function resetFilters() {
+        document.getElementById('filter-verdict').value = '';
+        document.getElementById('filter-scenario').value = '';
+        document.getElementById('filter-commit').value = '';
+        document.getElementById('filter-sort').value = 'timestamp';
+        loadRepository(1);
+    }
+
+    function changePage(delta) {
+        const newPage = currentPage + delta;
+        if (newPage >= 1 && newPage <= totalPages) {
+            loadRepository(newPage);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadRepository(1);
+    });
+</script>
+{% endblock %}

@@ -99,3 +99,71 @@ class HeartbeatPayload(BaseModel):
     schema_version: str = Field(default="1.0")
     event: str = Field(default="HEARTBEAT")
     timestamp: str
+
+
+# ============================================================================
+# Repository Pydantic Schemas (Phase G4)
+# ============================================================================
+
+class RepositoryScenarioSummary(BaseModel):
+    scenario_id: str
+    verdict: str
+    duration_sec: Optional[float] = 0.0
+    trial_count: Optional[int] = 0
+    latency_mean: Optional[float] = None
+    latency_ci_low: Optional[float] = None
+    latency_ci_high: Optional[float] = None
+
+
+class RepositoryExperimentSummary(BaseModel):
+    experiment_id: str
+    directory: str
+    timestamp: str
+    archived_at: str
+    seed: Optional[int] = 4321
+    git_commit: Optional[str] = "unknown"
+    trial_count: Optional[int] = 0
+    overall_verdict: str
+    execution_duration_sec: Optional[float] = 0.0
+    manifest_sha256: str
+    archive_schema_version: str = "1.0"
+    scenarios_summary: List[RepositoryScenarioSummary] = Field(default_factory=list)
+
+
+class RepositoryListResponseData(BaseModel):
+    experiments: List[RepositoryExperimentSummary]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
+class RepositoryListResponse(BaseModel):
+    status: str = "success"
+    data: RepositoryListResponseData
+
+
+class RepositoryExperimentDetail(BaseModel):
+    experiment_id: str
+    directory: str
+    directory_path: str
+    timestamp: str
+    archived_at: str
+    seed: Optional[int] = 4321
+    git_commit: Optional[str] = "unknown"
+    trial_count: Optional[int] = 0
+    overall_verdict: str
+    execution_duration_sec: Optional[float] = 0.0
+    platform_os: Optional[str] = "unknown"
+    platform_python: Optional[str] = "unknown"
+    platform_docker: Optional[str] = "unknown"
+    hostname: Optional[str] = "unknown"
+    manifest_sha256: str
+    archive_schema_version: str = "1.0"
+    scenarios: List[Dict[str, Any]] = Field(default_factory=list)
+    metrics: Dict[str, Any] = Field(default_factory=dict)
+    manifest: Dict[str, Any] = Field(default_factory=dict)
+    has_html_report: bool = False
+    has_md_report: bool = False
+    charts: List[str] = Field(default_factory=list)
+

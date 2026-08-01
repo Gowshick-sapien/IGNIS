@@ -378,7 +378,7 @@ def calculate_final_state(results: list) -> dict:
 
 def get_git_commit() -> str:
     try:
-        return subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], stderr=subprocess.DEVNULL).decode().strip()
+        return subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], stderr=subprocess.DEVNULL, timeout=1.0).decode().strip()
     except Exception:
         return "unknown"
 
@@ -391,11 +391,11 @@ def get_platform_metadata() -> dict:
     docker_version = "unknown"
     docker_compose_version = "unknown"
     try:
-        docker_version = subprocess.check_output(["docker", "--version"], stderr=subprocess.DEVNULL).decode().strip()
+        docker_version = subprocess.check_output(["docker", "--version"], stderr=subprocess.DEVNULL, timeout=1.0).decode().strip()
     except Exception:
         pass
     try:
-        docker_compose_version = subprocess.check_output(["docker", "compose", "version"], stderr=subprocess.DEVNULL).decode().strip()
+        docker_compose_version = subprocess.check_output(["docker", "compose", "version"], stderr=subprocess.DEVNULL, timeout=1.0).decode().strip()
     except Exception:
         pass
         
@@ -635,8 +635,8 @@ def compute_metrics(raw_results: dict) -> dict:
     summary_invalid = 0
     summary_incomplete = 0
     
-    # We evaluate all scenarios listed in raw_results or in metadata
-    all_sids = sorted(list(set(list(raw_results.keys()) + ["S1", "S2", "S3", "S4", "S5", "S6", "S7"])))
+    # Evaluate only scenarios actually executed in raw_results
+    all_sids = sorted(list(raw_results.keys())) if raw_results else ["S1", "S2", "S3", "S4", "S5", "S6", "S7"]
     
     for sid in all_sids:
         results = raw_results.get(sid, [])

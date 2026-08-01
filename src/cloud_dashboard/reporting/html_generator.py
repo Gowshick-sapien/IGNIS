@@ -78,8 +78,9 @@ def generate_html_report(
 
     # Build HTML sections
     scenarios = metrics.get("scenario_results", {})
-    overall_verdict = metrics.get("overall_verdict", "UNKNOWN")
-    total_trials = metrics.get("total_trials", 0)
+    exp_meta = metrics.get("experiment_metadata", {})
+    summary_info = metrics.get("summary", {})
+    exp_id = manifest.get("experiment_id") or exp_meta.get("experiment_id", "N/A")
 
     toc_html = render_sidebar_toc(scenarios)
     summary_html = _render_executive_summary(metrics, manifest)
@@ -94,7 +95,7 @@ def generate_html_report(
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IGNIS Experiment Report — {manifest.get('experiment_id', 'Run')}</title>
+    <title>IGNIS Experiment Report — {exp_id}</title>
     {plotly_bundle}
     <style>
     {css_content}
@@ -134,7 +135,7 @@ def generate_html_report(
         <div class="top-bar">
             <div class="report-title">
                 <h1>IGNIS Experimentation & Validation Report</h1>
-                <p>Experiment ID: <code>{manifest.get('experiment_id', 'N/A')}</code> | Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}</p>
+                <p>Experiment ID: <code>{exp_id}</code> | Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}</p>
             </div>
             <div class="controls-group">
                 <button id="expand-all" class="btn">Expand All</button>
@@ -184,12 +185,15 @@ def _load_json(file_path: str, name: str) -> Dict[str, Any]:
 
 
 def _render_executive_summary(metrics: Dict[str, Any], manifest: Dict[str, Any]) -> str:
-    verdict = metrics.get("overall_verdict", "UNKNOWN")
+    summary_info = metrics.get("summary", {})
+    verdict = summary_info.get("overall_verdict", metrics.get("overall_verdict", "UNKNOWN"))
     badge = render_badge(verdict)
-    total_trials = metrics.get("total_trials", 0)
-    passed_scenarios = metrics.get("passed_scenarios", 0)
-    total_scenarios = metrics.get("total_scenarios", 0)
-    duration = round(metrics.get("total_execution_duration_sec", 0.0), 2)
+    exp_meta = metrics.get("experiment_metadata", {})
+    
+    total_trials = manifest.get("trial_count", exp_meta.get("trial_count", metrics.get("total_trials", 0)))
+    passed_scenarios = summary_info.get("passed", metrics.get("passed_scenarios", 0))
+    total_scenarios = summary_info.get("total_scenarios", metrics.get("total_scenarios", len(metrics.get("scenario_results", {}))))
+    duration = round(manifest.get("execution_duration_sec", exp_meta.get("total_duration_sec", metrics.get("total_execution_duration_sec", 0.0))), 2)
 
     return f"""
     <section id="summary" class="card">
@@ -331,18 +335,23 @@ def _render_charts_section(charts: Dict[str, Dict[str, Any]]) -> str:
 
 
 def _render_metadata(manifest: Dict[str, Any]) -> str:
-    env = manifest.get("environment", {})
+    platform_info = manifest.get("platform", manifest.get("environment", {}))
+    exp_id = manifest.get("experiment_id", "N/A")
+    seed_val = manifest.get("random_seed", manifest.get("seed", "N/A"))
+    py_ver = platform_info.get("python_version", "N/A")
+    os_ver = platform_info.get("os", platform_info.get("os_platform", "N/A"))
+
     return f"""
     <section id="appendix" class="card">
         <h2 class="card-title">Appendix & Reproducibility Metadata</h2>
         <table class="data-table">
             <tbody>
-                <tr><td><strong>Experiment ID</strong></td><td><code>{manifest.get('experiment_id', 'N/A')}</code></td></tr>
+                <tr><td><strong>Experiment ID</strong></td><td><code>{exp_id}</code></td></tr>
                 <tr><td><strong>Execution Timestamp</strong></td><td>{manifest.get('timestamp', 'N/A')}</td></tr>
                 <tr><td><strong>Git Commit / Branch</strong></td><td><code>{manifest.get('git_commit', 'N/A')}</code> ({manifest.get('git_branch', 'main')})</td></tr>
-                <tr><td><strong>Python Version</strong></td><td>{env.get('python_version', 'N/A')}</td></tr>
-                <tr><td><strong>Platform OS</strong></td><td>{env.get('os_platform', 'N/A')}</td></tr>
-                <tr><td><strong>Seed</strong></td><td><code>{manifest.get('seed', 'N/A')}</code></td></tr>
+                <tr><td><strong>Python Version</strong></td><td>{py_ver}</td></tr>
+                <tr><td><strong>Platform OS</strong></td><td>{os_ver}</td></tr>
+                <tr><td><strong>Seed</strong></td><td><code>{seed_val}</code></td></tr>
             </tbody>
         </table>
     </section>

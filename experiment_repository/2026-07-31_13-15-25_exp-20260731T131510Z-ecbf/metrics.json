@@ -1,0 +1,105 @@
+{
+  "experiment_metadata": {
+    "timestamp": "2026-07-31T13:15:18Z",
+    "git_commit": "2b503f8",
+    "trial_count": 5,
+    "random_seed": 4321,
+    "total_duration_sec": 6.8612,
+    "platform": {
+      "os": "Windows 11",
+      "architecture": "AMD64",
+      "python_version": "3.12.2",
+      "timezone": "India Standard Time",
+      "hostname": "Gowshick",
+      "docker_version": "Docker version 29.6.1, build 8900f1d",
+      "docker_compose_version": "Docker Compose version v5.2.0"
+    },
+    "scenario_versions": {
+      "S1": "1.0",
+      "S2": "1.0",
+      "S3": "1.0",
+      "S4": "1.0",
+      "S5": "1.0",
+      "S6": "1.0",
+      "S7": "1.0"
+    },
+    "scenario_checksums": {
+      "S1": "4a3f292bc5f81fa064abfada76c3ad454fbe3d540f0615355a46c243e482bb6a",
+      "S2": "9f826d74ce1ae826fa9902aaa0c751f04f8edbcb734c5fdd09e17d7c0e22c91d",
+      "S3": "9f2704b7ff6899ce0f8ee34a85ca775c6c625ba0d1e5d1d5bd6e2d996265bf27",
+      "S4": "1d013fa6da5dfb5ae0a7c911f736444f67bb61147f0c1ded2d91f8b261d88a33",
+      "S5": "4eaddb8c28d3a3587d3c20641f65bf3d4281b53e4cf6e54bd1034baec736a701",
+      "S6": "4d856d49d9f260a6046e3462a0e6ace726ecd1f7822375a544135f18121fd87b",
+      "S7": "e709785255f052d7fa96f709eb5b5ef0ac141fd2821316329a0ebb19266e9c35"
+    },
+    "container_images": {
+      "fog-node": "python:3.11-slim",
+      "edge-sim": "python:3.11-slim"
+    },
+    "experiment_id": "exp-20260731T131510Z-ecbf"
+  },
+  "scenario_results": {
+    "S1": {
+      "status": "INVALID",
+      "reason": "No matching events found",
+      "trials": 0,
+      "metrics": {}
+    },
+    "S2": {
+      "status": "INVALID",
+      "reason": "No matching events found",
+      "trials": 0,
+      "metrics": {}
+    },
+    "S3": {
+      "status": "FAIL",
+      "reason": "Assertions failed: No matching events found; Assertion Failed: Expected: RED, Observed: GREEN",
+      "trials": 5,
+      "metrics": {
+        "fog_decision_latency": {
+          "status": "INVALID",
+          "reason": "No matching events found"
+        },
+        "final_state": {
+          "value": "GREEN",
+          "status": "FAIL",
+          "reason": "GREEN == threshold RED",
+          "threshold": "RED",
+          "operator": "=="
+        }
+      }
+    },
+    "S4": {
+      "status": "INVALID",
+      "reason": "No matching events found",
+      "trials": 0,
+      "metrics": {}
+    },
+    "S5": {
+      "status": "INVALID",
+      "reason": "No matching events found",
+      "trials": 0,
+      "metrics": {}
+    },
+    "S6": {
+      "status": "INVALID",
+      "reason": "No matching events found",
+      "trials": 0,
+      "metrics": {}
+    },
+    "S7": {
+      "status": "INVALID",
+      "reason": "No matching events found",
+      "trials": 0,
+      "metrics": {}
+    }
+  },
+  "summary": {
+    "total_scenarios": 7,
+    "passed": 0,
+    "failed": 1,
+    "invalid": 6,
+    "incomplete": 0,
+    "overall_verdict": "FAIL"
+  }
+}

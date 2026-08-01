@@ -56,11 +56,7 @@ def clean_outputs(output_dir: str, report_dir: str, logger):
                         except Exception:
                             pass
             elif item == "progress_events.jsonl":
-                try:
-                    with open(item_path, "w", encoding="utf-8") as f:
-                        pass
-                except Exception:
-                    pass
+                pass
             else:
                 try:
                     if os.path.isdir(item_path):
@@ -111,7 +107,15 @@ def run_stages():
     
     pipeline_start = time.time()
     
+    try:
+        from src.cloud_dashboard.services.progress_reporter import ProgressReporter
+        reporter = ProgressReporter(workspace_dir=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    except Exception:
+        reporter = None
+
     # Stage 1: Validate YAML Scenarios
+    if reporter:
+        reporter.emit_stage_progress(1, "Validating Scenarios", 2.0, "Validating YAML configurations")
     if not args.skip_validation:
         logger.info("Stage 1: Validating YAML configurations...")
         validator = YamlValidator()
@@ -130,6 +134,8 @@ def run_stages():
         logger.info("Stage 1: Skipped YAML schema validation.")
 
     # Stage 2: Clean outputs
+    if reporter:
+        reporter.emit_stage_progress(2, "Cleaning Outputs", 5.0, "Cleaning previous output files")
     if args.clean:
         clean_outputs(args.output_dir, args.report_dir, logger)
     else:
@@ -165,12 +171,6 @@ def run_stages():
         logger.info(f"Stage 3: Running scenarios {target_scenarios} for {args.trials} trials...")
         runner = ScenarioRunner(mqtt_host="localhost", mqtt_port=1883)
         total_scenarios_count = len(target_scenarios)
-        
-        try:
-            from src.cloud_dashboard.services.progress_reporter import ProgressReporter
-            reporter = ProgressReporter(workspace_dir=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        except Exception:
-            reporter = None
 
         for s_idx, sid in enumerate(target_scenarios, start=1):
             if reporter:
@@ -180,8 +180,9 @@ def run_stages():
                 elapsed = time.time() - scenarios_start_time
                 completed_trials_so_far = (s_idx - 1) * args.trials + trial_num
                 total_trials_overall = total_scenarios_count * args.trials
-                prog_pct = (completed_trials_so_far / total_trials_overall) * 100.0
-                eta = (elapsed / (prog_pct / 100.0) - elapsed) if prog_pct > 0 else 0.0
+                trial_prog_pct = (completed_trials_so_far / total_trials_overall) * 100.0
+                pipeline_prog_pct = 5.0 + (completed_trials_so_far / total_trials_overall) * 65.0
+                eta = (elapsed / (trial_prog_pct / 100.0) - elapsed) if trial_prog_pct > 0 else 0.0
                 
                 if reporter:
                     reporter.emit_trial_progress(
@@ -191,7 +192,7 @@ def run_stages():
                         scenario_index=s_idx,
                         total_scenarios=total_scenarios_count,
                         elapsed_sec=elapsed,
-                        progress_pct=prog_pct,
+                        progress_pct=pipeline_prog_pct,
                         eta_sec=max(0.0, eta)
                     )
 
@@ -235,10 +236,15 @@ def run_stages():
                 logger.warning(f"Scenario {sid} was executed but recorded 0 event messages across all trials.")
                 
     # Stage 5: Compute Metrics
+    if reporter:
+        reporter.emit_stage_progress(5, "Computing Metrics & Assertions", 75.0, "Computing Section 7 experiment metrics")
     logger.info("Stage 5: Computing statistics aggregates and asserting rules...")
     metrics = compute_metrics(raw_results)
     
     # Inject active execution parameters into metadata
+    exp_id = os.environ.get("IGNIS_EXPERIMENT_ID", "")
+    if exp_id:
+        metrics["experiment_metadata"]["experiment_id"] = exp_id
     metrics["experiment_metadata"]["random_seed"] = seed
     metrics["experiment_metadata"]["total_duration_sec"] = round(scenarios_duration, 4)
     
@@ -248,6 +254,8 @@ def run_stages():
     logger.info(f"Computed metrics written to {metrics_path}")
 
     # Stage 6: Generate Charts (Best Effort)
+    if reporter:
+        reporter.emit_stage_progress(6, "Generating Matplotlib Charts", 85.0, "Generating publication-ready Matplotlib charts")
     logger.info("Stage 6: Generating publication-ready Matplotlib charts...")
     charts_dir = os.path.join(args.report_dir, "charts")
     try:
@@ -257,6 +265,8 @@ def run_stages():
         logger.error(f"Failed to generate charts: {e}")
 
     # Stage 7: Generate Manifest
+    if reporter:
+        reporter.emit_stage_progress(7, "Generating Experiment Manifest", 90.0, "Generating experiment manifest metadata")
     logger.info("Stage 7: Generating experiment manifest metadata...")
     validator = YamlValidator()
     
@@ -273,6 +283,7 @@ def run_stages():
         output_files.append(os.path.join(charts_dir, "*.png"))
         
     manifest = {
+        "experiment_id": exp_id,
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "git_commit": get_git_commit(),
         "trial_count": args.trials if not args.load_existing else metrics["experiment_metadata"].get("trial_count", 0),
@@ -298,6 +309,8 @@ def run_stages():
     logger.info(f"Experiment manifest successfully generated at {manifest_path}")
 
     # Stage 8: Generate Reports (Best Effort)
+    if reporter:
+        reporter.emit_stage_progress(8, "Compiling Summary Reports", 95.0, "Compiling Markdown and interactive HTML reports")
     logger.info("Stage 8: Compiling final summary reports...")
     try:
         generate_report(metrics, report_file)
@@ -320,6 +333,8 @@ def run_stages():
         logger.warning(f"Could not generate interactive HTML report: {e}")
 
     # Stage 9: Summary Table
+    if reporter:
+        reporter.emit_stage_progress(9, "Pipeline Completed", 100.0, "Pipeline completed successfully")
     logger.info("Stage 9: Pipeline completed. Summary Results:")
     logger.info("-" * 80)
     logger.info(f"{'Scenario':<12} | {'Trials':<8} | {'Status':<10} | {'Reason'}")
