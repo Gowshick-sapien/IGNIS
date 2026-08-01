@@ -26,16 +26,16 @@ graph TB
     end
 
     subgraph FogTier["2. FOG TIER - Local Intelligence and Autonomous Pre-Suppression"]
-        MQTT_FOG["Local MQTT Broker (Port 1883)"]
-        FOG_NODE["Fog Node Server (Zone 4B Core)"]
-        FOG_PEERS["Adjacent Fog Nodes (Zone 4A / Zone 4C)"]
+        MQTT_FOG["Local MQTT Broker Port 1883"]
+        FOG_NODE["Fog Node Server Zone 4B Core"]
+        FOG_PEERS["Adjacent Fog Nodes Zone 4A and 4C"]
     end
 
     subgraph CloudTier["3. CLOUD TIER - Regional Operations NOC and Research Control"]
-        CLOUD_BROKER["Cloud MQTT Broker (Port 1884)"]
+        CLOUD_BROKER["Cloud MQTT Broker Port 1884"]
         INGESTOR["Cloud Ingestor Worker"]
-        INFLUX["InfluxDB v2 Time-Series DB (Port 8086)"]
-        DASHBOARD["IGNIS Cloud Dashboard (Port 8000 / 9000)"]
+        INFLUX["InfluxDB v2 Time-Series DB Port 8086"]
+        DASHBOARD["IGNIS Cloud Dashboard Port 8000 and 9000"]
     end
 
     E1 -->|Telemetry Stream| MQTT_FOG
@@ -43,7 +43,7 @@ graph TB
     E3 -->|Telemetry Stream| MQTT_FOG
     MQTT_FOG -->|Sensor Readings| FOG_NODE
 
-    FOG_NODE -->|Peer Warning (under 5s)| FOG_PEERS
+    FOG_NODE -->|Peer Warning under 5 sec| FOG_PEERS
     FOG_PEERS -->|Peer Warning| FOG_NODE
 
     FOG_NODE -->|Buffered Sync| CLOUD_BROKER
