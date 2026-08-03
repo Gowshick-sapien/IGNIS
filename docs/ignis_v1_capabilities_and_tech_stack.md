@@ -75,6 +75,76 @@ The centralized Regional Operations layer provides:
 - **Operator advisory command interface** allowing regional operators to dispatch binding commands (`SET_SAFETY_MODE`, `FORCE_CLAMP_WHI`, `RESET_OVERRIDE`) validated with unique UUIDs, sequence numbers, TTL cutoffs, and audit logging
 - **Unified web dashboard** consolidating real-time monitoring, experiment orchestration, historical analysis, regression detection, and reproducibility publishing
 
+### 3.4. Zone & Node Naming Hierarchy (Region 4 Specification)
+
+IGNIS V1 models a **single simulated forest region** assigned the internal identifier **Region 4**.
+
+> [!IMPORTANT]
+> **Explicit Clarification:** Region 4 is an internal simulation identifier and should not be interpreted as an official administrative designation of the Simlipal Biosphere Reserve or any real forest management jurisdiction.
+
+#### Spatial Partitioning
+The study region is partitioned into three neighboring ecological zones:
+
+| Zone ID | Description | Simlipal Reference | Function in Simulation |
+| :--- | :--- | :--- | :--- |
+| **`4A`** | **Northern Zone** | Simlipal North | Peer fog node for lateral warning propagation testing. |
+| **`4B`** | **Core Zone** | Simlipal Core | Primary high-risk biosphere sector under active test scenarios (S1–S5). |
+| **`4C`** | **Southern Zone** | Simlipal South | Peer fog node for multi-zone cross-talk isolation testing (S7). |
+
+#### Structural Hierarchy
+
+```
+Region (Simulated Study Area)
+  └── Zone (Ecological Sector)
+        └── Edge Node (Microclimate Sensor Array)
+```
+
+Detailed tree structure:
+
+```
+Region 4
+├── Zone 4A (Northern Zone)
+│      ├── Edge E1 (4A-E1)
+│      ├── Edge E2 (4A-E2)
+│      └── Edge E3 (4A-E3)
+├── Zone 4B (Core Zone)
+│      ├── Edge E1 (4B-E1)
+│      ├── Edge E2 (4B-E2)
+│      └── Edge E3 (4B-E3)
+└── Zone 4C (Southern Zone)
+       ├── Edge E1 (4C-E1)
+       ├── Edge E2 (4C-E2)
+       └── Edge E3 (4C-E3)
+```
+
+Therefore, the identifier **`4B-E2`** resolves to:
+- **Region 4**: Simulated study region
+- **Zone B**: Core ecological zone
+- **Edge Node 2**: Sensor node instance #2
+
+#### MQTT Topic Namespace Mapping
+This hierarchical structure maps directly into the versioned MQTT topic hierarchy:
+
+- `ignis/v1/telemetry/zone/4B/edge/4B-E1`:
+  - `ignis` $\rightarrow$ Project root namespace
+  - `v1` $\rightarrow$ Protocol version
+  - `telemetry` $\rightarrow$ Sensor telemetry message type
+  - `zone/4B` $\rightarrow$ Region 4, Zone B (Core Zone)
+  - `edge/4B-E1` $\rightarrow$ Edge Node 1 in Zone 4B
+- `ignis/v1/fog/zone/4B/state`:
+  - Decision state for the Fog Node responsible for Zone 4B within Region 4.
+
+#### Architectural Rationale & Future Scalability
+- The numeric prefix (**`4`**) groups related zones belonging to the same simulated forest region.
+- The alphabetic suffix (**`A`**, **`B`**, **`C`**) distinguishes neighboring ecological zones within that region.
+- This hierarchy allows the naming convention to scale naturally if additional simulated regions are introduced in future expansion versions:
+  ```
+  Region 1: 1A, 1B, 1C
+  Region 2: 2A, 2B, 2C
+  Region 3: 3A, 3B, 3C
+  Region 4: 4A, 4B, 4C  <-- (Modeled in IGNIS V1)
+  ```
+
 ### Architecture Diagram
 
 ```mermaid

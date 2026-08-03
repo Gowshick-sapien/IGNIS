@@ -58,6 +58,27 @@ This repository implements **IGNIS Version 1**:
 
 ---
 
+## Zone & Region Naming Hierarchy (Region 4)
+
+IGNIS V1 models a **single simulated forest region** assigned the internal identifier **Region 4**.
+
+> **Explicit Clarification:** Region 4 is an internal simulation identifier and should not be interpreted as an official administrative designation of the Simlipal Biosphere Reserve or any real forest management jurisdiction.
+
+```
+Region (Simulated Area)
+    ↓
+Zone (Ecological Sector)
+    ↓
+Edge Node (Sensor Array)
+```
+
+- **Region 4**: Assigned study area.
+- **Zone 4A** (Simlipal North), **Zone 4B** (Simlipal Core), **Zone 4C** (Simlipal South): Partitioned ecological sectors.
+- **Edge Node (e.g., `4B-E2`)**: Region 4 $\rightarrow$ Zone B $\rightarrow$ Sensor Node 2.
+- **MQTT Namespace**: `ignis/v1/telemetry/zone/4B/edge/4B-E1` represents Region 4, Zone B, Edge Node 1.
+
+---
+
 # Project Objectives
 
 - Develop a distributed wildfire early warning architecture.

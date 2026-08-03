@@ -105,6 +105,62 @@ flowchart TB
 
 ---
 
+### 3.1. Simulated Forest Region & Zone Naming Hierarchy (Region 4)
+
+IGNIS V1 models a **single simulated forest region** assigned the internal identifier **Region 4**.
+
+> [!IMPORTANT]
+> **Explicit Clarification:** Region 4 is an internal simulation identifier and should not be interpreted as an official administrative designation of the Simlipal Biosphere Reserve or any real forest management jurisdiction.
+
+#### Spatial Partitioning & Naming Hierarchy
+
+```
+Region (Simulated Study Area)
+  └── Zone (Ecological Sector)
+        └── Edge Node (Microclimate Sensor Array)
+```
+
+The simulated study region is partitioned into three neighboring ecological zones:
+
+| Zone | Description | Spatial / Ecological Profile |
+| :--- | :--- | :--- |
+| **`4A`** | **Northern Zone** | Simlipal North — Peer fog node for lateral warning propagation. |
+| **`4B`** | **Core Zone** | Simlipal Core — Primary high-risk biosphere sector under active test scenarios (S1–S5). |
+| **`4C`** | **Southern Zone** | Simlipal South — Peer fog node for multi-zone cross-talk isolation testing (S7). |
+
+```
+Region 4
+├── Zone 4A (Northern Zone)
+│      ├── Edge E1 (4A-E1)
+│      ├── Edge E2 (4A-E2)
+│      └── Edge E3 (4A-E3)
+├── Zone 4B (Core Zone)
+│      ├── Edge E1 (4B-E1)
+│      ├── Edge E2 (4B-E2)
+│      └── Edge E3 (4B-E3)
+└── Zone 4C (Southern Zone)
+       ├── Edge E1 (4C-E1)
+       ├── Edge E2 (4C-E2)
+       └── Edge E3 (4C-E3)
+```
+
+An identifier such as **`4B-E2`** resolves hierarchically to:
+- **Region 4**: Simulated study region
+- **Zone B**: Core ecological zone
+- **Edge Node 2**: Sensor node instance #2
+
+#### MQTT Topic Namespace Mapping
+The structural hierarchy is reflected directly in the versioned MQTT namespace:
+- `ignis/v1/telemetry/zone/4B/edge/4B-E1` $\rightarrow$ Telemetry from Edge Node 1, Zone B, Region 4.
+- `ignis/v1/fog/zone/4B/state` $\rightarrow$ Decision state for Fog Node responsible for Zone 4B in Region 4.
+
+#### Rationale & Scalability
+- The numeric prefix (**`4`**) groups related zones belonging to the same simulated forest region.
+- The alphabetic suffix (**`A`**, **`B`**, **`C`**) distinguishes neighboring ecological zones within that region.
+- This design scales naturally if additional simulated regions are added in future versions (e.g., Region 1: `1A,1B,1C`; Region 2: `2A,2B,2C`; Region 3: `3A,3B,3C`; Region 4: `4A,4B,4C`).
+
+---
+
 ## 4. Container Inventory
 
 | Container | Image Basis | Role | Scale |

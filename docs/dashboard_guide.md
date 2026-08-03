@@ -37,6 +37,7 @@ The UI is built with a high-contrast dark theme (`#0f172a` / `#1e293b` palette w
 * **Primary Role:** Real-Time Operational Monitoring & Advisory Command Center.
 * **Update Mechanism:** Polling every 2.0s via `/api/snapshot?zone_id=4B` and `/api/lateral-timeline`.
 * **Key Components & Features:**
+  * **Simulated Region 4 Topology:** Monitors Sector/Region 4 zones (`4A` North Zone, `4B` Core Zone, `4C` South Zone) and edge sensor nodes (`4B-E1`, `4B-E2`, `4B-E3`). Note: Region 4 is an internal simulation identifier.
   * **System Component Health Bar:** Status monitors for Cloud Broker (MQTT), InfluxDB Time-Series DB, Fog Node instance, and Cloud Ingestor service.
   * **Zone Status Overview Card:** Real-time Wildfire Hazard Index (WHI score), state classification (`NORMAL`, `ELEVATED`, `CRITICAL`), clamping status, and advisory override badge.
   * **Edge Sensor Telemetry Table:** Live node-by-node telemetry stream displaying Temperature (°C), Humidity (%), Wind Speed (km/h), Smoke (PPM), and Flame Detection status.

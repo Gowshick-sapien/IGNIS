@@ -217,6 +217,12 @@ docker exec -it ignis-mqtt-broker-4b mosquitto_sub -t "ignis/v1/fog/zone/+/later
 # mosquitto_sub -h localhost -p 1884 -t "ignis/v1/#" -v
 ```
 
+```
+
+#### MQTT Topic Namespace Hierarchy Interpretation
+- `ignis/v1/telemetry/zone/4B/edge/4B-E1` $\rightarrow$ Telemetry from **Edge Node 1** in **Zone 4B (Core Zone)** of **Region 4** (Simulated Study Area).
+- `ignis/v1/fog/zone/4B/state` $\rightarrow$ State decision from the **Fog Node** responsible for **Zone 4B** in **Region 4**.
+
 * **Pass Criteria:** Message payloads conform strictly to Pydantic schema contracts; timestamps are ISO8601 UTC; topic hierarchy matches `ignis/v1/...` specifications.
 
 ---
