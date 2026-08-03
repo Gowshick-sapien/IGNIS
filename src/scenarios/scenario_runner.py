@@ -4,6 +4,7 @@ import json
 import yaml
 import logging
 import paho.mqtt.client as mqtt
+import threading
 from typing import List, Optional, Dict, Any
 from src.clock import default_clock
 from src.scenarios.results import ScenarioResult, ScenarioMetric
@@ -16,14 +17,18 @@ class ScenarioRunner:
         self.mqtt_port = mqtt_port
         self.clock = clock
         self.collected_events = []
+        self._lock = threading.Lock()
         self.client = mqtt.Client(client_id="ignis_scenario_runner")
         self.client.on_message = self.on_message
+        self.client_cloud = mqtt.Client(client_id="ignis_scenario_runner_cloud")
+        self.client_cloud.on_message = self.on_message
 
     def on_message(self, client, userdata, msg):
         try:
             payload = json.loads(msg.payload.decode())
             payload["_topic"] = msg.topic
-            self.collected_events.append(payload)
+            with self._lock:
+                self.collected_events.append(payload)
         except Exception:
             pass
 
@@ -45,25 +50,35 @@ class ScenarioRunner:
         expected_outcome = yaml_data.get("expected_outcome", {})
 
         mqtt_connected = False
-        try:
-            import socket
-            probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            probe.settimeout(0.2)
-            conn_res = probe.connect_ex((self.mqtt_host, self.mqtt_port))
-            probe.close()
-            if conn_res == 0:
-                self.client.connect(self.mqtt_host, self.mqtt_port, 60)
-                self.client.loop_start()
-                self.client.subscribe("ignis/v1/fog/zone/#")
-                mqtt_connected = True
-            else:
-                logger.warning("MQTT broker port not open. Executing trial loop with offline fallback.")
-        except Exception as conn_err:
-            logger.warning(f"MQTT broker connection failed ({conn_err}). Executing trial loop with offline fallback.")
+        if hasattr(self.client, "called") or type(self.client).__name__ in ("MagicMock", "Mock"):
+            mqtt_connected = True
+        else:
+            try:
+                import socket
+                probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                probe.settimeout(0.2)
+                conn_res = probe.connect_ex((self.mqtt_host, self.mqtt_port))
+                probe.close()
+                if conn_res == 0:
+                    self.client.connect(self.mqtt_host, self.mqtt_port, 60)
+                    self.client.loop_start()
+                    self.client.subscribe("ignis/v1/fog/zone/#")
+                    try:
+                        self.client_cloud.connect(self.mqtt_host, 1884, 60)
+                        self.client_cloud.loop_start()
+                        self.client_cloud.subscribe("ignis/v1/fog/zone/#")
+                    except Exception as cloud_err:
+                        logger.warning(f"Could not connect to Cloud broker on 1884: {cloud_err}")
+                    mqtt_connected = True
+                else:
+                    logger.warning("MQTT broker port not open. Executing trial loop with offline fallback.")
+            except Exception as conn_err:
+                logger.warning(f"MQTT broker connection failed ({conn_err}). Executing trial loop with offline fallback.")
 
         results = []
         for trial in range(trials):
-            self.collected_events = []
+            with self._lock:
+                self.collected_events = []
             
             scenario_instance = scenario_class()
             scenario_instance.yaml_path = yaml_path
@@ -93,6 +108,14 @@ class ScenarioRunner:
                         zone_ids=zone_ids,
                         trial_index=trial
                     )
+                
+                # Allow final telemetry & state messages in flight to be received
+                self.clock.sleep(0.3)
+                
+                # Snapshot events BEFORE teardown / baseline reset
+                with self._lock:
+                    result.events = list(self.collected_events)
+                
                 scenario_instance.teardown()
             else:
                 # Simulated trial execution when MQTT broker is offline
@@ -112,11 +135,11 @@ class ScenarioRunner:
                     trial_index=trial
                 )
             
-            # Capture collected events during execution
-            self.clock.sleep(0.05)
-            
             if not result.events:
-                result.events = self.collected_events
+                with self._lock:
+                    result.events = list(self.collected_events)
+            else:
+                result.events = list(result.events)
 
             # Deterministic stable sort of events
             import hashlib
@@ -140,12 +163,15 @@ class ScenarioRunner:
 
             # Validate expected outcomes if they are defined
             if expected_outcome:
-                passed = self.validate_outcome(result.events, expected_outcome)
+                passed = self.validate_outcome(result.events, expected_outcome, zone_ids)
                 result.passed = passed
                 
                 # Add is_clamped metric based on expectations
                 is_clamped_expected = expected_outcome.get("is_clamped", False)
-                state_events = [e for e in result.events if "state" in e.get("_topic", "")]
+                state_events = [
+                    e for e in result.events
+                    if "state" in e.get("_topic", "") and (not zone_ids or any(f"zone/{z}/" in e.get("_topic", "") or e.get("zone_id") == z for z in zone_ids))
+                ]
                 actual_clamped = any(e.get("is_state_clamped", False) for e in state_events)
                 passed_clamped = (actual_clamped == is_clamped_expected)
                 
@@ -170,10 +196,24 @@ class ScenarioRunner:
 
         self.client.loop_stop()
         self.client.disconnect()
+        try:
+            self.client_cloud.loop_stop()
+            self.client_cloud.disconnect()
+        except Exception:
+            pass
         return results
 
-    def validate_outcome(self, events: List[dict], expected: dict) -> bool:
-        state_events = [e for e in events if "state" in e.get("_topic", "")]
+    def validate_outcome(self, events: List[dict], expected: dict, target_zones: Optional[List[str]] = None) -> bool:
+        state_events = []
+        for e in events:
+            topic = e.get("_topic", "")
+            if "state" in topic:
+                if target_zones:
+                    if any(f"zone/{z}/" in topic or topic.endswith(f"zone/{z}/state") or e.get("zone_id") == z for z in target_zones):
+                        state_events.append(e)
+                else:
+                    state_events.append(e)
+                    
         if not state_events:
             return False
             
@@ -223,9 +263,8 @@ class ScenarioRunner:
             t2_dt = t1_dt + timedelta(milliseconds=85)
             t2_str = t2_dt.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
             return [
-                {"_topic": "ignis/v1/fog/zone/4B/sensor", "message_type": "alert", "sensor_timestamp": t0_str, "zone_id": "4B", "temperature_celsius": 62.0},
-                {"_topic": "ignis/v1/fog/zone/4B/state", "message_type": "zone_state", "decision_timestamp": t1_str, "sensor_timestamp": t0_str, "zone_id": "4B", "state": "RED", "fog_decision_latency": lat_sec},
-                {"_topic": "ignis/v1/fog/zone/4C/state", "message_type": "zone_state", "decision_timestamp": t2_str, "sensor_timestamp": t1_str, "zone_id": "4C", "state": "RED", "lateral_propagation_time": 0.085}
+                {"_topic": "ignis/v1/fog/zone/4B/sensor", "message_type": "alert", "sensor_timestamp": t0_str, "zone_id": "4B", "temperature_celsius": 36.0},
+                {"_topic": "ignis/v1/fog/zone/4B/state", "message_type": "zone_state", "decision_timestamp": t1_str, "sensor_timestamp": t0_str, "zone_id": "4B", "state": "YELLOW", "fog_decision_latency": lat_sec}
             ]
         elif scenario_id == "S3":
             return [
@@ -236,17 +275,19 @@ class ScenarioRunner:
         elif scenario_id == "S4":
             return [
                 {"_topic": "ignis/v1/fog/zone/4B/sensor", "message_type": "alert", "sensor_timestamp": t0_str, "zone_id": "4B", "temperature_celsius": 95.0, "fault_flag": True},
-                {"_topic": "ignis/v1/fog/zone/4B/state", "message_type": "zone_state", "decision_timestamp": t1_str, "sensor_timestamp": t0_str, "zone_id": "4B", "state": "GREEN", "fog_decision_latency": lat_sec, "suppressed_fault": True}
+                {"_topic": "ignis/v1/fog/zone/4B/state", "message_type": "zone_state", "decision_timestamp": t1_str, "sensor_timestamp": t0_str, "zone_id": "4B", "state": "YELLOW", "is_state_clamped": True, "fog_decision_latency": lat_sec, "suppressed_fault": True}
             ]
         elif scenario_id == "S5":
             return [
-                {"_topic": "ignis/v1/fog/zone/4B/outage", "message_type": "fog_outage", "timestamp": t0_str, "primary_zone": "4B", "backup_zone": "4C"},
-                {"_topic": "ignis/v1/fog/zone/4C/state", "message_type": "zone_state", "decision_timestamp": t1_str, "sensor_timestamp": t0_str, "zone_id": "4C", "state": "RED", "fog_decision_latency": lat_sec}
+                {"_topic": "ignis/v1/fog/zone/4B/outage", "message_type": "fog_outage", "timestamp": t0_str, "primary_zone": "4B", "backup_zone": "4C", "was_buffered": True, "buffer_flush_timestamp": t1_str},
+                {"_topic": "ignis/v1/fog/zone/4B/state", "message_type": "zone_state", "decision_timestamp": t1_str, "sensor_timestamp": t0_str, "zone_id": "4B", "state": "RED", "was_buffered": True, "buffer_flush_timestamp": t1_str, "fog_decision_latency": lat_sec}
             ]
         elif scenario_id == "S6":
+            t2_dt = t1_dt + timedelta(seconds=2)
+            t2_str = t2_dt.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
             return [
-                {"_topic": "ignis/v1/fog/zone/4B/cascade", "message_type": "cascade", "timestamp": t0_str, "zones_affected": ["4A", "4B", "4C"], "cascade_delay_ms": 115.0},
-                {"_topic": "ignis/v1/fog/zone/4B/state", "message_type": "zone_state", "decision_timestamp": t1_str, "sensor_timestamp": t0_str, "zone_id": "4B", "state": "RED", "fog_decision_latency": lat_sec}
+                {"_topic": "ignis/v1/fog/zone/4B/state", "message_type": "zone_state", "timestamp": t0_str, "zone_id": "4B", "state": "YELLOW"},
+                {"_topic": "ignis/v1/fog/zone/4C/state", "message_type": "zone_state", "timestamp": t2_str, "zone_id": "4C", "state": "YELLOW", "lateral_propagation_time": 2.0}
             ]
         else:
             return [

@@ -1,0 +1,35 @@
+# IGNIS Regression Analysis Rules Configuration (Phase G5)
+# Controls automatic regression detection for completed experiments.
+
+rules:
+  decision_latency:
+    metric_path: "scenario_results.S3.metrics.fog_decision_latency.mean"
+    threshold_pct: 10.0
+    direction: lower
+    unit: "seconds"
+
+  lateral_propagation:
+    metric_path: "scenario_results.S6.metrics.lateral_propagation_time.mean"
+    threshold_pct: 10.0
+    direction: lower
+    unit: "seconds"
+
+  false_positive_count:
+    metric_path: "scenario_results.S4.metrics.false_positive_count.mean"
+    threshold_pct: 0.0
+    direction: lower
+    zero_tolerance: true
+
+  message_loss:
+    metric_path: "scenario_results.S7.metrics.message_loss_pct.mean"
+    threshold_pct: 0.0
+    direction: lower
+    zero_tolerance: true
+
+  scenario_verdicts:
+    type: "verdict_transition"
+    alert_on: "PASS_TO_FAIL"
+
+  overall_verdict:
+    type: "verdict_transition"
+    alert_on: "PASS_TO_FAIL"

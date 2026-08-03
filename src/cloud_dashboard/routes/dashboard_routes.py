@@ -62,6 +62,16 @@ async def charts_page(request: Request):
     )
 
 
+@dashboard_router.get("/metrics", response_class=HTMLResponse)
+async def metrics_page(request: Request):
+    """Real-Time Benchmarks & Section 7 Metrics KPI page."""
+    return templates.TemplateResponse(
+        request=request,
+        name="metrics.html",
+        context={"active_page": "metrics"}
+    )
+
+
 @dashboard_router.get("/scenarios", response_class=HTMLResponse)
 async def scenarios_page(request: Request):
     """Read-Only Scenario Browser page."""

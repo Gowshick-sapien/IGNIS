@@ -159,10 +159,25 @@ class CloudDashboardDB:
             logger.error(f"Error querying edge telemetry: {e}")
         return []
 
+    def _check_cloud_broker_socket(self) -> str:
+        import socket
+        host = os.environ.get("CLOUD_MQTT_HOST", "cloud-broker")
+        port = int(os.environ.get("CLOUD_MQTT_PORT", 1883))
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(0.5)
+            res = s.connect_ex((host, port))
+            s.close()
+            if res == 0:
+                return "ONLINE"
+        except Exception:
+            pass
+        return "OFFLINE"
+
     def get_system_health(self, zone_id: str) -> dict:
-        """Checks status of Ingestor, Broker, and Fog Node based on Influx logs."""
+        """Checks status of Ingestor, Broker, and Fog Node based on Influx logs and active socket probing."""
         health = {
-            "Cloud_Broker": "ONLINE",  # Assumed ONLINE if dashboard is querying, but will check connection
+            "Cloud_Broker": self._check_cloud_broker_socket(),
             "InfluxDB": "ONLINE" if self.ping_influx() else "OFFLINE",
             "Fog_Node": "OFFLINE",
             "Cloud_Ingestor": "OFFLINE"

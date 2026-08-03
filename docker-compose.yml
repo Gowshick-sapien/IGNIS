@@ -78,6 +78,10 @@ services:
     volumes:
       - ./historical:/app/historical
       - ./docs:/app/docs
+      - ./scenarios:/app/scenarios
+      - ./reports:/app/reports
+      - ./results:/app/results
+      - ./src:/app/src
     restart: unless-stopped
     networks:
       - cloud-net

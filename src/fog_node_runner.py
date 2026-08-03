@@ -253,16 +253,15 @@ class FogNodeRunner:
             success = False
             msg_details = ""
             
-            # 1. Manual Overrides
-            if command == "set_override_state":
-                state = parameters.get("state")
+            # 1. Manual Overrides & Clamping
+            if command in ["set_override_state", "SET_SAFETY_MODE"]:
+                state = parameters.get("state", "GREEN")
                 if state in self.STATE_ORDER:
                     self.override_active = True
                     self.override_state = state
                     self.override_operator = issued_by
                     self.override_reason = f"Manual override to {state} requested by {issued_by}"
                     
-                    # Log actions triggered by this override state
                     if state == "ORANGE":
                         self.override_actions = ["activate_mist_perimeter", "notify_control_center"]
                     elif state == "RED":
@@ -279,8 +278,21 @@ class FogNodeRunner:
                     logger.info(f"FOG MANUAL STATE OVERRIDE: Clamped to {state}")
                 else:
                     msg_details = f"Invalid state value: {state}"
-                    
-            elif command == "release_override":
+
+            elif command == "FORCE_CLAMP_WHI":
+                clamped_val = float(parameters.get("clamped_value", 0.25))
+                # Force clamped state based on clamped_value
+                state = "YELLOW" if clamped_val >= 0.3 else "GREEN"
+                self.override_active = True
+                self.override_state = state
+                self.override_operator = issued_by
+                self.override_reason = f"FORCE_CLAMP_WHI to {clamped_val} requested by {issued_by}"
+                self.override_actions = []
+                success = True
+                msg_details = f"WHI successfully clamped to {clamped_val} (State: {state})"
+                logger.info(f"FOG FORCE CLAMP WHI: Clamped to {clamped_val} ({state})")
+
+            elif command in ["release_override", "RESET_OVERRIDE"]:
                 self.override_active = False
                 self.override_state = "NONE"
                 self.override_operator = "SYSTEM"
@@ -291,12 +303,17 @@ class FogNodeRunner:
                 logger.info("FOG MANUAL STATE OVERRIDE: Released")
                 
             # 2. Dynamic Threshold Policy Updates
-            elif command == "adjust_temperature_threshold":
-                val = float(parameters.get("value", 40.0))
-                self.fog_processor.sensor_limits["temperature_c"]["confirmation_threshold"] = val
+            elif command in ["adjust_temperature_threshold", "ADJUST_THRESHOLD"]:
+                val = float(parameters.get("value", parameters.get("threshold", 40.0)))
+                sensor = parameters.get("sensor", "temperature")
+                if sensor == "gas" or "gas" in command:
+                    self.fog_processor.sensor_limits["gas_ppm"]["confirmation_threshold"] = val
+                    msg_details = f"Gas confirmation threshold adjusted to {val} PPM"
+                else:
+                    self.fog_processor.sensor_limits["temperature_c"]["confirmation_threshold"] = val
+                    msg_details = f"Temperature confirmation threshold adjusted to {val}°C"
                 success = True
-                msg_details = f"Temperature confirmation threshold adjusted to {val}°C"
-                logger.info(f"POLICY UPDATE: Temperature threshold updated to {val}")
+                logger.info(f"POLICY UPDATE: Threshold updated to {val}")
                 
             elif command == "adjust_humidity_threshold":
                 val = float(parameters.get("value", 25.0))
@@ -514,6 +531,7 @@ class FogNodeRunner:
             actions_logged = self.override_actions
             
         timestamp = self.clock.strftime("%Y-%m-%dT%H:%M:%SZ")
+        latest_sensor_ts = max((r.get("timestamp") or r.get("raw_reading", {}).get("timestamp", timestamp) for r in active_records), default=timestamp)
         
         # 1. Publish Zone State Heartbeat (to Local & Cloud)
         state_payload = {
@@ -521,6 +539,8 @@ class FogNodeRunner:
             "version": "1",
             "zone_id": self.zone_id,
             "timestamp": timestamp,
+            "sensor_timestamp": latest_sensor_ts,
+            "decision_timestamp": timestamp,
             "whi": float(zone_whi),
             "state": zone_state,
             "is_state_clamped": bool(is_clamped),

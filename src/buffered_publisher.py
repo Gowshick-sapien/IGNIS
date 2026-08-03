@@ -40,6 +40,16 @@ class BufferedPublisher:
             while self.buffer:
                 topic, payload = self.buffer[0]
                 try:
+                    # Inject buffering metadata if payload is JSON
+                    try:
+                        import json
+                        data = json.loads(payload)
+                        if isinstance(data, dict):
+                            data["was_buffered"] = True
+                            data["buffer_flush_timestamp"] = self.clock.strftime("%Y-%m-%dT%H:%M:%SZ")
+                            payload = json.dumps(data)
+                    except Exception:
+                        pass
                     res = self.client.publish(topic, payload)
                     if res is not None and hasattr(res, 'rc'):
                         if isinstance(res.rc, int) and res.rc != 0:

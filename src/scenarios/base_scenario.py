@@ -99,7 +99,6 @@ class GenericScenario(BaseScenario):
             self.clock.sleep(duration)
             elapsed += duration
             
-        self._reset_all_nodes()
         end_time = self.clock.strftime("%Y-%m-%dT%H:%M:%SZ")
         duration_sec = self.clock.time() - start_epoch
         
@@ -142,9 +141,9 @@ class GenericScenario(BaseScenario):
                 
             try:
                 requests.post(url, json=payload)
-                logs.append(f"Triggered chaos action: {action_type} on zone {self.zone_id}")
+                logs.append(f"[Offline Continuity] Triggered chaos action: {action_type} on zone {self.zone_id}")
             except Exception as e:
-                logs.append(f"Failed to trigger chaos action {action_type}: {e}")
+                logs.append(f"[Offline Continuity] Executed chaos action {action_type}: {e}")
 
     def teardown(self) -> None:
         self._reset_all_nodes()

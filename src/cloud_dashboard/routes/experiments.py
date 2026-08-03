@@ -259,6 +259,29 @@ async def get_experiment_results(request: Request):
         )
 
 
+@experiments_router.get("/raw-results", response_model=Dict[str, Any])
+async def get_experiment_raw_results(request: Request):
+    """Fetch current active raw_results.json output."""
+    pm = _get_process_manager(request)
+    raw_path = os.path.join(pm.results_dir, "raw_results.json")
+    if not os.path.exists(raw_path):
+        return _error_response(
+            status_code=status.HTTP_404_NOT_FOUND,
+            error_code="ExperimentNotFound",
+            message="No active or loaded raw_results.json available."
+        )
+    try:
+        with open(raw_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return {"status": "success", "data": data}
+    except Exception as e:
+        return _error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            error_code="FileReadError",
+            message=f"Error reading raw_results.json: {e}"
+        )
+
+
 @experiments_router.get("/logs", response_model=Dict[str, Any])
 async def get_experiment_logs(tail: int = 100, request: Request = None):
     """Fetch trailing lines from active experiment log file."""

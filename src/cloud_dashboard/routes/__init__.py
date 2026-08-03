@@ -75,9 +75,6 @@ async def get_snapshot(request: Request, zone_id: str = "4B"):
     logs = db.get_recent_alerts_and_logs(zone_id, limit=15)
     performance = db.get_latest_performance_metrics(zone_id)
     
-    # Query Cloud Broker health
-    system_health["Cloud_Broker"] = "ONLINE"
-    
     return {
         "database_health": "ONLINE",
         "zone_state": zone_state,
@@ -245,12 +242,3 @@ async def get_latest_metrics():
     except Exception as e:
         logger.error(f"Failed to read metrics file: {e}")
         raise HTTPException(status_code=500, detail="Failed to load metrics results.")
-
-@router.get("/metrics", response_class=HTMLResponse)
-async def read_metrics():
-    template_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates", "metrics.html")
-    try:
-        with open(template_path, "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-    except FileNotFoundError:
-        raise HTTPException(status_code=404, detail="Cloud dashboard metrics template not found.")

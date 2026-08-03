@@ -1,0 +1,115 @@
+scenario_id: "S5"
+description: "Cloud Outage During Event — Simulates sudden ignition with concurrent cloud network partition."
+version: "1.0"
+target:
+  mode: "localized"
+  zone_ids: ["4B"]
+  target_node_index: 1
+steps:
+  - index: 0
+    duration_sec: 4
+    sensor_data:
+      temperature_c: 32.0
+      humidity_pct: 40.0
+      wind_speed_kmh: 10.0
+      wind_dir_deg: 220.0
+      soil_moisture_pct: 20.0
+      gas_ppm: 12.0
+      thermal_anomaly_c: 0.2
+      light_lux: 50000.0
+      rain_mm: 0.0
+    seasonal_baseline: 0.85
+  - index: 1
+    duration_sec: 4
+    sensor_data:
+      temperature_c: 32.0
+      humidity_pct: 40.0
+      wind_speed_kmh: 10.0
+      wind_dir_deg: 220.0
+      soil_moisture_pct: 20.0
+      gas_ppm: 12.0
+      thermal_anomaly_c: 0.2
+      light_lux: 50000.0
+      rain_mm: 0.0
+    seasonal_baseline: 0.85
+  - index: 2
+    duration_sec: 4
+    sensor_data:
+      temperature_c: 35.5
+      humidity_pct: 32.0
+      wind_speed_kmh: 12.0
+      wind_dir_deg: 220.0
+      soil_moisture_pct: 18.0
+      gas_ppm: 28.0
+      thermal_anomaly_c: 1.5
+      light_lux: 48000.0
+      rain_mm: 0.0
+    seasonal_baseline: 0.85
+  - index: 3
+    duration_sec: 4
+    sensor_data:
+      temperature_c: 41.0
+      humidity_pct: 22.0
+      wind_speed_kmh: 15.0
+      wind_dir_deg: 230.0
+      soil_moisture_pct: 12.0
+      gas_ppm: 45.0
+      thermal_anomaly_c: 3.8
+      light_lux: 42000.0
+      rain_mm: 0.0
+    seasonal_baseline: 0.85
+  - index: 4
+    duration_sec: 4
+    sensor_data:
+      temperature_c: 49.0
+      humidity_pct: 12.0
+      wind_speed_kmh: 22.0
+      wind_dir_deg: 240.0
+      soil_moisture_pct: 6.0
+      gas_ppm: 85.0
+      thermal_anomaly_c: 7.5
+      light_lux: 35000.0
+      rain_mm: 0.0
+    seasonal_baseline: 0.85
+  - index: 5
+    duration_sec: 4
+    sensor_data:
+      temperature_c: 49.0
+      humidity_pct: 12.0
+      wind_speed_kmh: 22.0
+      wind_dir_deg: 240.0
+      soil_moisture_pct: 6.0
+      gas_ppm: 85.0
+      thermal_anomaly_c: 7.5
+      light_lux: 35000.0
+      rain_mm: 0.0
+    seasonal_baseline: 0.85
+chaos_actions:
+  - type: "disconnect_cloud"
+    time_offset_sec: 8
+    duration_sec: 20
+expected_outcome:
+  final_state: "RED"
+  max_state_allowed: "RED"
+  is_clamped: false
+metrics_targets:
+  offline_continuity: true
+  flush_success_rate: 1.0
+
+validation:
+  require_events: true
+  min_event_count: 1
+  timeout_sec: 120
+  assertions:
+    - metric: "offline_continuity"
+      operator: "=="
+      threshold: 1.0
+      unit: "bool"
+    - metric: "flush_success_rate"
+      operator: "=="
+      threshold: 1.0
+      unit: "ratio"
+
+metadata:
+  forest_type: "sal_forest"
+  zone_profile: "simlipal_south"

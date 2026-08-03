@@ -202,18 +202,19 @@ In addition to automated unit and integration tests, IGNIS Version 1 includes a 
 Test engineers can manually inspect live pub/sub payloads using standard MQTT CLI tools:
 
 ```bash
-# 1. Subscribe to all local edge & fog telemetry on Zone 4B (Port 1883)
-mosquitto_sub -h localhost -p 1883 -t "ignis/v1/#" -v
+# Option A: Inspect via Docker Container (Recommended for Windows without host mosquitto CLI)
+# 1. Subscribe to Zone 4B Local Broker (Port 1883)
+docker exec -it ignis-mqtt-broker-4b mosquitto_sub -t "ignis/v1/#" -v
 
-# Expected Output Format:
-# ignis/v1/zone/4B/edge/4B-E1/reading {"node_id":"4B-E1","zone_id":"4B","timestamp":"...","temperature":28.4,"humidity":52.1,...}
-# ignis/v1/zone/4B/fog/state {"zone_id":"4B","whi":0.28,"state":"NORMAL","timestamp":"..."}
-
-# 2. Subscribe to Central Cloud Broker telemetry (Port 1884)
-mosquitto_sub -h localhost -p 1884 -t "ignis/v1/#" -v
+# 2. Subscribe to Central Cloud Broker (Port 1884)
+docker exec -it ignis-cloud-broker mosquitto_sub -t "ignis/v1/#" -v
 
 # 3. Monitor Inter-Fog Lateral Coordination Events
-mosquitto_sub -h localhost -p 1883 -t "ignis/v1/lateral/#" -v
+docker exec -it ignis-mqtt-broker-4b mosquitto_sub -t "ignis/v1/fog/zone/+/lateral" -v
+
+# Option B: Inspect via Host Mosquitto CLI (If mosquitto_sub is installed on Host PATH)
+# mosquitto_sub -h localhost -p 1883 -t "ignis/v1/#" -v
+# mosquitto_sub -h localhost -p 1884 -t "ignis/v1/#" -v
 ```
 
 * **Pass Criteria:** Message payloads conform strictly to Pydantic schema contracts; timestamps are ISO8601 UTC; topic hierarchy matches `ignis/v1/...` specifications.
@@ -232,15 +233,20 @@ mosquitto_sub -h localhost -p 1883 -t "ignis/v1/lateral/#" -v
 
 ### Section 5.4: Manual Reproducibility Bundle Verification Protocol
 
-1. **Download Bundle:** From `http://localhost:9000/settings`, click **"Generate Reproducibility Bundle"** for an archived experiment run (e.g. `exp-20260801T091603Z-b2b5`).
-2. **Transfer & Extract:** Move the downloaded `.zip` file to an isolated directory outside the repository (e.g., `/tmp/reproduction_test`).
-3. **Execute Standalone Script:**
-   ```bash
-   cd /tmp/reproduction_test
-   python run_reproduction.py
+1. **Generate & Download Bundle:** From `http://localhost:9000/settings` or `/repository`, click **"Generate Reproducibility Bundle"** for an experiment run (e.g. `exp-20260803T041519Z-aad9`). The generated bundle is saved to `reports/exports/reproducibility_bundle_<exp_id>.zip`.
+2. **Extract Archive:** Unzip the downloaded `.zip` file into an isolated folder (e.g., `D:\projects\IGNIS\tmp\reproduction_test`).
+3. **Navigate to Extracted Bundle & Verify Checksums:**
+   ```cmd
+   cd D:\projects\IGNIS\tmp\reproduction_test\reproducibility_bundle_exp-20260803T041519Z-aad9
+   python -c "import json, hashlib, os; manifest=json.load(open('bundle_manifest.json')); print('Manifest Verification PASS:', all(hashlib.sha256(open(f, 'rb').read()).hexdigest() == h for f, h in manifest['checksums'].items() if f != 'bundle_manifest.json' and os.path.exists(f)))"
    ```
-4. **Verify Manifest Checksum:** Compare `reproduction_manifest.json` SHA256 digest against the original repository record.
-* **Pass Criteria:** Simulation executes independently without external dependencies; generated WHI scores and latencies match original run results within 99.9% statistical confidence.
+4. **Replay Experiment Scenario:**
+   Return to the main repository root directory where `src/` is located:
+   ```cmd
+   cd D:\projects\IGNIS
+   python -m src.run_experiment --trials 5 --seed 4321
+   ```
+* **Pass Criteria:** `bundle_manifest.json` SHA256 checksums match all extracted files 100%; experiment scenario replay produces identical WHI scores and latencies within statistical bounds.
 
 ---
 

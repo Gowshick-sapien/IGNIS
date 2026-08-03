@@ -533,6 +533,7 @@
                 <a href="/repository" style="padding: 6px 14px; background: rgba(255,255,255,0.06); color: #e2e8f0; text-decoration: none; border-radius: 4px; font-size: 0.85rem; font-weight: 500; border: 1px solid rgba(255,255,255,0.1);">Repository</a>
                 <a href="/comparison" style="padding: 6px 14px; background: rgba(255,255,255,0.06); color: #e2e8f0; text-decoration: none; border-radius: 4px; font-size: 0.85rem; font-weight: 500; border: 1px solid rgba(255,255,255,0.1);">Comparison</a>
                 <a href="/charts" style="padding: 6px 14px; background: rgba(255,255,255,0.06); color: #e2e8f0; text-decoration: none; border-radius: 4px; font-size: 0.85rem; font-weight: 500; border: 1px solid rgba(255,255,255,0.1);">Charts</a>
+                <a href="/metrics" style="padding: 6px 14px; background: rgba(255,255,255,0.06); color: #e2e8f0; text-decoration: none; border-radius: 4px; font-size: 0.85rem; font-weight: 500; border: 1px solid rgba(255,255,255,0.1);">Metrics</a>
                 <a href="/scenarios" style="padding: 6px 14px; background: rgba(255,255,255,0.06); color: #e2e8f0; text-decoration: none; border-radius: 4px; font-size: 0.85rem; font-weight: 500; border: 1px solid rgba(255,255,255,0.1);">Scenarios</a>
                 <a href="/settings" style="padding: 6px 14px; background: rgba(255,255,255,0.06); color: #e2e8f0; text-decoration: none; border-radius: 4px; font-size: 0.85rem; font-weight: 500; border: 1px solid rgba(255,255,255,0.1);">Settings</a>
             </div>
@@ -586,7 +587,26 @@
                 <div class="panel">
                     <div class="panel-title">Operator Advisory Console</div>
                     
-                    <div class="form-group">
+                    <!-- MT-02 Explicit Advisory Command Dispatcher -->
+                    <div style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px;">
+                        <span style="font-size: 11px; font-weight: 600; color: #38bdf8;">Advisory Command Dispatcher</span>
+                        <div class="form-group">
+                            <label for="adv-command">Command</label>
+                            <select id="adv-command" onchange="onCommandChange()" style="width: 100%;">
+                                <option value="FORCE_CLAMP_WHI" selected>FORCE_CLAMP_WHI</option>
+                                <option value="SET_SAFETY_MODE">SET_SAFETY_MODE</option>
+                                <option value="RESET_OVERRIDE">RESET_OVERRIDE</option>
+                                <option value="ADJUST_THRESHOLD">ADJUST_THRESHOLD</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="adv-params">Parameters (JSON)</label>
+                            <input type="text" id="adv-params" value='{"clamped_value": 0.25}' style="width: 100%; font-family: monospace;">
+                        </div>
+                        <button class="btn-primary" onclick="dispatchCustomAdvisoryCommand()" style="width: 100%; padding: 10px; margin-top: 2px;">Dispatch Advisory Command</button>
+                    </div>
+
+                    <div style="border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 12px;" class="form-group">
                         <label>Manual Override State</label>
                         <div style="display: flex; gap: 8px;">
                             <select id="override-state" style="flex: 1;">
@@ -753,6 +773,32 @@
         // ==========================================
         // API Calls & Actions
         // ==========================================
+        function onCommandChange() {
+            const cmd = document.getElementById("adv-command").value;
+            const paramInput = document.getElementById("adv-params");
+            if (cmd === "FORCE_CLAMP_WHI") {
+                paramInput.value = '{"clamped_value": 0.25}';
+            } else if (cmd === "SET_SAFETY_MODE") {
+                paramInput.value = '{"state": "ORANGE"}';
+            } else if (cmd === "RESET_OVERRIDE") {
+                paramInput.value = '{}';
+            } else if (cmd === "ADJUST_THRESHOLD") {
+                paramInput.value = '{"sensor": "temperature", "threshold": 40.0}';
+            }
+        }
+
+        function dispatchCustomAdvisoryCommand() {
+            const cmd = document.getElementById("adv-command").value;
+            const rawParams = document.getElementById("adv-params").value;
+            let params = {};
+            try {
+                params = JSON.parse(rawParams);
+            } catch (e) {
+                return showToast("Invalid JSON parameters format", true);
+            }
+            postAdvisoryCommand(cmd, params);
+        }
+
         function submitOverride() {
             const state = document.getElementById("override-state").value;
             postAdvisoryCommand("set_override_state", { "state": state });

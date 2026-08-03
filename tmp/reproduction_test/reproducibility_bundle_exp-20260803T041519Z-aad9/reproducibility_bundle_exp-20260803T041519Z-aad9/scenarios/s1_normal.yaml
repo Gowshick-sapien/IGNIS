@@ -1,0 +1,106 @@
+scenario_id: "S1"
+description: "Normal Day — Slow natural drift within normal bounds. Everything stays GREEN."
+version: "1.0"
+target:
+  mode: "global"
+  zone_ids: ["4B"]
+steps:
+  - index: 0
+    duration_sec: 4
+    sensor_data:
+      temperature_c: 28.0
+      humidity_pct: 55.0
+      wind_speed_kmh: 6.0
+      wind_dir_deg: 180.0
+      soil_moisture_pct: 28.0
+      gas_ppm: 12.0
+      thermal_anomaly_c: 0.2
+      light_lux: 20000.0
+      rain_mm: 0.0
+    seasonal_baseline: 0.3
+  - index: 1
+    duration_sec: 4
+    sensor_data:
+      temperature_c: 28.4
+      humidity_pct: 54.5
+      wind_speed_kmh: 6.3
+      wind_dir_deg: 185.0
+      soil_moisture_pct: 27.8
+      gas_ppm: 12.1
+      thermal_anomaly_c: 0.25
+      light_lux: 30000.0
+      rain_mm: 0.0
+    seasonal_baseline: 0.3
+  - index: 2
+    duration_sec: 4
+    sensor_data:
+      temperature_c: 28.8
+      humidity_pct: 54.0
+      wind_speed_kmh: 6.6
+      wind_dir_deg: 190.0
+      soil_moisture_pct: 27.6
+      gas_ppm: 12.2
+      thermal_anomaly_c: 0.3
+      light_lux: 40000.0
+      rain_mm: 0.0
+    seasonal_baseline: 0.3
+  - index: 3
+    duration_sec: 4
+    sensor_data:
+      temperature_c: 29.2
+      humidity_pct: 53.5
+      wind_speed_kmh: 6.9
+      wind_dir_deg: 195.0
+      soil_moisture_pct: 27.4
+      gas_ppm: 12.3
+      thermal_anomaly_c: 0.35
+      light_lux: 50000.0
+      rain_mm: 0.0
+    seasonal_baseline: 0.3
+  - index: 4
+    duration_sec: 4
+    sensor_data:
+      temperature_c: 29.6
+      humidity_pct: 53.0
+      wind_speed_kmh: 7.2
+      wind_dir_deg: 200.0
+      soil_moisture_pct: 27.2
+      gas_ppm: 12.4
+      thermal_anomaly_c: 0.4
+      light_lux: 50000.0
+      rain_mm: 0.0
+    seasonal_baseline: 0.3
+  - index: 5
+    duration_sec: 4
+    sensor_data:
+      temperature_c: 30.0
+      humidity_pct: 52.5
+      wind_speed_kmh: 7.5
+      wind_dir_deg: 205.0
+      soil_moisture_pct: 27.0
+      gas_ppm: 12.5
+      thermal_anomaly_c: 0.45
+      light_lux: 50000.0
+      rain_mm: 0.0
+    seasonal_baseline: 0.3
+chaos_actions: []
+expected_outcome:
+  final_state: "GREEN"
+  max_state_allowed: "GREEN"
+  is_clamped: false
+metrics_targets:
+  false_positive_rate: 0.0
+
+validation:
+  require_events: true
+  min_event_count: 1
+  timeout_sec: 60
+  assertions:
+    - metric: "max_state"
+      operator: "=="
+      threshold: "GREEN"
+      unit: "state"
+
+metadata:
+  forest_type: "dry_deciduous"
+  zone_profile: "simlipal_core"
