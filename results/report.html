@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IGNIS Experiment Report — exp-20260803T041519Z-aad9</title>
+    <title>IGNIS Experiment Report — exp-20260805T103447Z-8ace</title>
     <script>
 /**
 * plotly.js v2.27.0
@@ -549,7 +549,7 @@ mark.search-mark {
             <ul class="toc-list">
                 <li class="toc-item"><a href="#summary">Executive Summary</a></li>
 <li class="toc-item"><a href="#key-findings">Key Findings</a></li>
-<li class="toc-item toc-subitem"><a href="#scenario-s3">Scenario S3</a></li>
+<li class="toc-item toc-subitem"><a href="#scenario-s2">Scenario S2</a></li>
 <li class="toc-item"><a href="#charts">Interactive Analytics</a></li>
 <li class="toc-item"><a href="#appendix">Appendix & Metadata</a></li>
             </ul>
@@ -566,7 +566,7 @@ mark.search-mark {
         <div class="top-bar">
             <div class="report-title">
                 <h1>IGNIS Experimentation & Validation Report</h1>
-                <p>Experiment ID: <code>exp-20260803T041519Z-aad9</code> | Generated: 2026-08-03 04:15:24 UTC</p>
+                <p>Experiment ID: <code>exp-20260805T103447Z-8ace</code> | Generated: 2026-08-05 10:34:52 UTC</p>
             </div>
             <div class="controls-group">
                 <button id="expand-all" class="btn">Expand All</button>
@@ -596,7 +596,7 @@ mark.search-mark {
             </div>
             <div class="metric-card">
                 <div class="metric-label">Execution Duration</div>
-                <div class="metric-value">3.34s</div>
+                <div class="metric-value">3.61s</div>
                 <div class="metric-sub">Pipeline wall clock time</div>
             </div>
             <div class="metric-card">
@@ -624,9 +624,9 @@ mark.search-mark {
         <section id="scenarios-container">
             <h2 style="font-size: 1.4rem; margin-bottom: 1rem;">Scenario Validation Details</h2>
             
-        <details id="scenario-s3" class="scenario-section">
+        <details id="scenario-s2" class="scenario-section">
             <summary>
-                <span><strong>S3:</strong> Scenario S3</span>
+                <span><strong>S2:</strong> Scenario S2</span>
                 <div style="display: flex; align-items: center; gap: 1rem;">
                     <span style="font-size: 0.85rem; color: var(--text-muted);">10 trials | 0.0s</span>
                     <span class="badge badge-pass">PASS</span>
@@ -635,7 +635,7 @@ mark.search-mark {
             <div class="scenario-content">
                 <div class="scenario-meta-bar">
                     
-                    <p class="scenario-reason"><strong>Scenario Outcome Reason:</strong> All assertions passed across 2 rules</p>
+                    <p class="scenario-reason"><strong>Scenario Outcome Reason:</strong> All assertions passed across 1 rules</p>
                 </div>
                 
                 <h4 style="font-size: 1rem; color: var(--text-primary); margin-bottom: 1rem;">Metric Validations & Classification</h4>
@@ -643,44 +643,7 @@ mark.search-mark {
                     
     <div class="metric-card-detail">
         <div class="metric-card-header">
-            <h4>Fog Decision Latency</h4>
-            <span class="metric-type-tag">Statistical Metric</span>
-        </div>
-        
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Metric</th>
-                    <th>Mean</th>
-                    <th>Median</th>
-                    <th>Std Dev</th>
-                    <th>95% Confidence Interval</th>
-                    <th>Samples</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><strong>Fog Decision Latency</strong></td>
-                    <td>0.462</td>
-                    <td>0.448</td>
-                    <td>0.307</td>
-                    <td><code>[0.243, 0.682]</code></td>
-                    <td>10</td>
-                    <td><span class="badge badge-pass">PASS</span></td>
-                </tr>
-            </tbody>
-        </table>
-        
-        <div class="metric-reason">
-            <strong>Reason:</strong> Mean 0.4624 s <= threshold 5.0 s
-        </div>
-    </div>
-    
-
-    <div class="metric-card-detail">
-        <div class="metric-card-header">
-            <h4>Final State</h4>
+            <h4>Max State</h4>
             <span class="metric-type-tag">Assertion Metric</span>
         </div>
         
@@ -692,15 +655,15 @@ mark.search-mark {
                 </tr>
             </thead>
             <tbody>
-                <tr><td>Observed Value</td><td><strong>RED</strong></td></tr>
-                <tr><td>Expected Threshold</td><td><code>RED</code></td></tr>
-                <tr><td>Comparison Operator</td><td><code>==</code></td></tr>
+                <tr><td>Observed Value</td><td><strong>YELLOW</strong></td></tr>
+                <tr><td>Expected Threshold</td><td><code>YELLOW</code></td></tr>
+                <tr><td>Comparison Operator</td><td><code><=</code></td></tr>
                 <tr><td>Validation Status</td><td><span class="badge badge-pass">PASS</span></td></tr>
             </tbody>
         </table>
         
         <div class="metric-reason">
-            <strong>Reason:</strong> RED == threshold RED
+            <strong>Reason:</strong> YELLOW <= threshold YELLOW
         </div>
     </div>
     
@@ -710,35 +673,15 @@ mark.search-mark {
                     <summary style="font-size: 0.85rem; color: var(--text-muted); cursor: pointer;">Raw Metric JSON (Developer Data)</summary>
                     <pre class="json-code"><code>{
   "status": "PASS",
-  "reason": "All assertions passed across 2 rules",
+  "reason": "All assertions passed across 1 rules",
   "trials": 10,
   "metrics": {
-    "fog_decision_latency": {
-      "sample_count": 10,
-      "min": 0.0391,
-      "minimum": 0.0391,
-      "max": 0.9364,
-      "maximum": 0.9364,
-      "mean": 0.4624,
-      "median": 0.4483,
-      "std_dev": 0.3067,
-      "confidence95": [
-        0.243,
-        0.6818
-      ],
-      "ci_method": "scipy",
-      "avg_sec": 0.4624,
+    "max_state": {
+      "value": "YELLOW",
       "status": "PASS",
-      "reason": "Mean 0.4624 s <= threshold 5.0 s",
-      "threshold": 5.0,
+      "reason": "YELLOW <= threshold YELLOW",
+      "threshold": "YELLOW",
       "operator": "<="
-    },
-    "final_state": {
-      "value": "RED",
-      "status": "PASS",
-      "reason": "RED == threshold RED",
-      "threshold": "RED",
-      "operator": "=="
     }
   }
 }</code></pre>
@@ -758,7 +701,7 @@ mark.search-mark {
     <div id="chart-decision-latency" class="chart-container"></div>
     <script>
         (function() {
-            const data = [{"type": "box", "y": [0.1735, 0.2777, 0.3921, 0.5045, 0.6068, 0.7208, 0.8256, 0.9364, 0.0391, 0.1479], "name": "Fog Node 4B", "boxpoints": "all", "jitter": 0.3, "pointpos": -1.8, "marker": {"color": "#38bdf8", "size": 6}, "line": {"width": 2}}];
+            const data = [{"type": "box", "y": [0.12, 0.15, 0.08, 0.14, 0.11, 0.13, 0.09, 0.1, 0.12, 0.11], "name": "Fog Node 4B", "boxpoints": "all", "jitter": 0.3, "pointpos": -1.8, "marker": {"color": "#38bdf8", "size": 6}, "line": {"width": 2}}];
             const layout = {"title": {"text": "Scenario S3: Fog Decision Latency Distribution", "font": {"size": 16, "color": "#f8fafc", "family": "system-ui, sans-serif"}}, "paper_bgcolor": "#1e293b", "plot_bgcolor": "#1e293b", "font": {"color": "#f8fafc", "family": "system-ui, sans-serif"}, "margin": {"l": 50, "r": 30, "t": 50, "b": 50}, "autosize": true, "legend": {"font": {"color": "#f8fafc"}}, "xaxis": {"title": {"text": "Fog Node Zone"}, "gridcolor": "rgba(255, 255, 255, 0.1)", "zerolinecolor": "rgba(255, 255, 255, 0.1)", "tickfont": {"color": "#f8fafc"}}, "yaxis": {"title": {"text": "Latency (seconds)"}, "gridcolor": "rgba(255, 255, 255, 0.1)", "zerolinecolor": "rgba(255, 255, 255, 0.1)", "tickfont": {"color": "#f8fafc"}}};
             const config = {"responsive": true};
             Plotly.newPlot('chart-decision-latency', data, layout, config);
@@ -768,7 +711,7 @@ mark.search-mark {
     <div id="chart-latency-histogram" class="chart-container"></div>
     <script>
         (function() {
-            const data = [{"type": "histogram", "x": [21.173529, 21.27767, 21.392115, 21.504549, 21.606802, 21.720825, 21.825571, 21.936358, 22.039127, 22.147909], "nbinsx": 10, "marker": {"color": "#c084fc", "line": {"color": "#ffffff", "width": 1}}, "name": "Latency Frequency"}];
+            const data = [{"type": "histogram", "x": [0.12, 0.15, 0.08, 0.14, 0.11, 0.13, 0.09, 0.1, 0.12, 0.11], "nbinsx": 10, "marker": {"color": "#c084fc", "line": {"color": "#ffffff", "width": 1}}, "name": "Latency Frequency"}];
             const layout = {"title": {"text": "Decision Latency Frequency Histogram", "font": {"size": 16, "color": "#f8fafc", "family": "system-ui, sans-serif"}}, "paper_bgcolor": "#1e293b", "plot_bgcolor": "#1e293b", "font": {"color": "#f8fafc", "family": "system-ui, sans-serif"}, "margin": {"l": 50, "r": 30, "t": 50, "b": 50}, "autosize": true, "legend": {"font": {"color": "#f8fafc"}}, "xaxis": {"title": {"text": "Latency (seconds)"}, "gridcolor": "rgba(255, 255, 255, 0.1)", "zerolinecolor": "rgba(255, 255, 255, 0.1)", "tickfont": {"color": "#f8fafc"}}, "yaxis": {"title": {"text": "Trial Count"}, "gridcolor": "rgba(255, 255, 255, 0.1)", "zerolinecolor": "rgba(255, 255, 255, 0.1)", "tickfont": {"color": "#f8fafc"}}};
             const config = {"responsive": true};
             Plotly.newPlot('chart-latency-histogram', data, layout, config);
@@ -863,8 +806,8 @@ mark.search-mark {
         <h2 class="card-title">Appendix & Reproducibility Metadata</h2>
         <table class="data-table">
             <tbody>
-                <tr><td><strong>Experiment ID</strong></td><td><code>exp-20260803T041519Z-aad9</code></td></tr>
-                <tr><td><strong>Execution Timestamp</strong></td><td>2026-08-03T04:15:24Z</td></tr>
+                <tr><td><strong>Experiment ID</strong></td><td><code>exp-20260805T103447Z-8ace</code></td></tr>
+                <tr><td><strong>Execution Timestamp</strong></td><td>2026-08-05T10:34:52Z</td></tr>
                 <tr><td><strong>Git Commit / Branch</strong></td><td><code>unknown</code> (main)</td></tr>
                 <tr><td><strong>Python Version</strong></td><td>3.11.15</td></tr>
                 <tr><td><strong>Platform OS</strong></td><td>Linux 6.6.87.2-microsoft-standard-WSL2</td></tr>

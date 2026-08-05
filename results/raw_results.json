@@ -1,11 +1,11 @@
 {
-  "S3": [
+  "S2": [
     {
-      "scenario": "S3",
+      "scenario": "S2",
       "passed": true,
       "duration_sec": 0.1,
-      "start_time": "2026-08-03T04:15:21Z",
-      "end_time": "2026-08-03T04:15:21Z",
+      "start_time": "2026-08-05T10:34:49Z",
+      "end_time": "2026-08-05T10:34:49Z",
       "metrics": [
         {
           "name": "is_clamped",
@@ -20,26 +20,18 @@
         {
           "_topic": "ignis/v1/fog/zone/4B/sensor",
           "message_type": "alert",
-          "sensor_timestamp": "2026-08-03T04:15:21.000000Z",
+          "sensor_timestamp": "2026-08-05T10:34:49.000000Z",
           "zone_id": "4B",
-          "temperature_celsius": 55.0
+          "temperature_celsius": 36.0
         },
         {
           "_topic": "ignis/v1/fog/zone/4B/state",
           "message_type": "zone_state",
-          "decision_timestamp": "2026-08-03T04:15:21.173529Z",
-          "sensor_timestamp": "2026-08-03T04:15:21.000000Z",
+          "decision_timestamp": "2026-08-05T10:34:49.239302Z",
+          "sensor_timestamp": "2026-08-05T10:34:49.000000Z",
           "zone_id": "4B",
-          "state": "RED",
+          "state": "YELLOW",
           "fog_decision_latency": 0.013
-        },
-        {
-          "_topic": "ignis/v1/fog/zone/4B/buffer",
-          "message_type": "offline_buffer",
-          "timestamp": "2026-08-03T04:15:21.173529Z",
-          "zone_id": "4B",
-          "buffered_count": 15,
-          "flush_success": true
         }
       ],
       "logs": [
@@ -52,11 +44,11 @@
       "trial_index": 0
     },
     {
-      "scenario": "S3",
+      "scenario": "S2",
       "passed": true,
       "duration_sec": 0.1,
-      "start_time": "2026-08-03T04:15:21Z",
-      "end_time": "2026-08-03T04:15:21Z",
+      "start_time": "2026-08-05T10:34:49Z",
+      "end_time": "2026-08-05T10:34:49Z",
       "metrics": [
         {
           "name": "is_clamped",
@@ -71,26 +63,18 @@
         {
           "_topic": "ignis/v1/fog/zone/4B/sensor",
           "message_type": "alert",
-          "sensor_timestamp": "2026-08-03T04:15:21.000000Z",
+          "sensor_timestamp": "2026-08-05T10:34:49.000000Z",
           "zone_id": "4B",
-          "temperature_celsius": 55.0
+          "temperature_celsius": 36.0
         },
         {
           "_topic": "ignis/v1/fog/zone/4B/state",
           "message_type": "zone_state",
-          "decision_timestamp": "2026-08-03T04:15:21.277670Z",
-          "sensor_timestamp": "2026-08-03T04:15:21.000000Z",
+          "decision_timestamp": "2026-08-05T10:34:49.349650Z",
+          "sensor_timestamp": "2026-08-05T10:34:49.000000Z",
           "zone_id": "4B",
-          "state": "RED",
+          "state": "YELLOW",
           "fog_decision_latency": 0.014
-        },
-        {
-          "_topic": "ignis/v1/fog/zone/4B/buffer",
-          "message_type": "offline_buffer",
-          "timestamp": "2026-08-03T04:15:21.277670Z",
-          "zone_id": "4B",
-          "buffered_count": 15,
-          "flush_success": true
         }
       ],
       "logs": [
@@ -103,11 +87,11 @@
       "trial_index": 1
     },
     {
-      "scenario": "S3",
+      "scenario": "S2",
       "passed": true,
       "duration_sec": 0.1,
-      "start_time": "2026-08-03T04:15:21Z",
-      "end_time": "2026-08-03T04:15:21Z",
+      "start_time": "2026-08-05T10:34:49Z",
+      "end_time": "2026-08-05T10:34:49Z",
       "metrics": [
         {
           "name": "is_clamped",
@@ -122,26 +106,18 @@
         {
           "_topic": "ignis/v1/fog/zone/4B/sensor",
           "message_type": "alert",
-          "sensor_timestamp": "2026-08-03T04:15:21.000000Z",
+          "sensor_timestamp": "2026-08-05T10:34:49.000000Z",
           "zone_id": "4B",
-          "temperature_celsius": 55.0
+          "temperature_celsius": 36.0
         },
         {
           "_topic": "ignis/v1/fog/zone/4B/state",
           "message_type": "zone_state",
-          "decision_timestamp": "2026-08-03T04:15:21.392115Z",
-          "sensor_timestamp": "2026-08-03T04:15:21.000000Z",
+          "decision_timestamp": "2026-08-05T10:34:49.458828Z",
+          "sensor_timestamp": "2026-08-05T10:34:49.000000Z",
           "zone_id": "4B",
-          "state": "RED",
+          "state": "YELLOW",
           "fog_decision_latency": 0.014
-        },
-        {
-          "_topic": "ignis/v1/fog/zone/4B/buffer",
-          "message_type": "offline_buffer",
-          "timestamp": "2026-08-03T04:15:21.392115Z",
-          "zone_id": "4B",
-          "buffered_count": 15,
-          "flush_success": true
         }
       ],
       "logs": [
@@ -154,11 +130,11 @@
       "trial_index": 2
     },
     {
-      "scenario": "S3",
+      "scenario": "S2",
       "passed": true,
       "duration_sec": 0.1,
-      "start_time": "2026-08-03T04:15:21Z",
-      "end_time": "2026-08-03T04:15:21Z",
+      "start_time": "2026-08-05T10:34:49Z",
+      "end_time": "2026-08-05T10:34:49Z",
       "metrics": [
         {
           "name": "is_clamped",
@@ -173,26 +149,18 @@
         {
           "_topic": "ignis/v1/fog/zone/4B/sensor",
           "message_type": "alert",
-          "sensor_timestamp": "2026-08-03T04:15:21.000000Z",
+          "sensor_timestamp": "2026-08-05T10:34:49.000000Z",
           "zone_id": "4B",
-          "temperature_celsius": 55.0
+          "temperature_celsius": 36.0
         },
         {
           "_topic": "ignis/v1/fog/zone/4B/state",
           "message_type": "zone_state",
-          "decision_timestamp": "2026-08-03T04:15:21.504549Z",
-          "sensor_timestamp": "2026-08-03T04:15:21.000000Z",
+          "decision_timestamp": "2026-08-05T10:34:49.571908Z",
+          "sensor_timestamp": "2026-08-05T10:34:49.000000Z",
           "zone_id": "4B",
-          "state": "RED",
+          "state": "YELLOW",
           "fog_decision_latency": 0.016
-        },
-        {
-          "_topic": "ignis/v1/fog/zone/4B/buffer",
-          "message_type": "offline_buffer",
-          "timestamp": "2026-08-03T04:15:21.504549Z",
-          "zone_id": "4B",
-          "buffered_count": 15,
-          "flush_success": true
         }
       ],
       "logs": [
@@ -205,11 +173,11 @@
       "trial_index": 3
     },
     {
-      "scenario": "S3",
+      "scenario": "S2",
       "passed": true,
       "duration_sec": 0.1,
-      "start_time": "2026-08-03T04:15:21Z",
-      "end_time": "2026-08-03T04:15:21Z",
+      "start_time": "2026-08-05T10:34:49Z",
+      "end_time": "2026-08-05T10:34:49Z",
       "metrics": [
         {
           "name": "is_clamped",
@@ -224,26 +192,18 @@
         {
           "_topic": "ignis/v1/fog/zone/4B/sensor",
           "message_type": "alert",
-          "sensor_timestamp": "2026-08-03T04:15:21.000000Z",
+          "sensor_timestamp": "2026-08-05T10:34:49.000000Z",
           "zone_id": "4B",
-          "temperature_celsius": 55.0
+          "temperature_celsius": 36.0
         },
         {
           "_topic": "ignis/v1/fog/zone/4B/state",
           "message_type": "zone_state",
-          "decision_timestamp": "2026-08-03T04:15:21.606802Z",
-          "sensor_timestamp": "2026-08-03T04:15:21.000000Z",
+          "decision_timestamp": "2026-08-05T10:34:49.675699Z",
+          "sensor_timestamp": "2026-08-05T10:34:49.000000Z",
           "zone_id": "4B",
-          "state": "RED",
+          "state": "YELLOW",
           "fog_decision_latency": 0.012
-        },
-        {
-          "_topic": "ignis/v1/fog/zone/4B/buffer",
-          "message_type": "offline_buffer",
-          "timestamp": "2026-08-03T04:15:21.606802Z",
-          "zone_id": "4B",
-          "buffered_count": 15,
-          "flush_success": true
         }
       ],
       "logs": [
@@ -256,11 +216,11 @@
       "trial_index": 4
     },
     {
-      "scenario": "S3",
+      "scenario": "S2",
       "passed": true,
       "duration_sec": 0.1,
-      "start_time": "2026-08-03T04:15:21Z",
-      "end_time": "2026-08-03T04:15:21Z",
+      "start_time": "2026-08-05T10:34:49Z",
+      "end_time": "2026-08-05T10:34:49Z",
       "metrics": [
         {
           "name": "is_clamped",
@@ -275,26 +235,18 @@
         {
           "_topic": "ignis/v1/fog/zone/4B/sensor",
           "message_type": "alert",
-          "sensor_timestamp": "2026-08-03T04:15:21.000000Z",
+          "sensor_timestamp": "2026-08-05T10:34:49.000000Z",
           "zone_id": "4B",
-          "temperature_celsius": 55.0
+          "temperature_celsius": 36.0
         },
         {
           "_topic": "ignis/v1/fog/zone/4B/state",
           "message_type": "zone_state",
-          "decision_timestamp": "2026-08-03T04:15:21.720825Z",
-          "sensor_timestamp": "2026-08-03T04:15:21.000000Z",
+          "decision_timestamp": "2026-08-05T10:34:49.786868Z",
+          "sensor_timestamp": "2026-08-05T10:34:49.000000Z",
           "zone_id": "4B",
-          "state": "RED",
+          "state": "YELLOW",
           "fog_decision_latency": 0.016
-        },
-        {
-          "_topic": "ignis/v1/fog/zone/4B/buffer",
-          "message_type": "offline_buffer",
-          "timestamp": "2026-08-03T04:15:21.720825Z",
-          "zone_id": "4B",
-          "buffered_count": 15,
-          "flush_success": true
         }
       ],
       "logs": [
@@ -307,11 +259,11 @@
       "trial_index": 5
     },
     {
-      "scenario": "S3",
+      "scenario": "S2",
       "passed": true,
       "duration_sec": 0.1,
-      "start_time": "2026-08-03T04:15:21Z",
-      "end_time": "2026-08-03T04:15:21Z",
+      "start_time": "2026-08-05T10:34:49Z",
+      "end_time": "2026-08-05T10:34:49Z",
       "metrics": [
         {
           "name": "is_clamped",
@@ -326,26 +278,18 @@
         {
           "_topic": "ignis/v1/fog/zone/4B/sensor",
           "message_type": "alert",
-          "sensor_timestamp": "2026-08-03T04:15:21.000000Z",
+          "sensor_timestamp": "2026-08-05T10:34:49.000000Z",
           "zone_id": "4B",
-          "temperature_celsius": 55.0
+          "temperature_celsius": 36.0
         },
         {
           "_topic": "ignis/v1/fog/zone/4B/state",
           "message_type": "zone_state",
-          "decision_timestamp": "2026-08-03T04:15:21.825571Z",
-          "sensor_timestamp": "2026-08-03T04:15:21.000000Z",
+          "decision_timestamp": "2026-08-05T10:34:49.933161Z",
+          "sensor_timestamp": "2026-08-05T10:34:49.000000Z",
           "zone_id": "4B",
-          "state": "RED",
+          "state": "YELLOW",
           "fog_decision_latency": 0.012
-        },
-        {
-          "_topic": "ignis/v1/fog/zone/4B/buffer",
-          "message_type": "offline_buffer",
-          "timestamp": "2026-08-03T04:15:21.825571Z",
-          "zone_id": "4B",
-          "buffered_count": 15,
-          "flush_success": true
         }
       ],
       "logs": [
@@ -358,11 +302,11 @@
       "trial_index": 6
     },
     {
-      "scenario": "S3",
+      "scenario": "S2",
       "passed": true,
       "duration_sec": 0.1,
-      "start_time": "2026-08-03T04:15:21Z",
-      "end_time": "2026-08-03T04:15:21Z",
+      "start_time": "2026-08-05T10:34:49Z",
+      "end_time": "2026-08-05T10:34:50Z",
       "metrics": [
         {
           "name": "is_clamped",
@@ -377,26 +321,18 @@
         {
           "_topic": "ignis/v1/fog/zone/4B/sensor",
           "message_type": "alert",
-          "sensor_timestamp": "2026-08-03T04:15:21.000000Z",
+          "sensor_timestamp": "2026-08-05T10:34:50.000000Z",
           "zone_id": "4B",
-          "temperature_celsius": 55.0
+          "temperature_celsius": 36.0
         },
         {
           "_topic": "ignis/v1/fog/zone/4B/state",
           "message_type": "zone_state",
-          "decision_timestamp": "2026-08-03T04:15:21.936358Z",
-          "sensor_timestamp": "2026-08-03T04:15:21.000000Z",
+          "decision_timestamp": "2026-08-05T10:34:50.041078Z",
+          "sensor_timestamp": "2026-08-05T10:34:50.000000Z",
           "zone_id": "4B",
-          "state": "RED",
+          "state": "YELLOW",
           "fog_decision_latency": 0.014
-        },
-        {
-          "_topic": "ignis/v1/fog/zone/4B/buffer",
-          "message_type": "offline_buffer",
-          "timestamp": "2026-08-03T04:15:21.936358Z",
-          "zone_id": "4B",
-          "buffered_count": 15,
-          "flush_success": true
         }
       ],
       "logs": [
@@ -409,11 +345,11 @@
       "trial_index": 7
     },
     {
-      "scenario": "S3",
+      "scenario": "S2",
       "passed": true,
       "duration_sec": 0.1,
-      "start_time": "2026-08-03T04:15:21Z",
-      "end_time": "2026-08-03T04:15:22Z",
+      "start_time": "2026-08-05T10:34:50Z",
+      "end_time": "2026-08-05T10:34:50Z",
       "metrics": [
         {
           "name": "is_clamped",
@@ -428,26 +364,18 @@
         {
           "_topic": "ignis/v1/fog/zone/4B/sensor",
           "message_type": "alert",
-          "sensor_timestamp": "2026-08-03T04:15:22.000000Z",
+          "sensor_timestamp": "2026-08-05T10:34:50.000000Z",
           "zone_id": "4B",
-          "temperature_celsius": 55.0
+          "temperature_celsius": 36.0
         },
         {
           "_topic": "ignis/v1/fog/zone/4B/state",
           "message_type": "zone_state",
-          "decision_timestamp": "2026-08-03T04:15:22.039127Z",
-          "sensor_timestamp": "2026-08-03T04:15:22.000000Z",
+          "decision_timestamp": "2026-08-05T10:34:50.146705Z",
+          "sensor_timestamp": "2026-08-05T10:34:50.000000Z",
           "zone_id": "4B",
-          "state": "RED",
+          "state": "YELLOW",
           "fog_decision_latency": 0.012
-        },
-        {
-          "_topic": "ignis/v1/fog/zone/4B/buffer",
-          "message_type": "offline_buffer",
-          "timestamp": "2026-08-03T04:15:22.039127Z",
-          "zone_id": "4B",
-          "buffered_count": 15,
-          "flush_success": true
         }
       ],
       "logs": [
@@ -460,11 +388,11 @@
       "trial_index": 8
     },
     {
-      "scenario": "S3",
+      "scenario": "S2",
       "passed": true,
       "duration_sec": 0.1,
-      "start_time": "2026-08-03T04:15:22Z",
-      "end_time": "2026-08-03T04:15:22Z",
+      "start_time": "2026-08-05T10:34:50Z",
+      "end_time": "2026-08-05T10:34:50Z",
       "metrics": [
         {
           "name": "is_clamped",
@@ -479,26 +407,18 @@
         {
           "_topic": "ignis/v1/fog/zone/4B/sensor",
           "message_type": "alert",
-          "sensor_timestamp": "2026-08-03T04:15:22.000000Z",
+          "sensor_timestamp": "2026-08-05T10:34:50.000000Z",
           "zone_id": "4B",
-          "temperature_celsius": 55.0
+          "temperature_celsius": 36.0
         },
         {
           "_topic": "ignis/v1/fog/zone/4B/state",
           "message_type": "zone_state",
-          "decision_timestamp": "2026-08-03T04:15:22.147909Z",
-          "sensor_timestamp": "2026-08-03T04:15:22.000000Z",
+          "decision_timestamp": "2026-08-05T10:34:50.256522Z",
+          "sensor_timestamp": "2026-08-05T10:34:50.000000Z",
           "zone_id": "4B",
-          "state": "RED",
+          "state": "YELLOW",
           "fog_decision_latency": 0.016
-        },
-        {
-          "_topic": "ignis/v1/fog/zone/4B/buffer",
-          "message_type": "offline_buffer",
-          "timestamp": "2026-08-03T04:15:22.147909Z",
-          "zone_id": "4B",
-          "buffered_count": 15,
-          "flush_success": true
         }
       ],
       "logs": [

@@ -23,8 +23,8 @@
 ### 2.1 Experiment Configuration
 - **Trial Count per Scenario**: 10
 - **Random Seed**: 4321
-- **Total Execution Duration**: 1.12 seconds
-- **Execution Date (UTC)**: 2026-08-03T04:15:22Z
+- **Total Execution Duration**: 1.19 seconds
+- **Execution Date (UTC)**: 2026-08-05T10:34:50Z
 
 ### 2.2 Simulation Configuration
 - **Zones Configured**: 3 (Zones 4A, 4B, 4C)
@@ -48,7 +48,7 @@
 - **Python Runtime Version**: 3.11.15
 - **Git Active Commit**: `unknown`
 - **System Timezone**: UTC
-- **Execution Hostname**: 7f2aa30e2542
+- **Execution Hostname**: 0885c08be7d1
 
 ### 2.4 Statistical Method
 All numeric decision latency and lateral propagation measurements were aggregated across all completed trials. Confidence intervals are calculated using the 95% Student-t distribution boundaries:
@@ -60,7 +60,7 @@ Where degrees of freedom $df = N-1$. (CI calculation method: `internal_t_table`)
 
 | Scenario | Trials | Verdict | Reason |
 |---|---|---|---|
-| **S3** | 10 | **PASS** | All assertions passed across 2 rules |
+| **S2** | 10 | **PASS** | All assertions passed across 1 rules |
 
 ![Execution Gantt Timeline](charts/execution_timeline.png)
 
@@ -76,21 +76,20 @@ Where degrees of freedom $df = N-1$. (CI calculation method: `internal_t_table`)
 ---
 
 ### 4.2 Scenario S2
-- **Status**: **INCOMPLETE**
-- **Verdict Details**: N/A
+- **Status**: **PASS**
+- **Verdict Details**: All assertions passed across 1 rules
 
-*No numerical metrics recorded.*
+| Metric | Value / Aggregates | Target | Operator | Status | Reason |
+|---|---|---|---|---|---|
+| max_state | Value: YELLOW | YELLOW | <= | **PASS** | YELLOW <= threshold YELLOW |
 
 ---
 
 ### 4.3 Scenario S3
-- **Status**: **PASS**
-- **Verdict Details**: All assertions passed across 2 rules
+- **Status**: **INCOMPLETE**
+- **Verdict Details**: N/A
 
-| Metric | Value / Aggregates | Target | Operator | Status | Reason |
-|---|---|---|---|---|---|
-| fog_decision_latency | Mean: 0.4624 s (Min: 0.0391 s, Max: 0.9364 s, Med: 0.4483 s, StdDev: 0.3067 s, CI95: [0.243, 0.6818]) | 5.0 | <= | **PASS** | Mean 0.4624 s <= threshold 5.0 s |
-| final_state | Value: RED | RED | == | **PASS** | RED == threshold RED |
+*No numerical metrics recorded.*
 
 ![Decision Latency Distribution](charts/decision_latency_boxplot.png)
 ![Decision Latency Frequency Histogram](charts/decision_latency_histogram.png)
@@ -138,7 +137,7 @@ Where degrees of freedom $df = N-1$. (CI calculation method: `internal_t_table`)
 
 ## 5. Cross-Scenario Analysis
 
-The following scenarios successfully passed their validation checks: S3. These results confirm that under normal and minor risk conditions (such as S1 and S2) and isolated multi-zone events (S7), the fog nodes correctly execute local and bridged protocols.
+The following scenarios successfully passed their validation checks: S2. These results confirm that under normal and minor risk conditions (such as S1 and S2) and isolated multi-zone events (S7), the fog nodes correctly execute local and bridged protocols.
 
 
 ![Scenario Comparison Durations](charts/scenario_comparison_summary.png)
@@ -148,7 +147,7 @@ The following scenarios successfully passed their validation checks: S3. These r
 
 | Core Architecture Claim | Reference Scenario | Validation Status | Evidence / Reason |
 |---|---|---|---|
-| **Fog Decision Latency** (<1.0s target) | S3 | [PASS] Validated | All assertions passed |
+| **Fog Decision Latency** (<1.0s target) | S3 | [INCOMPLETE] Not Executed | No results calculated. |
 | **Lateral Warning Propagation** (<10s window) | S6 | [INCOMPLETE] Not Executed | No results calculated. |
 | **False-Positive Suppression** (Local 3-Node check) | S4 | [INCOMPLETE] Not Executed | No results calculated. |
 | **Offline Continuity Cache** (Local mitigation action) | S5 | [INCOMPLETE] Not Executed | No results calculated. |
@@ -157,7 +156,7 @@ The following scenarios successfully passed their validation checks: S3. These r
 
 ## 7. Discussion
 
-The empirical results confirm that decentralized consensus and fog coordinator topologies meet and exceed real-time critical latency limits. Average decision latency remains below 0.4624s, validating the primary value proposition of the edge architecture.
+Decision latency measurements could not be validated because Scenario S3 failed to generate sufficient events.
 
 Offline continuity could not be validated because Scenario S5 produced insufficient evidence.
 

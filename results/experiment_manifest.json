@@ -1,22 +1,22 @@
 {
-  "experiment_id": "exp-20260803T041519Z-aad9",
-  "timestamp": "2026-08-03T04:15:24Z",
+  "experiment_id": "exp-20260805T103447Z-8ace",
+  "timestamp": "2026-08-05T10:34:52Z",
   "git_commit": "unknown",
   "trial_count": 10,
   "random_seed": 4321,
-  "execution_duration_sec": 3.3356,
+  "execution_duration_sec": 3.6088,
   "ci_method": "internal_t_table",
   "platform": {
     "os": "Linux 6.6.87.2-microsoft-standard-WSL2",
     "architecture": "x86_64",
     "python_version": "3.11.15",
     "timezone": "UTC",
-    "hostname": "7f2aa30e2542",
+    "hostname": "0885c08be7d1",
     "docker_version": "unknown",
     "docker_compose_version": "unknown"
   },
   "scenarios_executed": [
-    "S3"
+    "S2"
   ],
   "scenario_versions": {
     "S1": "1.0",

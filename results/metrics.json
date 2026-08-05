@@ -1,16 +1,16 @@
 {
   "experiment_metadata": {
-    "timestamp": "2026-08-03T04:15:22Z",
+    "timestamp": "2026-08-05T10:34:50Z",
     "git_commit": "unknown",
     "trial_count": 10,
     "random_seed": 4321,
-    "total_duration_sec": 1.1215,
+    "total_duration_sec": 1.1931,
     "platform": {
       "os": "Linux 6.6.87.2-microsoft-standard-WSL2",
       "architecture": "x86_64",
       "python_version": "3.11.15",
       "timezone": "UTC",
-      "hostname": "7f2aa30e2542",
+      "hostname": "0885c08be7d1",
       "docker_version": "unknown",
       "docker_compose_version": "unknown"
     },
@@ -36,40 +36,20 @@
       "fog-node": "python:3.11-slim",
       "edge-sim": "python:3.11-slim"
     },
-    "experiment_id": "exp-20260803T041519Z-aad9"
+    "experiment_id": "exp-20260805T103447Z-8ace"
   },
   "scenario_results": {
-    "S3": {
+    "S2": {
       "status": "PASS",
-      "reason": "All assertions passed across 2 rules",
+      "reason": "All assertions passed across 1 rules",
       "trials": 10,
       "metrics": {
-        "fog_decision_latency": {
-          "sample_count": 10,
-          "min": 0.0391,
-          "minimum": 0.0391,
-          "max": 0.9364,
-          "maximum": 0.9364,
-          "mean": 0.4624,
-          "median": 0.4483,
-          "std_dev": 0.3067,
-          "confidence95": [
-            0.243,
-            0.6818
-          ],
-          "ci_method": "scipy",
-          "avg_sec": 0.4624,
+        "max_state": {
+          "value": "YELLOW",
           "status": "PASS",
-          "reason": "Mean 0.4624 s <= threshold 5.0 s",
-          "threshold": 5.0,
+          "reason": "YELLOW <= threshold YELLOW",
+          "threshold": "YELLOW",
           "operator": "<="
-        },
-        "final_state": {
-          "value": "RED",
-          "status": "PASS",
-          "reason": "RED == threshold RED",
-          "threshold": "RED",
-          "operator": "=="
         }
       }
     }
