@@ -72,9 +72,9 @@ This repository currently implements:
 |---------|:------:|------------|
 | Phase A | [PASS] | Core wildfire decision pipeline |
 | Phase B | [PASS] | MQTT communication & Docker architecture |
-| Phase C | ⏳ | Cloud integration |
-| Phase D | ⏳ | Multi-zone coordination |
-| Phase E | ⏳ | Hardware integration |
+| Phase C | [PENDING] | Cloud integration |
+| Phase D | [PENDING] | Multi-zone coordination |
+| Phase E | [PENDING] | Hardware integration |
 
 ---
 

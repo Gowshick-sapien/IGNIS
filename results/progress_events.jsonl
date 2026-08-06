@@ -1,1 +1,1 @@
-{"schema_version": "1.0", "event": "EXPERIMENT_COMPLETE", "event_id": "exp-test-sse-000001", "sequence": 1, "experiment_id": "exp-test-sse", "timestamp": "2026-08-05T12:39:03.899477+00:00", "overall_verdict": "PASS", "duration_sec": 1.0, "summary_stats": {}}
+{"schema_version": "1.0", "event": "EXPERIMENT_COMPLETE", "event_id": "exp-test-sse-000001", "sequence": 1, "experiment_id": "exp-test-sse", "timestamp": "2026-08-06T14:18:17.583883+00:00", "overall_verdict": "PASS", "duration_sec": 1.0, "summary_stats": {}}

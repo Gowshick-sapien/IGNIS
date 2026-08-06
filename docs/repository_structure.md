@@ -392,11 +392,13 @@ historical/
 
 ```
 docs/
- repository_structure.md                     # ← This file
- architecture.md                             # System architecture: layers, data flow, protocols
- dashboard_guide.md                          # Cloud Dashboard user guide
- ignis_v1_capabilities_and_tech_stack.md     # V1 capabilities overview and technology stack
- v1_consolidated_testing_plan.md             # Master testing plan across all phases
+  ignis_v1_complete_system_handbook.md        # Master System Handbook: scientific ideation, math derivations, and Simlipal case study
+  repository_structure.md                     # <-- This file (Complete repository map)
+  architecture.md                             # System architecture: layers, data flow, protocols
+  dashboard_guide.md                          # Cloud Dashboard user guide
+  ignis_v1_capabilities_and_tech_stack.md     # V1 capabilities overview and technology stack
+  ui_and_simulation_testing_plan.md           # Live UI & multi-zone simulation testing protocol
+  v1_consolidated_testing_plan.md             # Master testing plan across all phases
 
    Phase Documentation (A → G) 
   Each phase directory contains:

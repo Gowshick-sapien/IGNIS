@@ -6,8 +6,10 @@
 ---
 
 ## 1. Purpose
-
+ 
 This document translates the Simulation Ideation (v1) into a concrete, buildable software architecture. It is a **decision-architecture validation testbed** — every physical component (sensors, LoRa radios, solar fog servers, actuators) is replaced with a containerized software surrogate that reproduces the same data flow, decision logic, and failure modes. Nothing here drives real hardware; the goal is to produce measurable evidence for the risk-scoring, state-machine, lateral-coordination, and offline-resilience claims of the parent design before any capital is spent.
+
+> **[Master System Reference]** For full mathematical derivations, the Simlipal case study justifications, an exhaustive inventory of hardcoded parameters/assumptions, and the V2 physical migration blueprint, refer to [docs/ignis_v1_complete_system_handbook.md](file:///d:/projects/IGNIS/docs/ignis_v1_complete_system_handbook.md).
 
 ---
 

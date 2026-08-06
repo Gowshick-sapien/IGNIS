@@ -23,7 +23,9 @@ This repository implements **IGNIS Version 1**:
 - [PASS] Phase F – Scenario Library (S1–S7) & Metric Derivation Engine
 - [PASS] Phase G – Unified Web Dashboard Framework, Repository Archive, Regression Detector & Reproducibility Exporter
 
-> [Master Specification] For the complete detailed technical stack, architectural breakdown, scenario benchmarks, and full capabilities reference, see [docs/ignis_v1_capabilities_and_tech_stack.md](file:///d:/projects/IGNIS/docs/ignis_v1_capabilities_and_tech_stack.md).
+> **[Master System Handbook]** For the authoritative mathematical formulations, Simlipal case study justifications, full inventory of hardcoded parameters, and V2 migration blueprint, see [docs/ignis_v1_complete_system_handbook.md](file:///d:/projects/IGNIS/docs/ignis_v1_complete_system_handbook.md).
+>
+> **[Testing & Verification Protocols]** For dashboard UI verification and live multi-zone scenario execution, see [docs/ui_and_simulation_testing_plan.md](file:///d:/projects/IGNIS/docs/ui_and_simulation_testing_plan.md).
 
 ---
 
