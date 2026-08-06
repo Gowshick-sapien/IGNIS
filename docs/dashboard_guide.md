@@ -34,16 +34,19 @@ The UI is built with a high-contrast dark theme (`#0f172a` / `#1e293b` palette w
 
 ### 3.1. Regional Operations NOC (`/`)
 * **URL:** [http://localhost:8000/](http://localhost:8000/)
-* **Primary Role:** Real-Time Operational Monitoring & Advisory Command Center.
-* **Update Mechanism:** Polling every 2.0s via `/api/snapshot?zone_id=4B` and `/api/lateral-timeline`.
+* **Primary Role:** Real-Time Operational Monitoring, Multi-Zone Telemetry, Scenario Simulation & Advisory Command Center.
+* **Update Mechanism:** Polling every 2.0s–3.0s via `/api/snapshot?zone_id=4B`, `/api/zones`, `/api/simulation/status`, and `/api/lateral-timeline`.
 * **Key Components & Features:**
-  * **Simulated Region 4 Topology:** Monitors Sector/Region 4 zones (`4A` North Zone, `4B` Core Zone, `4C` South Zone) and edge sensor nodes (`4B-E1`, `4B-E2`, `4B-E3`). Note: Region 4 is an internal simulation identifier.
+  * **Collapsible Simulation Control Drawer:** Quick-access live scenario runner for Scenarios S1 (Normal Day), S2 (Slow Risk), S3 (Sudden Ignition), S4 (Sensor Fault), and S6 (Lateral Spread). Displays active step progress (`Step X/Y`), percent fill bar, and immediate ` Stop / Reset to Baseline` control.
+  * **Rich Multi-Zone Overview Cards (`renderRichZoneCards`):** Side-by-side visual cards for Zone 4A (North), Zone 4B (Core), and Zone 4C (South). Each card features a glowing circular state ring (`GREEN`, `YELLOW`, `ORANGE`, `RED`), high-visibility WHI score, dynamic color-gradient progress bar, and 6 active sensor confirmation badges (`Temp`, `Humid`, `Wind`, `Soil`, `Gas`, `Thermal`).
+  * **Safety Clamping & Lateral Warning Chips:** Instant notification chips displaying `[WARNING] Clamped to YELLOW (Single Fault Guard)` and ` Lateral Wind from Zone X`.
   * **System Component Health Bar:** Status monitors for Cloud Broker (MQTT), InfluxDB Time-Series DB, Fog Node instance, and Cloud Ingestor service.
-  * **Zone Status Overview Card:** Real-time Wildfire Hazard Index (WHI score), state classification (`NORMAL`, `ELEVATED`, `CRITICAL`), clamping status, and advisory override badge.
-  * **Edge Sensor Telemetry Table:** Live node-by-node telemetry stream displaying Temperature (°C), Humidity (%), Wind Speed (km/h), Smoke (PPM), and Flame Detection status.
+  * **Live Edge Node Sensor Array Grid (`renderEdgeNodes`):** Per-node live telemetry cards for reporting edge devices (`Node 4B-E1`, `4B-E2`, `4B-E3`) with automatic red threshold alert highlighting for parameters exceeding safety thresholds.
+  * **Historical Time-Series Telemetry Charts:** Interactive Chart.js graphs displaying Temperature, Humidity, and Gas trends against seasonal baseline profiles.
   * **Lateral Coordination Event Timeline:** Visual timeline mapping inter-fog peer events, hazard propagation, and peer-to-peer warning message exchanges.
   * **Operator Advisory Control Panel:** Form to issue binding operational commands (`SET_SAFETY_MODE`, `FORCE_CLAMP_WHI`, `RESET_OVERRIDE`, `ADJUST_THRESHOLD`) with custom parameters and TTL. Dispatches payloads to MQTT topic `ignis/v1/advisory/zone/{zone_id}/command` and logs audit records to InfluxDB.
   * **Live Alerts & Audit Log Feed:** Real-time log stream recording system state changes, safety clamps, and operator actions.
+  * **Testing & Verification Reference:** See [docs/ui_and_simulation_testing_plan.md](file:///d:/projects/IGNIS/docs/ui_and_simulation_testing_plan.md) for automated test runbooks and step-by-step manual test protocols.
 
 ---
 

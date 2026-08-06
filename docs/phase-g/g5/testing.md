@@ -13,7 +13,7 @@ Phase G5 equips IGNIS with advanced analytics capabilities:
 4. **Baseline Selection Strategy & Regression Analyzer (`RegressionDetector`)**: Evaluates completed experiments using a 3-tier baseline selection hierarchy (1. Same Git commit, 2. Recent overall, 3. Skip). Handles missing metrics with `ComparisonIndicator.NOT_COMPARABLE`.
 5. **Regression Summary Storage**: Persists `regression_summary.json` directly into `experiment_repository/YYYY-MM-DD_HH-MM-SS_{exp_id}/` immediately after detection.
 6. **Comparison REST API (`/api/v1/experiments/compare*`)**: Versioned endpoints for querying comparison deltas and regression summaries.
-7. **Interactive Comparison UI (`comparison.html`)**: Two-column responsive view with synchronized scrolling, experiment selectors, color-coded delta badges (🟢/🟡//), and environment diff tables.
+7. **Interactive Comparison UI (`comparison.html`)**: Two-column responsive view with synchronized scrolling, experiment selectors, color-coded delta badges ([GREEN]/[YELLOW]//), and environment diff tables.
 
 ---
 

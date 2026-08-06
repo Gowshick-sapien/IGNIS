@@ -480,6 +480,434 @@
             from { transform: translateY(20px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
+
+        /* =========================================================
+           Rich Multi-Zone WHI Cards & Visual Indicators
+           ========================================================= */
+        .rich-zone-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 16px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: all 0.25s ease;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        .rich-zone-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(56, 189, 248, 0.5);
+        }
+
+        .rich-zone-card.selected {
+            border-color: #38bdf8 !important;
+            box-shadow: 0 0 16px rgba(56, 189, 248, 0.25), inset 0 0 12px rgba(56, 189, 248, 0.06) !important;
+        }
+
+        .rich-zone-card.state-green {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(15, 23, 42, 0.85));
+            border-color: rgba(16, 185, 129, 0.25);
+        }
+        .rich-zone-card.state-yellow {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(15, 23, 42, 0.85));
+            border-color: rgba(245, 158, 11, 0.35);
+        }
+        .rich-zone-card.state-orange {
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.12), rgba(15, 23, 42, 0.85));
+            border-color: rgba(249, 115, 22, 0.45);
+            animation: pulse-border-orange 2s infinite;
+        }
+        .rich-zone-card.state-red {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(15, 23, 42, 0.85));
+            border-color: rgba(239, 68, 68, 0.55);
+            animation: pulse-border-red 1.2s infinite;
+        }
+
+        @keyframes pulse-border-orange {
+            0%, 100% { box-shadow: 0 0 10px rgba(249, 115, 22, 0.2); }
+            50% { box-shadow: 0 0 22px rgba(249, 115, 22, 0.5); }
+        }
+
+        @keyframes pulse-border-red {
+            0%, 100% { box-shadow: 0 0 12px rgba(239, 68, 68, 0.3); }
+            50% { box-shadow: 0 0 28px rgba(239, 68, 68, 0.7); }
+        }
+
+        .rich-zone-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .rich-zone-name {
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        .rich-zone-id-badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #94a3b8;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .rich-zone-body {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        /* Glowing Status Ring */
+        .zone-ring-wrapper {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #334155;
+            background: rgba(15, 23, 42, 0.7);
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .zone-ring-wrapper.state-green {
+            border-color: #10b981;
+            box-shadow: 0 0 14px rgba(16, 185, 129, 0.4);
+        }
+        .zone-ring-wrapper.state-yellow {
+            border-color: #f59e0b;
+            box-shadow: 0 0 14px rgba(245, 158, 11, 0.4);
+        }
+        .zone-ring-wrapper.state-orange {
+            border-color: #f97316;
+            box-shadow: 0 0 18px rgba(249, 115, 22, 0.6);
+        }
+        .zone-ring-wrapper.state-red {
+            border-color: #ef4444;
+            box-shadow: 0 0 22px rgba(239, 68, 68, 0.8);
+        }
+
+        .zone-ring-state {
+            font-family: 'Outfit', sans-serif;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        /* WHI Metrics Block */
+        .whi-metrics-block {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .whi-value-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+
+        .whi-score-num {
+            font-family: 'Outfit', sans-serif;
+            font-size: 24px;
+            font-weight: 800;
+            color: #f8fafc;
+            line-height: 1;
+        }
+
+        .whi-score-label {
+            font-size: 10px;
+            color: #94a3b8;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Progress bar */
+        .whi-progress-bg {
+            width: 100%;
+            height: 7px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 999px;
+            overflow: hidden;
+            margin-top: 2px;
+        }
+
+        .whi-progress-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 999px;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(90deg, #10b981, #f59e0b 50%, #f97316 75%, #ef4444);
+        }
+
+        /* Sensor Confirmation Badges */
+        .confirming-badges-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 2px;
+        }
+
+        .sensor-badge {
+            font-size: 9px;
+            font-weight: 600;
+            padding: 2px 5px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.04);
+            color: #64748b;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: all 0.2s ease;
+        }
+
+        .sensor-badge.active {
+            background: rgba(239, 68, 68, 0.18);
+            color: #fca5a5;
+            border-color: rgba(239, 68, 68, 0.45);
+            box-shadow: 0 0 6px rgba(239, 68, 68, 0.25);
+        }
+
+        /* Alerts Banner */
+        .zone-alert-chip {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 3px 7px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .chip-clamped {
+            background: rgba(245, 158, 11, 0.12);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .chip-lateral {
+            background: rgba(239, 68, 68, 0.12);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        /* =========================================================
+           Simulation Control Panel (Interactive Drawer)
+           ========================================================= */
+        .sim-drawer {
+            background: rgba(15, 23, 42, 0.92);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            border-radius: 14px;
+            margin-top: 18px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .sim-drawer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 18px;
+            cursor: pointer;
+            user-select: none;
+            background: rgba(30, 41, 59, 0.5);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: background 0.2s ease;
+        }
+
+        .sim-drawer-header:hover {
+            background: rgba(30, 41, 59, 0.8);
+        }
+
+        .sim-drawer-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: #38bdf8;
+            letter-spacing: 0.03em;
+        }
+
+        .sim-drawer-body {
+            padding: 16px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .sim-btn-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+        }
+
+        .btn-scenario {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: #f1f5f9;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .btn-scenario:hover {
+            background: rgba(56, 189, 248, 0.15);
+            border-color: #38bdf8;
+            transform: translateY(-1px);
+        }
+
+        .btn-scenario.active-scenario {
+            background: rgba(249, 115, 22, 0.2) !important;
+            border-color: #f97316 !important;
+            box-shadow: 0 0 12px rgba(249, 115, 22, 0.35) !important;
+        }
+
+        .scenario-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #38bdf8;
+        }
+
+        .scenario-sub {
+            font-size: 10px;
+            color: #94a3b8;
+            font-weight: 400;
+        }
+
+        .btn-reset {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        .btn-reset:hover {
+            background: rgba(239, 68, 68, 0.3);
+            border-color: #ef4444;
+        }
+
+        /* =========================================================
+           Edge Node Sensor Array Cards
+           ========================================================= */
+        .edge-nodes-panel {
+            margin-top: 20px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 18px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        .edge-node-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+            margin-top: 14px;
+        }
+
+        .edge-node-card {
+            background: rgba(20, 28, 48, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .edge-node-card:hover {
+            border-color: rgba(56, 189, 248, 0.3);
+        }
+
+        .edge-card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding-bottom: 8px;
+        }
+
+        .edge-node-title {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 13px;
+            color: #38bdf8;
+        }
+
+        .edge-node-seq {
+            font-size: 10px;
+            color: #64748b;
+        }
+
+        .edge-param-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .param-box {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 8px 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            transition: all 0.2s ease;
+        }
+
+        .param-box.alerted {
+            background: rgba(239, 68, 68, 0.15) !important;
+            border-color: rgba(239, 68, 68, 0.5) !important;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.25) !important;
+        }
+
+        .param-box.alerted .param-val {
+            color: #f87171 !important;
+            font-weight: 800;
+        }
+
+        .param-label {
+            font-size: 9px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .param-val {
+            font-family: 'Outfit', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            color: #f8fafc;
+        }
     </style>
 </head>
 <body>
@@ -542,6 +970,67 @@
         <!-- Zone Overview Bar -->
         <div id="zones-bar" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
             <!-- Zone cards generated dynamically -->
+        </div>
+
+        <!-- Collapsible Simulation Control Panel (All 3 Zones) -->
+        <div id="sim-control-drawer" class="sim-drawer">
+            <div class="sim-drawer-header" onclick="toggleSimDrawer()">
+                <div class="sim-drawer-title">
+                    <span id="sim-drawer-arrow" style="font-size: 11px; transition: transform 0.3s ease; display: inline-block;"></span>
+                    <span>[ALERT] Live Scenario Simulation Control</span>
+                    <span id="sim-active-badge" style="font-size: 11px; padding: 2px 8px; border-radius: 6px; background: rgba(16, 185, 129, 0.15); color: #34d399; font-weight: 600; border: 1px solid rgba(16, 185, 129, 0.3);">STATUS: IDLE</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div id="sim-progress-wrapper" style="display: none; align-items: center; gap: 8px;">
+                        <span id="sim-progress-text" style="font-size: 11px; color: #38bdf8; font-weight: 600;">Running S3 (Step 1/6)</span>
+                        <div style="width: 100px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 99px; overflow: hidden;">
+                            <div id="sim-progress-bar" style="width: 0%; height: 100%; background: #38bdf8; border-radius: 99px; transition: width 0.3s ease;"></div>
+                        </div>
+                    </div>
+                    <span style="font-size: 11px; color: #94a3b8; font-weight: 500;">Target Zone: <strong id="sim-target-zone-label" style="color: #38bdf8;">Zone 4B</strong></span>
+                    <button class="btn-secondary" style="padding: 4px 10px; font-size: 11px;" onclick="event.stopPropagation(); toggleSimDrawer();">Toggle Controls</button>
+                </div>
+            </div>
+            <div id="sim-drawer-content" class="sim-drawer-body">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 12px; font-weight: 600; color: #94a3b8;">Select Target Zone for Scenario:</span>
+                        <select id="sim-zone-selector" onchange="syncSimZoneSelection()" style="padding: 6px 12px; font-size: 12px;">
+                            <option value="4A">Zone 4A (Simlipal North)</option>
+                            <option value="4B" selected>Zone 4B (Simlipal Core)</option>
+                            <option value="4C">Zone 4C (Simlipal South)</option>
+                        </select>
+                    </div>
+                    <span style="font-size: 11px; color: #64748b;">Injects real-time MQTT telemetry sequences into edge nodes in the selected zone.</span>
+                </div>
+
+                <div class="sim-btn-grid">
+                    <button class="btn-scenario" id="btn-scenario-S1" onclick="triggerSimulation('S1')">
+                        <span class="scenario-title">S1: Normal Day</span>
+                        <span class="scenario-sub">Natural baseline drift. WHI stays GREEN (&lt; 0.25).</span>
+                    </button>
+                    <button class="btn-scenario" id="btn-scenario-S2" onclick="triggerSimulation('S2')">
+                        <span class="scenario-title">S2: Slow-Building Risk</span>
+                        <span class="scenario-sub">Rising temp &amp; dropping humidity. WHI rises to YELLOW.</span>
+                    </button>
+                    <button class="btn-scenario" id="btn-scenario-S3" onclick="triggerSimulation('S3')">
+                        <span class="scenario-title">S3: Sudden Ignition</span>
+                        <span class="scenario-sub">Rapid fire outbreak. Multi-sensor spikes to ORANGE &amp; RED.</span>
+                    </button>
+                    <button class="btn-scenario" id="btn-scenario-S4" onclick="triggerSimulation('S4')">
+                        <span class="scenario-title">S4: Sensor Fault (Clamping)</span>
+                        <span class="scenario-sub">Single gas sensor spike. Safety guard clamps WHI to YELLOW.</span>
+                    </button>
+                    <button class="btn-scenario" id="btn-scenario-S6" onclick="triggerSimulation('S6')">
+                        <span class="scenario-title">S6: Lateral Spread</span>
+                        <span class="scenario-sub">Zone fire with wind blowing South toward neighbor.</span>
+                    </button>
+                    <button class="btn-scenario btn-reset" onclick="stopSimulation()">
+                        <span class="scenario-title" style="color: #f87171;"> Stop / Reset Baseline</span>
+                        <span class="scenario-sub" style="color: #fca5a5;">Stops simulation &amp; restores normal sensor stream.</span>
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div class="dashboard-grid">
@@ -737,6 +1226,24 @@
                 </div>
             </div>
         </div>
+
+        <!-- Edge Node Live Sensor Readings Section -->
+        <div class="edge-nodes-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <div class="panel-title" style="margin-bottom: 2px;">Edge Node Real-Time Telemetry Array</div>
+                    <span style="font-size: 11px; color: #94a3b8;" id="edge-nodes-subtitle">Live parameter streams for Zone 4B reporting nodes. Alert thresholds highlighted in red.</span>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <span style="font-size: 10px; padding: 2px 6px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 4px; font-weight: 600;">Red = Threshold Exceeded</span>
+                    <span id="edge-reporting-count" style="font-size: 11px; color: #38bdf8; font-weight: 600;">3 Active Nodes</span>
+                </div>
+            </div>
+            <div id="edge-nodes-container" class="edge-node-grid">
+                <!-- Dynamically populated edge nodes -->
+                <div style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 20px;">Loading edge telemetry...</div>
+            </div>
+        </div>
     </div>
 
     <!-- Notification Toast -->
@@ -748,6 +1255,17 @@
         let tempChart = null;
         let humidityChart = null;
         let gasChart = null;
+        let simDrawerOpen = true;
+
+        // Confirmation thresholds and parameter descriptors
+        const CONFIRMATION_THRESHOLDS = {
+            temperature_c: { type: 'above', threshold: 40.0, label: 'Temp', suffix: '°C' },
+            humidity_pct: { type: 'below', threshold: 25.0, label: 'Humid', suffix: '%' },
+            wind_speed_kmh: { type: 'above', threshold: 25.0, label: 'Wind', suffix: ' km/h' },
+            soil_moisture_pct: { type: 'below', threshold: 10.0, label: 'Soil M.', suffix: '%' },
+            gas_ppm: { type: 'above', threshold: 30.0, label: 'Gas', suffix: ' ppm' },
+            thermal_anomaly_c: { type: 'above', threshold: 3.0, label: 'Thermal', suffix: '°C' }
+        };
 
         // Colors map
         const stateColors = {
@@ -771,7 +1289,111 @@
         }
 
         // ==========================================
-        // API Calls & Actions
+        // Simulation Control Panel Logic
+        // ==========================================
+        function toggleSimDrawer() {
+            simDrawerOpen = !simDrawerOpen;
+            const body = document.getElementById("sim-drawer-content");
+            const arrow = document.getElementById("sim-drawer-arrow");
+            if (simDrawerOpen) {
+                body.style.display = "flex";
+                arrow.style.transform = "rotate(0deg)";
+            } else {
+                body.style.display = "none";
+                arrow.style.transform = "rotate(-90deg)";
+            }
+        }
+
+        function syncSimZoneSelection() {
+            const sel = document.getElementById("sim-zone-selector").value;
+            const names = { "4A": "Zone 4A (North)", "4B": "Zone 4B (Core)", "4C": "Zone 4C (South)" };
+            const label = document.getElementById("sim-target-zone-label");
+            if (label) label.textContent = names[sel] || `Zone ${sel}`;
+            pollSimulationStatus();
+        }
+
+        function triggerSimulation(scenarioId) {
+            const zoneId = document.getElementById("sim-zone-selector").value;
+            fetch("/api/simulation/start", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ zone_id: zoneId, scenario_id: scenarioId })
+            })
+            .then(res => {
+                if (!res.ok) return res.json().then(e => { throw new Error(e.detail || "Simulation start failed"); });
+                return res.json();
+            })
+            .then(data => {
+                showToast(`Simulation ${scenarioId} started on Zone ${zoneId}`);
+                pollSimulationStatus();
+            })
+            .catch(err => {
+                showToast(`Failed to start simulation: ${err.message}`, true);
+            });
+        }
+
+        function stopSimulation() {
+            const zoneId = document.getElementById("sim-zone-selector").value;
+            fetch("/api/simulation/stop", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ zone_id: zoneId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                showToast(`Simulation stopped on Zone ${zoneId}. Nodes reset to baseline.`);
+                pollSimulationStatus();
+            })
+            .catch(err => {
+                showToast(`Failed to stop simulation: ${err.message}`, true);
+            });
+        }
+
+        function pollSimulationStatus() {
+            const targetZone = document.getElementById("sim-zone-selector").value;
+            fetch(`/api/simulation/status?zone_id=${targetZone}`)
+            .then(res => res.json())
+            .then(status => {
+                const badge = document.getElementById("sim-active-badge");
+                const progWrapper = document.getElementById("sim-progress-wrapper");
+                const progText = document.getElementById("sim-progress-text");
+                const progBar = document.getElementById("sim-progress-bar");
+
+                // Clear active states on all scenario buttons
+                ['S1', 'S2', 'S3', 'S4', 'S6'].forEach(s => {
+                    const btn = document.getElementById(`btn-scenario-${s}`);
+                    if (btn) btn.classList.remove('active-scenario');
+                });
+
+                if (status.is_active && status.running_scenario) {
+                    badge.textContent = `RUNNING: ${status.running_scenario}`;
+                    badge.style.background = "rgba(249, 115, 22, 0.2)";
+                    badge.style.color = "#fb923c";
+                    badge.style.borderColor = "rgba(249, 115, 22, 0.4)";
+
+                    progWrapper.style.display = "flex";
+                    progText.textContent = `${status.running_scenario} (Step ${status.current_step}/${status.total_steps})`;
+                    progBar.style.width = `${status.progress_pct}%`;
+
+                    const activeBtn = document.getElementById(`btn-scenario-${status.running_scenario}`);
+                    if (activeBtn) activeBtn.classList.add('active-scenario');
+                } else {
+                    badge.textContent = "STATUS: IDLE";
+                    badge.style.background = "rgba(16, 185, 129, 0.15)";
+                    badge.style.color = "#34d399";
+                    badge.style.borderColor = "rgba(16, 185, 129, 0.3)";
+
+                    progWrapper.style.display = "none";
+                    progBar.style.width = "0%";
+                }
+            })
+            .catch(err => {
+                console.error("Error fetching simulation status:", err);
+            });
+        }
+
+        // ==========================================
+        // API Calls & Actions (Advisory Overrides)
         // ==========================================
         function onCommandChange() {
             const cmd = document.getElementById("adv-command").value;
@@ -893,7 +1515,10 @@
                 document.getElementById("stat-latency").textContent = `${(data.performance_metrics.cloud_end_to_end_latency * 1000).toFixed(1)} ms`;
                 document.getElementById("stat-db-latency").textContent = `${(data.performance_metrics.influx_write_latency * 1000).toFixed(1)} ms`;
 
-                // 5. Timelines & Incident Log
+                // 5. Edge Nodes Array Grid
+                renderEdgeNodes(data.edge_readings, zone_id);
+
+                // 6. Timelines & Incident Log
                 renderAlerts(data.alerts);
                 renderActionLogs(data.action_logs);
                 renderAuditTrail(data.audit_logs);
@@ -919,50 +1544,181 @@
             }
         }
 
+        // ==========================================
+        // Rich Multi-Zone WHI Cards Rendering
+        // ==========================================
         function pollZones() {
             fetch("/api/zones")
             .then(res => res.json())
             .then(zones => {
-                const bar = document.getElementById("zones-bar");
-                if (!zones || zones.length === 0) {
-                    bar.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 12px; background: var(--card-bg); border-radius: 12px;">No active zones detected.</div>';
-                    return;
-                }
-                
-                const selectedZone = document.getElementById("zone-select").value;
-                const names = { "4A": "Simlipal North", "4B": "Simlipal Core", "4C": "Simlipal South" };
-                
-                bar.innerHTML = zones.map(z => {
-                    const isSelected = z.zone_id === selectedZone ? 'style="border-color: var(--accent-color); box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);"' : '';
-                    const stateClass = z.state.toLowerCase();
-                    const lateralWarning = (z.preemptive_escalation && z.lateral_warning_sources && z.lateral_warning_sources.length > 0)
-                        ? `<span class="status-badge badge-failed" style="margin-top: 4px; display: inline-block;">WARNING WIND FROM ${z.lateral_warning_sources.map(s => s.zone_id).join(', ')}</span>`
-                        : '';
-                    
-                    return `
-                        <div class="zone-card ${stateClass}" ${isSelected} onclick="selectZone('${z.zone_id}')" style="cursor: pointer;">
-                            <span class="zone-header">${names[z.zone_id] || ('Zone ' + z.zone_id)}</span>
-                            <div class="zone-state-badge" style="color: ${stateColors[z.state] || 'var(--color-green)'};">${z.state}</div>
-                            <span class="zone-whi-label">Max WHI: <strong>${parseFloat(z.whi).toFixed(3)}</strong></span>
-                            ${lateralWarning}
-                        </div>
-                    `;
-                }).join("");
+                renderRichZoneCards(zones);
             })
             .catch(err => {
                 console.error("Error fetching zones overview: ", err);
             });
         }
 
+        function renderRichZoneCards(zones) {
+            const bar = document.getElementById("zones-bar");
+            if (!zones || zones.length === 0) {
+                bar.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 12px; background: var(--card-bg); border-radius: 12px;">No active zones detected.</div>';
+                return;
+            }
+
+            const selectedZone = document.getElementById("zone-select").value;
+            const names = { "4A": "Simlipal North", "4B": "Simlipal Core", "4C": "Simlipal South" };
+
+            const sensorLabels = [
+                { key: 'temperature_c', label: 'Temp' },
+                { key: 'humidity_pct', label: 'Humid' },
+                { key: 'wind_speed_kmh', label: 'Wind' },
+                { key: 'soil_moisture_pct', label: 'Soil' },
+                { key: 'gas_ppm', label: 'Gas' },
+                { key: 'thermal_anomaly_c', label: 'Thermal' }
+            ];
+
+            bar.innerHTML = zones.map(z => {
+                const isSelected = z.zone_id === selectedZone ? 'selected' : '';
+                const stateClass = `state-${(z.state || 'GREEN').toLowerCase()}`;
+                const whiVal = parseFloat(z.whi || 0.0);
+                const whiPct = Math.min(Math.max(whiVal * 100, 0), 100).toFixed(1);
+                const confirming = z.confirming_sensors || [];
+
+                const badgesHtml = sensorLabels.map(s => {
+                    const isActive = confirming.includes(s.key) ? 'active' : '';
+                    return `<span class="sensor-badge ${isActive}">${s.label}</span>`;
+                }).join('');
+
+                let alertChipsHtml = '';
+                if (z.is_state_clamped) {
+                    alertChipsHtml += `<span class="zone-alert-chip chip-clamped">[WARNING] Clamped to YELLOW (Single Fault Guard)</span>`;
+                }
+                if (z.preemptive_escalation && z.lateral_warning_sources && z.lateral_warning_sources.length > 0) {
+                    alertChipsHtml += `<span class="zone-alert-chip chip-lateral"> Lateral Wind from Zone ${z.lateral_warning_sources.map(s => s.zone_id).join(', ')}</span>`;
+                }
+
+                return `
+                    <div class="rich-zone-card ${stateClass} ${isSelected}" onclick="selectZone('${z.zone_id}')">
+                        <div class="rich-zone-header">
+                            <span class="rich-zone-name">${names[z.zone_id] || ('Zone ' + z.zone_id)}</span>
+                            <span class="rich-zone-id-badge">ZONE ${z.zone_id}</span>
+                        </div>
+                        <div class="rich-zone-body">
+                            <div class="zone-ring-wrapper ${stateClass}">
+                                <span class="zone-ring-state" style="color: ${stateColors[z.state] || 'var(--color-green)'};">${z.state}</span>
+                            </div>
+                            <div class="whi-metrics-block">
+                                <div class="whi-value-row">
+                                    <span class="whi-score-label">Wildfire Hazard Index</span>
+                                    <span class="whi-score-num">${whiVal.toFixed(3)}</span>
+                                </div>
+                                <div class="whi-progress-bg">
+                                    <div class="whi-progress-fill" style="width: ${whiPct}%;"></div>
+                                </div>
+                                <div class="confirming-badges-row">
+                                    ${badgesHtml}
+                                </div>
+                            </div>
+                        </div>
+                        ${alertChipsHtml ? `<div style="display: flex; flex-direction: column; gap: 4px; margin-top: 2px;">${alertChipsHtml}</div>` : ''}
+                    </div>
+                `;
+            }).join("");
+        }
+
+        // ==========================================
+        // Edge Nodes Array Grid Rendering
+        // ==========================================
+        function renderEdgeNodes(readings, zoneId) {
+            const container = document.getElementById("edge-nodes-container");
+            const countLabel = document.getElementById("edge-reporting-count");
+            const subtitle = document.getElementById("edge-nodes-subtitle");
+
+            const names = { "4A": "Simlipal North", "4B": "Simlipal Core", "4C": "Simlipal South" };
+            if (subtitle) {
+                subtitle.textContent = `Live parameter streams for Zone ${zoneId} (${names[zoneId] || 'Reserve'}) reporting nodes. Alert thresholds highlighted in red.`;
+            }
+
+            if (!readings || readings.length === 0) {
+                const defaultNodes = [`${zoneId}-E1`, `${zoneId}-E2`, `${zoneId}-E3`];
+                if (countLabel) countLabel.textContent = `${defaultNodes.length} Nodes (Standby)`;
+                container.innerHTML = defaultNodes.map(nodeId => `
+                    <div class="edge-node-card">
+                        <div class="edge-card-head">
+                            <span class="edge-node-title">Node ${nodeId}</span>
+                            <span class="edge-node-seq">Standby / Awaiting Telemetry</span>
+                        </div>
+                        <div class="edge-param-grid">
+                            ${Object.entries(CONFIRMATION_THRESHOLDS).map(([k, cfg]) => `
+                                <div class="param-box">
+                                    <span class="param-label">${cfg.label}</span>
+                                    <span class="param-val">--</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('');
+                return;
+            }
+
+            if (countLabel) countLabel.textContent = `${readings.length} Active Nodes`;
+
+            container.innerHTML = readings.map(r => {
+                const nodeId = r.node_id || `${zoneId}-E?`;
+                const seq = r.sequence !== undefined ? `Seq #${r.sequence}` : (r._time ? r._time.substring(11, 19) : 'Active');
+
+                const paramsHtml = Object.entries(CONFIRMATION_THRESHOLDS).map(([key, cfg]) => {
+                    const val = r[key];
+                    const hasVal = val !== undefined && val !== null;
+                    const displayVal = hasVal ? `${parseFloat(val).toFixed(1)}${cfg.suffix}` : '--';
+
+                    let isAlerted = false;
+                    if (hasVal) {
+                        if (cfg.type === 'above') isAlerted = parseFloat(val) >= cfg.threshold;
+                        else isAlerted = parseFloat(val) <= cfg.threshold;
+                    }
+
+                    return `
+                        <div class="param-box ${isAlerted ? 'alerted' : ''}">
+                            <span class="param-label">${cfg.label}</span>
+                            <span class="param-val">${displayVal}</span>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="edge-node-card">
+                        <div class="edge-card-head">
+                            <span class="edge-node-title">Node ${nodeId}</span>
+                            <span class="edge-node-seq">${seq}</span>
+                        </div>
+                        <div class="edge-param-grid">
+                            ${paramsHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
         function selectZone(zoneId) {
             document.getElementById("zone-select").value = zoneId;
+            const simSel = document.getElementById("sim-zone-selector");
+            if (simSel) simSel.value = zoneId;
+            syncSimZoneSelection();
             changeZone();
         }
 
         function changeZone() {
+            const zoneId = document.getElementById("zone-select").value;
+            const simSel = document.getElementById("sim-zone-selector");
+            if (simSel && simSel.value !== zoneId) {
+                simSel.value = zoneId;
+                syncSimZoneSelection();
+            }
             pollSnapshot();
             pollHistory();
             pollZones();
+            pollSimulationStatus();
         }
 
         function renderAlerts(alerts) {
@@ -1173,11 +1929,13 @@
             pollHistory();
             pollZones();
             pollLateralTimeline();
+            pollSimulationStatus();
             
             setInterval(pollSnapshot, 3000);
             setInterval(pollHistory, 6000);
             setInterval(pollZones, 3000);
             setInterval(pollLateralTimeline, 4000);
+            setInterval(pollSimulationStatus, 2000);
             
             document.getElementById("time-select").addEventListener("change", pollHistory);
             document.getElementById("season-select").addEventListener("change", pollHistory);

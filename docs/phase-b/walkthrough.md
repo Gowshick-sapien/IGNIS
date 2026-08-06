@@ -24,28 +24,28 @@ This repository currently implements:
 
 ```
 
-                   ┌────────────────────────────┐
-                   │      Control Center        │
-                   │ FastAPI + SSE Dashboard    │
-                   └─────────────┬──────────────┘
-                                 │
-                                 │ MQTT
-                                 │
-                    ┌────────────▼────────────┐
-                    │     MQTT Broker         │
-                    │  Eclipse Mosquitto      │
-                    └────────────┬────────────┘
-                                 │
-          ┌──────────────────────┼──────────────────────┐
-          │                      │                      │
-          ▼                      ▼                      ▼
+                   
+                         Control Center        
+                    FastAPI + SSE Dashboard    
+                   
+                                 
+                                  MQTT
+                                 
+                    
+                         MQTT Broker         
+                      Eclipse Mosquitto      
+                    
+                                 
+          
+                                                      
+                                                      
      Edge Node E11         Edge Node E12         Edge Node E13
-          │                      │                      │
-          └──────────────┬───────┴──────────────┬──────┘
-                         ▼
+                                                      
+          
+                         
                   Fog Node (Zone 4B)
-                         │
-                         ▼
+                         
+                         
           Wildfire Decision Pipeline
 ```
 
@@ -187,19 +187,19 @@ Every component runs inside its own Docker container.
 
 docker-compose
 
-│
 
-├── mqtt-broker
 
-├── edge-sim-e11
+ mqtt-broker
 
-├── edge-sim-e12
+ edge-sim-e11
 
-├── edge-sim-e13
+ edge-sim-e12
 
-├── fog-node
+ edge-sim-e13
 
-└── control-center
+ fog-node
+
+ control-center
 
 ```
 
@@ -211,15 +211,15 @@ docker-compose
 
 ignis/v1/
 
-├── zone/{zone}/edge/{node}/reading
+ zone/{zone}/edge/{node}/reading
 
-├── zone/{zone}/edge/{node}/control
+ zone/{zone}/edge/{node}/control
 
-├── zone/{zone}/fog/state
+ zone/{zone}/fog/state
 
-├── zone/{zone}/fog/alert
+ zone/{zone}/fog/alert
 
-└── zone/{zone}/fog/action_log
+ zone/{zone}/fog/action_log
 
 ```
 
@@ -475,43 +475,43 @@ Features include:
 
 IGNIS/
 
-├── config/
+ config/
 
-│ ├── zone_config.json
+  zone_config.json
 
-│ └── mosquitto.conf
+  mosquitto.conf
 
-│
 
-├── src/
 
-│ ├── scoring/
+ src/
 
-│ ├── control_center/
+  scoring/
 
-│ ├── edge_sim.py
+  control_center/
 
-│ ├── fog_node.py
+  edge_sim.py
 
-│ ├── fog_node_runner.py
+  fog_node.py
 
-│ ├── scenario.py
+  fog_node_runner.py
 
-│ └── presenter.py
+  scenario.py
 
-│
+  presenter.py
 
-├── tests/
 
-│
 
-├── Dockerfile
+ tests/
 
-├── docker-compose.yml
 
-├── requirements.txt
 
-└── run_phase_a.py
+ Dockerfile
+
+ docker-compose.yml
+
+ requirements.txt
+
+ run_phase_a.py
 
 ```
 

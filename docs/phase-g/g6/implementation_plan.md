@@ -80,31 +80,31 @@ class ExportService:
 
 ```
 reproducibility_bundle_exp-20260801T043524Z-b2d8/
-├── bundle_manifest.json               # Tamper verification manifest with file SHA256 hashes
-├── README.md                          # Comprehensive instructions, requirements, runtime & SHA256 hashes
-├── report/
-│   ├── project_results_report.md      # Summary Markdown report
-│   └── report.html                    # Self-contained interactive HTML report (offline Plotly)
-├── charts/
-│   └── *.png                          # All 10 publication-ready Matplotlib PNG charts
-├── data/
-│   ├── metrics.json                   # Aggregated statistics and confidence intervals
-│   ├── raw_results.json               # Full raw trial execution events
-│   ├── experiment_manifest.json       # Execution manifest and reproducibility hashes
-│   ├── regression_summary.json        # Automatic regression analysis summary
-│   └── progress_events.jsonl          # Time-stamped progress execution log
-├── environment/
-│   ├── requirements.txt               # Current Python package requirements
-│   ├── docker-compose.yml             # System docker compose configuration snapshot
-│   ├── platform_metadata.json         # OS, Python runtime, Docker daemon, and hostname
-│   └── git_state.json                 # Branch name, commit hash, commit message, git status, and diff patch
-├── scenarios/
-│   ├── S1_baseline.yaml ... S7.yaml   # Exact YAML scenario definitions executed
-├── logs/
-│   └── experiment.log                 # Standard output & orchestrator execution log
-└── methodology/
-    ├── architecture.md                # System architecture document snapshot
-    └── regression_rules.yaml          # Regression thresholds used during evaluation
+ bundle_manifest.json               # Tamper verification manifest with file SHA256 hashes
+ README.md                          # Comprehensive instructions, requirements, runtime & SHA256 hashes
+ report/
+    project_results_report.md      # Summary Markdown report
+    report.html                    # Self-contained interactive HTML report (offline Plotly)
+ charts/
+    *.png                          # All 10 publication-ready Matplotlib PNG charts
+ data/
+    metrics.json                   # Aggregated statistics and confidence intervals
+    raw_results.json               # Full raw trial execution events
+    experiment_manifest.json       # Execution manifest and reproducibility hashes
+    regression_summary.json        # Automatic regression analysis summary
+    progress_events.jsonl          # Time-stamped progress execution log
+ environment/
+    requirements.txt               # Current Python package requirements
+    docker-compose.yml             # System docker compose configuration snapshot
+    platform_metadata.json         # OS, Python runtime, Docker daemon, and hostname
+    git_state.json                 # Branch name, commit hash, commit message, git status, and diff patch
+ scenarios/
+    S1_baseline.yaml ... S7.yaml   # Exact YAML scenario definitions executed
+ logs/
+    experiment.log                 # Standard output & orchestrator execution log
+ methodology/
+     architecture.md                # System architecture document snapshot
+     regression_rules.yaml          # Regression thresholds used during evaluation
 ```
 
 ---

@@ -58,27 +58,27 @@ Not implemented yet:
 ```
 
 IGNIS/
-│
-├── config/
-│   └── zone_config.json
-│
-├── src/
-│   │
-│   ├── scoring/
-│   │   ├── normalization.py
-│   │   ├── hazard_index.py
-│   │   ├── confirmation.py
-│   │   └── state_machine.py
-│   │
-│   ├── edge_node.py
-│   ├── fog_node.py
-│   ├── scenario.py
-│   └── presenter.py
-│
-├── tests/
-│   └── test_scoring.py
-│
-└── run_phase_a.py
+
+ config/
+    zone_config.json
+
+ src/
+   
+    scoring/
+       normalization.py
+       hazard_index.py
+       confirmation.py
+       state_machine.py
+   
+    edge_node.py
+    fog_node.py
+    scenario.py
+    presenter.py
+
+ tests/
+    test_scoring.py
+
+ run_phase_a.py
 
 ```
 
@@ -89,25 +89,25 @@ IGNIS/
 ```
 
                  Scenario Generator
-                        │
-                        ▼
+                        
+                        
                  Sensor Readings
-                        │
-                        ▼
+                        
+                        
                    Edge Node
-                        │
-                        ▼
+                        
+                        
                    Fog Node
-                        │
-         ┌──────────────┼──────────────┐
-         ▼              ▼              ▼
+                        
+         
+                                     
   Normalization        WHI      Confirmation
-         └──────────────┼──────────────┘
-                        ▼
+         
+                        
                  State Machine
-                        ▼
+                        
                 Decision Record
-                        ▼
+                        
                    Presenter
 
 ```

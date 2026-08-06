@@ -95,26 +95,26 @@ The study region is partitioned into three neighboring ecological zones:
 
 ```
 Region (Simulated Study Area)
-  └── Zone (Ecological Sector)
-        └── Edge Node (Microclimate Sensor Array)
+   Zone (Ecological Sector)
+         Edge Node (Microclimate Sensor Array)
 ```
 
 Detailed tree structure:
 
 ```
 Region 4
-├── Zone 4A (Northern Zone)
-│      ├── Edge E1 (4A-E1)
-│      ├── Edge E2 (4A-E2)
-│      └── Edge E3 (4A-E3)
-├── Zone 4B (Core Zone)
-│      ├── Edge E1 (4B-E1)
-│      ├── Edge E2 (4B-E2)
-│      └── Edge E3 (4B-E3)
-└── Zone 4C (Southern Zone)
-       ├── Edge E1 (4C-E1)
-       ├── Edge E2 (4C-E2)
-       └── Edge E3 (4C-E3)
+ Zone 4A (Northern Zone)
+       Edge E1 (4A-E1)
+       Edge E2 (4A-E2)
+       Edge E3 (4A-E3)
+ Zone 4B (Core Zone)
+       Edge E1 (4B-E1)
+       Edge E2 (4B-E2)
+       Edge E3 (4B-E3)
+ Zone 4C (Southern Zone)
+        Edge E1 (4C-E1)
+        Edge E2 (4C-E2)
+        Edge E3 (4C-E3)
 ```
 
 Therefore, the identifier **`4B-E2`** resolves to:
@@ -306,12 +306,12 @@ The entire system is orchestrated as isolated Docker microservices via a single 
 
 ```
 ignis/v1/
-├── zone/{zone_id}/edge/{node_id}/reading    (Telemetry Stream)
-├── zone/{zone_id}/edge/{node_id}/control    (Edge Configuration)
-├── zone/{zone_id}/fog/state                 (Zone WHI and Risk State)
-├── zone/{zone_id}/fog/alert                 (Escalation Alerts)
-├── zone/{zone_id}/fog/action_log            (Autonomous Pre-Suppression Logs)
-└── lateral/zone/{zone_id}/event             (Peer-to-Peer Fog Communications)
+ zone/{zone_id}/edge/{node_id}/reading    (Telemetry Stream)
+ zone/{zone_id}/edge/{node_id}/control    (Edge Configuration)
+ zone/{zone_id}/fog/state                 (Zone WHI and Risk State)
+ zone/{zone_id}/fog/alert                 (Escalation Alerts)
+ zone/{zone_id}/fog/action_log            (Autonomous Pre-Suppression Logs)
+ lateral/zone/{zone_id}/event             (Peer-to-Peer Fog Communications)
 ```
 
 ### Multi-Zone Topology

@@ -18,11 +18,13 @@ from .services.report_service import ReportService
 from .services.export_service import ExportService
 from .services.bundle_service import BundleService
 from .services.result_manager import ResultManager
+from .services.simulation_service import SimulationService
 from .routes.experiments import experiments_router
 from .routes.dashboard_routes import dashboard_router
 from .routes.repository import repository_router
 from .routes.comparison import comparison_router
 from .routes.export_routes import export_router
+from .routes.simulation_routes import simulation_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("cloud_dashboard_app")
@@ -77,6 +79,11 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"InfluxDB not reachable during startup: {e}. Dashboard running in offline mode.")
 
+    # 5. Instantiate SimulationService singleton for live multi-zone scenario injection
+    simulation_service = SimulationService()
+    app.state.simulation_service = simulation_service
+    logger.info("SimulationService registered in app.state.")
+
     app.state.db = db
     app.state.command_sequence = 100
 
@@ -89,6 +96,11 @@ async def lifespan(app: FastAPI):
             process_manager.stop_experiment()
         except Exception:
             pass
+
+    try:
+        simulation_service.stop_all()
+    except Exception:
+        pass
 
     db.close()
     logger.info("IGNIS Cloud Dashboard shut down clean.")
@@ -117,4 +129,5 @@ app.include_router(dashboard_router)
 app.include_router(repository_router)
 app.include_router(comparison_router)
 app.include_router(export_router)
+app.include_router(simulation_router)
 app.include_router(router)

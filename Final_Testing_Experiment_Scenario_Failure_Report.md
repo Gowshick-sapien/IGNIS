@@ -111,7 +111,7 @@ For `4B-E2` with the S4 YAML step 2 data:
 - `humidity_pct: 30.0` → Threshold is `25.0%` (≤) → **NOT confirmed** (30 > 25)
 - `wind_speed_kmh: 12.0` → Threshold is `25.0 km/h` → **NOT confirmed** (12 < 25)
 - `soil_moisture_pct: 20.0` → Threshold is `10.0%` (≤) → **NOT confirmed** (20 > 10)
-- `gas_ppm: 100.0` → Threshold is `30.0` → **CONFIRMED** ✓
+- `gas_ppm: 100.0` → Threshold is `30.0` → **CONFIRMED** 
 - `thermal_anomaly_c: 0.2` → Threshold is `3.0` → **NOT confirmed** (0.2 < 3.0)
 
 **Only 1 sensor confirms.** Since confirmation count (1) < 3, the state machine returns `YELLOW, clamped=False` (not `True`) — the raw_state computed from WHI is `YELLOW` (WHI ≈ 0.45), which is below the `ORANGE` threshold (0.60). Clamping only activates when WHI pushes the raw state to `ORANGE` or `RED` but confirmation count is < 3 ([state_machine.py:L30-L35](file:///d:/projects/IGNIS/src/scoring/state_machine.py#L30-L35)):

@@ -189,40 +189,40 @@ All Phase G functionality is merged into the existing Cloud Dashboard (port 9000
 
 ```
 Cloud Dashboard (Port 9000)
-├── routes/
-│   ├── dashboard.py          # Existing NOC dashboard routes
-│   ├── experiments.py        # G2: Experiment lifecycle API (/api/v1/experiment/*)
-│   ├── reports.py            # G1: Report viewer routes (/api/v1/reports/*)
-│   ├── repository.py         # G4: Experiment repository API (/api/v1/repository/*)
-│   └── comparison.py         # G5: Experiment comparison API (/api/v1/experiments/*)
-├── services/
-│   ├── process_manager.py    # G2: Subprocess lifecycle (state machine)
-│   ├── progress_reporter.py  # G3: Structured progress events
-│   ├── live_monitor.py       # G3: SSE progress broadcaster
-│   ├── result_manager.py     # G5/G6: Orchestrator (delegates to services below)
-│   ├── report_service.py     # G1: Markdown + HTML generation
-│   ├── comparison_service.py # G5: Side-by-side comparison
-│   ├── export_service.py     # G6: Multi-format export
-│   ├── bundle_service.py     # G6: Reproducibility bundle
-│   ├── repository_manager.py # G4: Auto-archival + SQLite (SOLE writer to experiment_repository/)
-│   └── regression_detector.py# G5: Configurable regression analysis
-├── reporting/                 # G1: Consolidated report generation
-│   ├── __init__.py
-│   ├── html_generator.py     # Interactive HTML report engine
-│   ├── chart_engine.py       # Plotly.js chart configuration generator
-│   └── templates.py          # Report template utilities
-└── templates/
-    ├── index.html             # Existing (enhanced with navbar)
-    ├── metrics.html           # Existing (enhanced with interactive charts)
-    ├── experiments.html       # G2: Experiment control page
-    ├── reports.html           # G1: Report browser
-    ├── charts.html            # G1: Interactive chart gallery
-    ├── scenarios.html         # G2: Scenario browser
-    ├── repository.html        # G4: Repository browser
-    ├── comparison.html        # G5: Side-by-side comparison
-    ├── settings.html          # G6: Export preferences
-    └── partials/
-        └── navbar.html        # Shared navigation
+ routes/
+    dashboard.py          # Existing NOC dashboard routes
+    experiments.py        # G2: Experiment lifecycle API (/api/v1/experiment/*)
+    reports.py            # G1: Report viewer routes (/api/v1/reports/*)
+    repository.py         # G4: Experiment repository API (/api/v1/repository/*)
+    comparison.py         # G5: Experiment comparison API (/api/v1/experiments/*)
+ services/
+    process_manager.py    # G2: Subprocess lifecycle (state machine)
+    progress_reporter.py  # G3: Structured progress events
+    live_monitor.py       # G3: SSE progress broadcaster
+    result_manager.py     # G5/G6: Orchestrator (delegates to services below)
+    report_service.py     # G1: Markdown + HTML generation
+    comparison_service.py # G5: Side-by-side comparison
+    export_service.py     # G6: Multi-format export
+    bundle_service.py     # G6: Reproducibility bundle
+    repository_manager.py # G4: Auto-archival + SQLite (SOLE writer to experiment_repository/)
+    regression_detector.py# G5: Configurable regression analysis
+ reporting/                 # G1: Consolidated report generation
+    __init__.py
+    html_generator.py     # Interactive HTML report engine
+    chart_engine.py       # Plotly.js chart configuration generator
+    templates.py          # Report template utilities
+ templates/
+     index.html             # Existing (enhanced with navbar)
+     metrics.html           # Existing (enhanced with interactive charts)
+     experiments.html       # G2: Experiment control page
+     reports.html           # G1: Report browser
+     charts.html            # G1: Interactive chart gallery
+     scenarios.html         # G2: Scenario browser
+     repository.html        # G4: Repository browser
+     comparison.html        # G5: Side-by-side comparison
+     settings.html          # G6: Export preferences
+     partials/
+         navbar.html        # Shared navigation
 ```
 
 ### Service Dependency Injection
@@ -443,8 +443,8 @@ Experiment IDs use a timestamp + random suffix to prevent collisions:
 
 ```
 exp-20260723T153000Z-7a3f
-    │                  │
-    └─ ISO 8601 UTC    └─ 4-char hex suffix (random)
+                      
+     ISO 8601 UTC     4-char hex suffix (random)
 ```
 
 This ensures uniqueness even for sub-second launches while remaining human-readable and sortable.
@@ -1050,8 +1050,8 @@ Given two experiment IDs, produces a structured comparison:
 | Manifest differences | Side-by-side manifest comparison highlighting any metadata changes |
 
 Regression highlighting (automatic color-coded indicators):
-- 🟢 **Improved**: Metric moved in favorable direction
-- 🟡 **Unchanged**: Within configured threshold
+- [GREEN] **Improved**: Metric moved in favorable direction
+- [YELLOW] **Unchanged**: Within configured threshold
 -  **Regressed**: Metric moved in unfavorable direction or verdict changed PASS→FAIL
 
 #### [NEW] `src/cloud_dashboard/routes/comparison.py` — Comparison API Routes (v1)
@@ -1073,15 +1073,15 @@ Runs automatically after every experiment completes. Compares the new experiment
 Output: **Regression Summary**
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│              REGRESSION SUMMARY                         │
-├─────────────────────────────────────────────────────────┤
-│ Decision latency increased 18%    (0.11s → 0.13s)    │
-│ False positives increased         (0 → 2)             │
-│ Message loss unchanged            (0% → 0%)          🟢 │
-│ Scenario S3 changed               PASS → FAIL         │
-│ Lateral propagation improved 5%   (3.4s → 3.2s)     🟢 │
-└─────────────────────────────────────────────────────────┘
+
+              REGRESSION SUMMARY                         
+
+ Decision latency increased 18%    (0.11s → 0.13s)    
+ False positives increased         (0 → 2)             
+ Message loss unchanged            (0% → 0%)          [GREEN] 
+ Scenario S3 changed               PASS → FAIL         
+ Lateral propagation improved 5%   (3.4s → 3.2s)     [GREEN] 
+
 ```
 
 #### [NEW] `config/regression_rules.yaml` — Configurable Regression Rules

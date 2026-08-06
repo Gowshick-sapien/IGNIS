@@ -152,22 +152,22 @@ The fog node's local broker connection (`client_local`) remains unbuffered since
 
 ```
 src/scenarios/
-├── __init__.py
-├── results.py              # ScenarioResult + ScenarioMetric (decoupled)
-├── base_scenario.py        # BaseScenario abstract class only
-├── scenario_registry.py    # Central SCENARIO_REGISTRY dict
-├── scenario_runner.py      # YAML loader + trial executor
-├── scenario_s4.py          # S4 fault injection
-└── scenario_s6.py          # S6 lateral spread
+ __init__.py
+ results.py              # ScenarioResult + ScenarioMetric (decoupled)
+ base_scenario.py        # BaseScenario abstract class only
+ scenario_registry.py    # Central SCENARIO_REGISTRY dict
+ scenario_runner.py      # YAML loader + trial executor
+ scenario_s4.py          # S4 fault injection
+ scenario_s6.py          # S6 lateral spread
 
 scenarios/                   # YAML definitions (project root)
-├── s1_normal.yaml
-├── s2_slow_risk.yaml
-├── s3_sudden_ignition.yaml
-├── s4_sensor_fault.yaml
-├── s5_cloud_outage.yaml
-├── s6_lateral_spread.yaml
-└── s7_multi_zone.yaml
+ s1_normal.yaml
+ s2_slow_risk.yaml
+ s3_sudden_ignition.yaml
+ s4_sensor_fault.yaml
+ s5_cloud_outage.yaml
+ s6_lateral_spread.yaml
+ s7_multi_zone.yaml
 ```
 
 ---
@@ -255,14 +255,14 @@ Responsibilities:
 
 ```
 ScenarioRunner
-        │
-        ├── Executes scenario N times
-        └── Produces ScenarioResult[]
-                │
-                ▼
+        
+         Executes scenario N times
+         Produces ScenarioResult[]
+                
+                
 MetricsCollector
-        │
-        └── Computes statistics from ScenarioResult[]
+        
+         Computes statistics from ScenarioResult[]
 ```
 
 ---
@@ -324,10 +324,10 @@ Concrete `BaseScenario` subclasses that:
 
 ```
 src/chaos_controller/
-├── __init__.py
-├── docker_adapter.py       # Abstracted Docker SDK operations
-├── routes.py               # FastAPI REST endpoints
-└── app.py                  # FastAPI application (:9001)
+ __init__.py
+ docker_adapter.py       # Abstracted Docker SDK operations
+ routes.py               # FastAPI REST endpoints
+ app.py                  # FastAPI application (:9001)
 ```
 
 ---
@@ -397,9 +397,9 @@ Timeline:
     t=8s    Fog reaches YELLOW/ORANGE (step 2)
     t=8s    POST /api/chaos/disconnect_cloud {zone_id: "4B", duration_sec: 20}
     t=8-28s Fog continues locally (S3 steps 3-5 execute)
-            ├── Local broker still receives state/alert/action_log
-            ├── Cloud-bound messages queue in BufferedPublisher
-            └── Local stdout logs prove uninterrupted operation
+             Local broker still receives state/alert/action_log
+             Cloud-bound messages queue in BufferedPublisher
+             Local stdout logs prove uninterrupted operation
     t=28s   POST /api/chaos/restore_cloud {zone_id: "4B"}
     t=29s   BufferedPublisher.flush() drains queued messages
     t=30s   Verify flushed data appears in InfluxDB
@@ -419,9 +419,9 @@ Timeline:
     t=0-24s Both zones escalate through GREEN → YELLOW → ORANGE → RED
     t=24s   Subscribe to both zones' state topics, collect all messages
     t=25s   Assert:
-            ├── Zero cross-contamination (no zone_id mismatches)
-            ├── Zero dropped messages (all telemetry in InfluxDB)
-            └── Cloud dashboard reflects both zones independently
+             Zero cross-contamination (no zone_id mismatches)
+             Zero dropped messages (all telemetry in InfluxDB)
+             Cloud dashboard reflects both zones independently
     t=26s   Collect concurrent-zone integrity metrics → ScenarioResult
 ```
 
@@ -462,12 +462,12 @@ Trial count is configurable:
 metrics.json
     ↓
 Report Generator
-    ├── docs/phase-e/section7_metrics_report.md
-    ├── docs/phase-e/charts/decision_latency.png
-    ├── docs/phase-e/charts/lateral_propagation.png
-    ├── docs/phase-e/charts/false_positive_rate.png
-    ├── docs/phase-e/charts/offline_continuity.png
-    └── docs/phase-e/charts/message_integrity.png
+     docs/phase-e/section7_metrics_report.md
+     docs/phase-e/charts/decision_latency.png
+     docs/phase-e/charts/lateral_propagation.png
+     docs/phase-e/charts/false_positive_rate.png
+     docs/phase-e/charts/offline_continuity.png
+     docs/phase-e/charts/message_integrity.png
 ```
 
 Uses `matplotlib` for dissertation-ready visualizations embedded in the markdown report.

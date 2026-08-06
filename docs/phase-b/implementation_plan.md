@@ -212,13 +212,13 @@ Instead of a monolithic script, the presentation and scenario orchestration laye
 
 ```
 src/control_center/
-├── __init__.py
-├── app.py                   # FastAPI application startup and lifespan handlers
-├── routes.py                # HTTP UI endpoints and SSE streams
-├── mqtt_listener.py         # Background MQTT subscriber pushing updates to SSE queues
-├── scenario_service.py      # Independent orchestration engine executing scenarios (S1-S4)
-└── templates/
-    └── index.html           # Beautiful glassmorphic control dashboard
+ __init__.py
+ app.py                   # FastAPI application startup and lifespan handlers
+ routes.py                # HTTP UI endpoints and SSE streams
+ mqtt_listener.py         # Background MQTT subscriber pushing updates to SSE queues
+ scenario_service.py      # Independent orchestration engine executing scenarios (S1-S4)
+ templates/
+     index.html           # Beautiful glassmorphic control dashboard
 ```
 
 #### [NEW] [src/control_center/scenario_service.py](file:///d:/projects/IGNIS/src/control_center/scenario_service.py)

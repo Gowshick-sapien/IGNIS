@@ -10,8 +10,8 @@ ScenarioRunner Trials
 Metrics Collector (src/metrics_collector.py)
     ↓ (metrics.json)
 Report Generator (src/report_generator.py)
-    ├── docs/phase-e/section7_metrics_report.md
-    └── docs/phase-e/charts/ (5 plotted PNGs)
+     docs/phase-e/section7_metrics_report.md
+     docs/phase-e/charts/ (5 plotted PNGs)
 ```
 
 ---

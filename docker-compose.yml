@@ -84,6 +84,7 @@ services:
       - ./src:/app/src
     restart: unless-stopped
     networks:
+      - default
       - cloud-net
 
 
@@ -94,6 +95,9 @@ services:
     <<: *broker-template
     container_name: ignis-mqtt-broker-4a
     ports: ["1881:1883"]
+    networks:
+      - default
+      - cloud-net
 
   fog-node-4a:
     <<: *fog-template
@@ -148,6 +152,9 @@ services:
     <<: *broker-template
     container_name: ignis-mqtt-broker-4b
     ports: ["1883:1883"]
+    networks:
+      - default
+      - cloud-net
 
   fog-node-4b:
     <<: *fog-template
@@ -202,6 +209,9 @@ services:
     <<: *broker-template
     container_name: ignis-mqtt-broker-4c
     ports: ["1885:1883"]
+    networks:
+      - default
+      - cloud-net
 
   fog-node-4c:
     <<: *fog-template

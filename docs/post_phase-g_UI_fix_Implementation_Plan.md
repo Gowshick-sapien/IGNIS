@@ -111,19 +111,19 @@ The existing NOC Dashboard (`index.html`) has a 3-column layout: Left (health + 
 A new panel inserted between the zone overview bar and the main dashboard grid. Designed as a **collapsible drawer** (collapsed by default to keep the dashboard clean, with a toggle button):
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│ ▶ Simulation Control Panel                    [Zone: 4B ▾] │  ← collapsed header
-├─────────────────────────────────────────────────────────────┤
-│                                                             │  ← expanded panel
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐      │
-│  │S1 Normal │ │S2 Slow   │ │S3 Sudden │ │S4 Fault  │      │
-│  │  Day     │ │  Build   │ │ Ignition │ │  Sensor  │      │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────┘      │
-│  ┌──────────┐                                              │
-│  │S6 Lateral│  [████████░░ 3/6 Steps]  [RESET BASELINE]   │
-│  │  Spread  │                                              │
-│  └──────────┘                                              │
-└─────────────────────────────────────────────────────────────┘
+
+  Simulation Control Panel                    [Zone: 4B ]   ← collapsed header
+
+                                                               ← expanded panel
+           
+  S1 Normal  S2 Slow    S3 Sudden  S4 Fault        
+    Day        Build     Ignition    Sensor        
+           
+                                                
+  S6 Lateral  [ 3/6 Steps]  [RESET BASELINE]   
+    Spread                                                
+                                                
+
 ```
 
 **Key design principles:**
@@ -139,25 +139,25 @@ A new panel inserted between the zone overview bar and the main dashboard grid. 
 A new bottom section showing real-time edge node sensor readings, inspired by the Control Center's edge card grid:
 
 ```
-┌─ Edge Node Sensor Arrays ──────────────────────────────────────────────┐
-│                                                                        │
-│ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐           │
-│ │ Edge Node 4B-E1 │ │ Edge Node 4B-E2 │ │ Edge Node 4B-E3 │           │
-│ │ Seq: 142 | OK   │ │ Seq: 143 | OK   │ │ Seq: 141 | OK   │           │
-│ │ ┌─────┐ ┌─────┐│ │ ┌─────┐ ┌─────┐│ │ ┌─────┐ ┌─────┐│           │
-│ │ │Temp │ │Humid││ │ │Temp │ │Humid││ │ │Temp │ │Humid││           │
-│ │ │32.1°│ │45.2%││ │ │55.0°│ │18.3%││ │ │31.8°│ │46.1%││           │
-│ │ └─────┘ └─────┘│ │ └─────┘ └─────┘│ │ └─────┘ └─────┘│           │
-│ │ ┌─────┐ ┌─────┐│ │ ┌─────┐ ┌─────┐│ │ ┌─────┐ ┌─────┐│           │
-│ │ │Wind │ │SoilM││ │ │Wind │ │SoilM││ │ │Wind │ │SoilM││           │
-│ │ │12km │ │22.1%││ │ │28km │ │ 8.2%││ │ │11km │ │23.0%││           │
-│ │ └─────┘ └─────┘│ │ └─────┘ └─────┘│ │ └─────┘ └─────┘│           │
-│ │ ┌─────┐ ┌─────┐│ │ ┌─────┐ ┌─────┐│ │ ┌─────┐ ┌─────┐│           │
-│ │ │Gas  │ │Therm││ │ │Gas  │ │Therm││ │ │Gas  │ │Therm││           │
-│ │ │15ppm│ │0.3° ││ │ │45ppm│ │4.2° ││ │ │14ppm│ │0.4° ││           │
-│ │ └─────┘ └─────┘│ │ └─────┘ └─────┘│ │ └─────┘ └─────┘│           │
-│ └─────────────────┘ └─────────────────┘ └─────────────────┘           │
-└────────────────────────────────────────────────────────────────────────┘
+ Edge Node Sensor Arrays 
+                                                                        
+              
+  Edge Node 4B-E1   Edge Node 4B-E2   Edge Node 4B-E3            
+  Seq: 142 | OK     Seq: 143 | OK     Seq: 141 | OK              
+                    
+  Temp  Humid  Temp  Humid  Temp  Humid           
+  32.1° 45.2%  55.0° 18.3%  31.8° 46.1%           
+                    
+                    
+  Wind  SoilM  Wind  SoilM  Wind  SoilM           
+  12km  22.1%  28km   8.2%  11km  23.0%           
+                    
+                    
+  Gas   Therm  Gas   Therm  Gas   Therm           
+  15ppm 0.3°   45ppm 4.2°   14ppm 0.4°            
+                    
+              
+
 ```
 
 **Key features:**

@@ -27,18 +27,18 @@ Following Phase G1 (Interactive HTML Reporting), Phase G2 (Subprocess Lifecycle 
 When automatic regression detection runs for a newly completed experiment (and no explicit baseline ID is passed):
 
 ```
-                       ┌───────────────────────────────┐
-                       │  New Completed Experiment B   │
-                       └───────────────┬───────────────┘
-                                       │
-                    ┌──────────────────┴──────────────────┐
-                    ▼                                     ▼
+                       
+                         New Completed Experiment B   
+                       
+                                       
+                    
+                                                         
         1. Find most recent archive            2. Find most recent archive
         with SAME Git commit                      OVERALL in metadata.db
-                    │                                     │
+                                                         
              [Found archive?]                      [Found archive?]
-              ├─ YES ──> Use as Baseline            ├─ YES ──> Use as Baseline
-              └─ NO  ──> Fallback to 2.             └─ NO  ──> Skip Analysis
+               YES > Use as Baseline             YES > Use as Baseline
+               NO  > Fallback to 2.              NO  > Skip Analysis
 ```
 
 1. **Strategy 1 (Same Commit Baseline)**: Select the most recent archived experiment sharing the **exact same Git commit hash**.

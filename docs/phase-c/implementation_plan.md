@@ -144,13 +144,13 @@ Create a modular FastAPI application in `src/cloud_dashboard/`:
 
 ```
 src/cloud_dashboard/
-├── __init__.py
-├── app.py                  # FastAPI initialization, static assets mapping
-├── routes.py               # REST API endpoints, HTML routes (polling snapshot & history)
-├── database.py             # Read-only InfluxDB query client (historical metrics)
-├── cache.py                # Local configuration values cache
-└── templates/
-    └── index.html          # Central NOC Dashboard UI
+ __init__.py
+ app.py                  # FastAPI initialization, static assets mapping
+ routes.py               # REST API endpoints, HTML routes (polling snapshot & history)
+ database.py             # Read-only InfluxDB query client (historical metrics)
+ cache.py                # Local configuration values cache
+ templates/
+     index.html          # Central NOC Dashboard UI
 ```
 
 #### Stateless Design Details:
