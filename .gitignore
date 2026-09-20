@@ -1,8 +1,3 @@
-# IGNIS Ideation PDFs
-Simulation_Ideation_v1.pdf
-hardware_ideation_v1.pdf
-project title .pdf
-
 # Python artifacts
 __pycache__/
 *.pyc
@@ -29,22 +24,28 @@ ENV/
 *.swp
 *.swo
 
-# Docker / Local Database Volumes / Generated Data
+# Docker volumes and generated data
 historical/
 *.log
 
-# Temporary test runs & generated test data
-results/run_*/
-docs/phase-f/run_*/
+# Generated experiment output (ephemeral, regenerated on each run)
+results/
+reports/exports/
+experiment_repository/
 dummy_charts_dir/
+docs/phase-f/run_*/
+
+# Temporary directories
+tmp/
 tests/temp_experiment_reports/
 
 # System files
 .DS_Store
 Thumbs.db
 
-# Temporary scratch & scan scripts
+# Scratch and utility scripts (not part of the project)
 emojis_found.txt
 run_scan.py
 clean_emojis.py
-clean_brain_artifacts.py
+clean_brain_artifacts.py
+temp.txt
